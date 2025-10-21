@@ -1,33 +1,70 @@
+import { colors } from '@/theme/colors';
 import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Home, Star, Users } from 'lucide-react-native';
+import { Image } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: colors.morduBlue,
+        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Accueil',
+          tabBarIcon: ({ color, focused }) => (
+            <Home size={20} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="teams"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Équipes',
+          tabBarIcon: ({ color, focused }) => (
+            <Users size={20} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="teams/[id]"
+        options={{
+          href: null, // Cache cette route du bottom nav
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: 'Favoris',
+          tabBarIcon: ({ color, focused }) => (
+            <Star size={20} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="mordusport"
+        options={{
+          title: 'Mordu Sport',
+          tabBarIcon: ({ color, focused }) => (
+            <Image 
+              source={require('@/assets/images/Logo - Bouche Mordu (1).png')}
+              style={{ 
+                width: 42, 
+                height: 42,
+                tintColor: color,
+                opacity: focused ? 1 : 0.6
+              }}
+              resizeMode="contain"
+            />
+          ),
         }}
       />
     </Tabs>
