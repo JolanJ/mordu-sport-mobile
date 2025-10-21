@@ -41,6 +41,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="profile"
+        options={{
+          href: null, // Cache cette route du bottom nav
+        }}
+      />
+      <Tabs.Screen
         name="favorites"
         options={{
           title: 'Favoris',

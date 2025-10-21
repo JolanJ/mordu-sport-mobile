@@ -1,4 +1,5 @@
 import { colors } from '@/theme/colors'
+import { router } from 'expo-router'
 import { Bell, Search } from 'lucide-react-native'
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
@@ -7,14 +8,17 @@ export function HomeHeader() {
     <View style={styles.container}>
       <View style={styles.header}>
         {/* Section gauche : Avatar + Username */}
-        <View style={styles.leftSection}>
+        <Pressable 
+          style={styles.leftSection}
+          onPress={() => router.push('/profile')}
+        >
           <Image 
             source={require('@/assets/images/Avatar 3.png')} 
             style={styles.avatar} 
             resizeMode="cover"
           />
           <Text style={styles.username}>@Luxevo</Text>
-        </View>
+        </Pressable>
 
        
 
