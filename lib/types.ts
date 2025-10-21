@@ -10,14 +10,14 @@ export interface Match {
   awayTeam: {
     name: string
     abbr: string
-    logo: string
+    logo: any // Accept both string URLs and require() images
     score?: number
   }
   
   homeTeam: {
     name: string
     abbr: string
-    logo: string
+    logo: any // Accept both string URLs and require() images
     score?: number
   }
 }

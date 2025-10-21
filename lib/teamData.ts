@@ -6,6 +6,7 @@ export interface Team {
   league: "NHL" | "NBA" | "NFL"
   conference: string     // "Eastern", "Western", "AFC", "NFC"
   division: string       // "Atlantic", "Metropolitan", etc.
+  logo?: any            // Logo de l'équipe (URL ou image locale)
   stats?: {
     wins: number
     losses: number
@@ -24,6 +25,7 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Eastern",
     division: "Atlantic",
+    logo: require('@/assets/images/ch.png'),
     stats: { wins: 15, losses: 8, otLosses: 2, points: 32 }
   },
   {
@@ -34,6 +36,7 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Eastern",
     division: "Atlantic",
+    logo: require('@/assets/images/toor.png'),
     stats: { wins: 18, losses: 5, otLosses: 1, points: 37 }
   },
   {
@@ -44,6 +47,7 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Eastern",
     division: "Atlantic",
+    logo: require('@/assets/images/bos.png'),
     stats: { wins: 12, losses: 10, otLosses: 3, points: 27 }
   },
   {
@@ -54,6 +58,7 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Eastern",
     division: "Metropolitan",
+    logo: require('@/assets/images/ran.png'),
     stats: { wins: 16, losses: 7, otLosses: 2, points: 34 }
   },
   {
@@ -68,6 +73,17 @@ export const mockTeams: Team[] = [
   },
 
   // NHL - Conférence Ouest
+  {
+    id: "vegas-golden-knights",
+    name: "Vegas Golden Knights",
+    abbr: "VGK",
+    city: "Las Vegas",
+    league: "NHL",
+    conference: "Western",
+    division: "Pacific",
+    logo: require('@/assets/images/vgk.png'),
+    stats: { wins: 18, losses: 6, otLosses: 1, points: 37 }
+  },
   {
     id: "edmonton-oilers",
     name: "Edmonton Oilers",

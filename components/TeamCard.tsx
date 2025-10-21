@@ -1,7 +1,7 @@
 import { Team } from '@/lib/teamData'
 import { colors } from '@/theme/colors'
 import { Users } from 'lucide-react-native'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
 interface TeamCardProps {
   team: Team
@@ -34,9 +34,17 @@ export function TeamCard({ team, onPress }: TeamCardProps) {
       onPress={handlePress}
     >
       <View style={[styles.logoContainer, { backgroundColor: conferenceColor + '10' }]}>
-        <Text style={[styles.logoText, { color: conferenceColor }]}>
-          {team.abbr}
-        </Text>
+        {team.logo ? (
+          <Image
+            source={typeof team.logo === 'string' ? { uri: team.logo } : team.logo}
+            style={styles.teamLogo}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={[styles.logoText, { color: conferenceColor }]}>
+            {team.abbr}
+          </Text>
+        )}
       </View>
       
       <View style={styles.teamInfo}>
@@ -80,6 +88,10 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  teamLogo: {
+    width: 32,
+    height: 32,
   },
   teamInfo: {
     flex: 1,

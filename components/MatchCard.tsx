@@ -69,7 +69,7 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
           {/* Colonne 1: Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={{ uri: match.awayTeam.logo }}
+              source={typeof match.awayTeam.logo === 'string' ? { uri: match.awayTeam.logo } : match.awayTeam.logo}
               style={styles.teamLogo}
               resizeMode="contain"
             />
@@ -100,7 +100,7 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
           {/* Colonne 1: Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={{ uri: match.homeTeam.logo }}
+              source={typeof match.homeTeam.logo === 'string' ? { uri: match.homeTeam.logo } : match.homeTeam.logo}
               style={styles.teamLogo}
               resizeMode="contain"
             />

@@ -13,13 +13,13 @@ export const mockMatches: Match[] = [
     awayTeam: {
       name: "Montreal Canadiens",
       abbr: "MTL",
-      logo: "https://via.placeholder.com/32x32/FF0000/FFFFFF?text=MTL",
+      logo: require('@/assets/images/ch.png'),
       score: 2
     },
     homeTeam: {
       name: "Toronto Maple Leafs",
       abbr: "TOR",
-      logo: "https://via.placeholder.com/32x32/003E7E/FFFFFF?text=TOR",
+      logo: require('@/assets/images/toor.png'),
       score: 3
     }
   },
@@ -32,12 +32,12 @@ export const mockMatches: Match[] = [
     awayTeam: {
       name: "Boston Bruins",
       abbr: "BOS",
-      logo: "https://via.placeholder.com/32x32/FFB81C/000000?text=BOS"
+      logo: require('@/assets/images/bos.png')
     },
     homeTeam: {
       name: "New York Rangers",
       abbr: "NYR",
-      logo: "https://via.placeholder.com/32x32/0038A8/FFFFFF?text=NYR"
+      logo: require('@/assets/images/ran.png')
     }
   },
   {
@@ -49,7 +49,7 @@ export const mockMatches: Match[] = [
     awayTeam: {
       name: "Vegas Golden Knights",
       abbr: "VGK",
-      logo: "https://via.placeholder.com/32x32/B4975A/000000?text=VGK",
+      logo: require('@/assets/images/vgk.png'),
       score: 4
     },
     homeTeam: {
