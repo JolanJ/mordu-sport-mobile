@@ -30,7 +30,13 @@ export function TeamCard({ team, onPress }: TeamCardProps) {
 
   return (
     <Pressable
-      style={[styles.container, { borderColor: conferenceColor + '50' }]}
+      style={[
+        styles.container, 
+        { 
+          borderColor: conferenceColor + '50',
+          shadowColor: conferenceColor,
+        }
+      ]}
       onPress={handlePress}
     >
       <View style={[styles.logoContainer, { backgroundColor: conferenceColor + '10' }]}>
@@ -68,7 +74,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginVertical: 4,
-    shadowColor: colors.neonBlue,
     shadowOffset: {
       width: 0,
       height: 0,
