@@ -9,10 +9,10 @@ import { useRef, useState } from 'react'
 import { Animated, Image, ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const leagues = ['TOUS', 'NHL', 'NFL', 'MLB', 'NBA', 'NCAA', 'UFC']
+const leagues = ['NHL', 'NFL', 'NBA']
 
 export default function Teams() {
-  const [selectedLeague, setSelectedLeague] = useState('TOUS')
+  const [selectedLeague, setSelectedLeague] = useState(leagues[0])
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollY = useRef(new Animated.Value(0)).current
 
@@ -24,7 +24,7 @@ export default function Teams() {
     router.push(`/teams/${teamId}`)
   }
 
-  const teams = selectedLeague === 'TOUS' ? mockTeams : getTeamsByLeague(selectedLeague)
+  const teams = getTeamsByLeague(selectedLeague)
   
   // Grouper les équipes par conférence
   const teamsByConference = teams.reduce((acc, team) => {
@@ -52,6 +52,7 @@ export default function Teams() {
         leagues={leagues}
         selectedLeague={selectedLeague}
         onLeagueChange={setSelectedLeague}
+        centered
       />
 
       <View style={styles.content}>

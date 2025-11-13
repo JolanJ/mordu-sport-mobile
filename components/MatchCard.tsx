@@ -145,9 +145,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: 0,
     },
-    shadowOpacity: 0.8,
-    shadowRadius: 16,
-    elevation: 16,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
   },
   headerRow: {
     flexDirection: 'row',

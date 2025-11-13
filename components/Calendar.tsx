@@ -69,11 +69,11 @@ export function Calendar() {
     if (isDisabled) {
       return styles.dateTextDisabled
     }
-    if (isToday) {
-      return styles.dateTextToday // "Aujourd'hui" reste toujours orange
-    }
     if (isSelected) {
-      return styles.dateTextSelected
+      return isToday ? styles.dateTextTodaySelected : styles.dateTextSelected
+    }
+    if (isToday) {
+      return styles.dateTextToday
     }
     return styles.dateTextNormal
   }
@@ -166,9 +166,14 @@ const styles = StyleSheet.create({
   dateTextToday: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.foreground, // Blanc
+    color: colors.foreground,
   },
   dateTextSelected: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.neonGreen,
+  },
+  dateTextTodaySelected: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.neonGreen,

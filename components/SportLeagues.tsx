@@ -6,10 +6,7 @@ const leagues = [
   { id: "ALL", name: "TOUS" },
   { id: "NHL", name: "NHL" },
   { id: "NFL", name: "NFL" },
-  { id: "MLB", name: "MLB" },
   { id: "NBA", name: "NBA" },
-  { id: "NCAA", name: "NCAA" },
-  { id: "UFC", name: "UFC" },
 ]
 
 interface SportLeaguesProps {
@@ -60,6 +57,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   leagueButton: {
     paddingHorizontal: 16,

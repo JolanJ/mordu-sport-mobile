@@ -138,7 +138,7 @@ export default function Profile() {
 
         {/* Informations du profil */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations</Text>
+          <Text style={styles.sectionTitle}>Mes statistiques de fan</Text>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Membre depuis</Text>

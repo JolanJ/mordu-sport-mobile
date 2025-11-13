@@ -5,15 +5,19 @@ interface LeagueFilterProps {
   leagues: string[]
   selectedLeague: string
   onLeagueChange: (league: string) => void
+  centered?: boolean
 }
 
-export function LeagueFilter({ leagues, selectedLeague, onLeagueChange }: LeagueFilterProps) {
+export function LeagueFilter({ leagues, selectedLeague, onLeagueChange, centered = false }: LeagueFilterProps) {
   return (
     <View style={styles.container}>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          centered && styles.centeredContent,
+        ]}
       >
         {leagues.map((league) => {
           const isSelected = selectedLeague === league
@@ -46,6 +50,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
+  },
+  centeredContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   leagueButton: {
     paddingHorizontal: 16,
