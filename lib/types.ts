@@ -6,12 +6,14 @@ export interface Match {
   time?: string
   period?: string
   timeRemaining?: string
+  venue?: string // Nom du stade/aréna
   
   awayTeam: {
     name: string
     abbr: string
     logo: any // Accept both string URLs and require() images
     score?: number
+    teamId?: string // ID de l'équipe depuis Goalserve
   }
   
   homeTeam: {
@@ -19,5 +21,6 @@ export interface Match {
     abbr: string
     logo: any // Accept both string URLs and require() images
     score?: number
+    teamId?: string // ID de l'équipe depuis Goalserve
   }
 }

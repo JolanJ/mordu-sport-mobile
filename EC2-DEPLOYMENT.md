@@ -132,4 +132,250 @@ sudo apt install -y nodejs
 sudo apt install -y npm
 
 
-À CETTE ÉTAPE ON EST PRÊT À INSTALLER EXPRESS
+###creer le dossier sur le ec2: 
+mkdir ~/goalserve-proxy
+cd ~/goalserve-proxy
+
+ensuite de ca installer express: 
+npm install express axios dotenv
+Ça va installer :
+
+Express → ton serveur HTTP
+
+Axios → pour appeler Goalserve
+
+Dotenv → pour lire ton API Key de Goalserve proprement
+
+---
+
+## 9. Création du fichier .env
+
+### Commande utilisée
+```bash
+nano .env
+```
+
+### Contenu du fichier .env
+```
+GOALSERVE_TOKEN=174a9bd35aac4c6ba67a08de21cd460f
+```
+
+**Important :** La variable d'environnement doit s'appeler `GOALSERVE_TOKEN` (pas `GOALSERVE_KEY`) car c'est ce que `server.js` utilise.
+
+Sauvegarde : `Ctrl+X`, puis `Y`, puis `Enter`
+
+Vérification :
+```bash
+cat .env
+# Devrait afficher : GOALSERVE_TOKEN=174a9bd35aac4c6ba67a08de21cd460f
+```
+
+---
+
+## 10. Création du fichier server.js
+
+### Commande utilisée
+```bash
+nano server.js
+```
+
+### Contenu du fichier server.js
+
+Fichier complet du serveur proxy Express :
+
+```javascript
+const express = require('express');
+const axios = require('axios');
+require('dotenv').config();
+
+// Créer l'application Express
+const app = express();
+const PORT = 3000;
+const GOALSERVE_TOKEN = process.env.GOALSERVE_TOKEN;
+
+// Middleware pour parser JSON
+app.use(express.json());
+
+// Middleware CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
+// Route de santé
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    proxy: 'Goalserve'
+  });
+});
+
+// Route proxy pour Goalserve avec regex
+app.get(/^\/goalserve\/(.+)$/, async (req, res) => {
+  try {
+    const relativePath = req.params[0];
+    const url = `https://www.goalserve.com/getfeed/${GOALSERVE_TOKEN}/${relativePath}`;
+    
+    console.log(`[PROXY] ${req.method} ${req.url}`);
+    console.log(`[PROXY] → ${url}`);
+    
+    const response = await axios.get(url, {
+      headers: {
+        'Accept': 'application/xml, application/json',
+        'User-Agent': 'MorduSport-Mobile/1.0'
+      },
+      timeout: 10000
+    });
+    
+    res.set('Content-Type', response.headers['content-type'] || 'application/xml');
+    res.send(response.data);
+    
+    console.log(`[PROXY] ✓ Réponse envoyée (${response.status})`);
+    
+  } catch (error) {
+    console.error('[PROXY] ✗ Erreur:', error.message);
+    
+    if (error.response) {
+      res.status(error.response.status).json({ 
+        error: 'Erreur Goalserve',
+        status: error.response.status,
+        message: error.response.statusText
+      });
+    } else if (error.request) {
+      res.status(504).json({ 
+        error: 'Timeout ou Goalserve inaccessible',
+        message: 'Le serveur Goalserve ne répond pas'
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Erreur serveur',
+        message: error.message 
+      });
+    }
+  }
+});
+
+// Démarrer le serveur
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('═══════════════════════════════════════');
+  console.log('🚀 Proxy Goalserve démarré');
+  console.log(`📡 Port: ${PORT}`);
+  console.log(`🌐 Accessible sur: http://3.233.18.235:${PORT}`);
+  console.log(`🔑 API Key: ${GOALSERVE_TOKEN ? '✓ Configurée' : '✗ Manquante'}`);
+  console.log('═══════════════════════════════════════');
+});
+```
+
+**Points importants :**
+- Utilise `require()` et non `import` (CommonJS, pas ES6 modules)
+- Route avec regex : `/^\/goalserve\/(.+)$/` pour capturer tout après `/goalserve/`
+- Supporte tous les sports : `football/`, `hockey/`, `basketball/`, etc.
+- Supporte les query params : `?date=18.05.2018`
+
+---
+
+## 11. Résolution des erreurs rencontrées
+
+### Erreur 1 : "cannot use import statement outside a module"
+**Cause :** Utilisation de `import` au lieu de `require`  
+**Solution :** Remplacer `import` par `require()` (CommonJS)
+
+### Erreur 2 : "missing parameter name at index"
+**Cause :** Syntaxe de route invalide (`/goalserve/*` ou `/goalserve/:path(*)`)  
+**Solution :** Utiliser une regex : `/^\/goalserve\/(.+)$/`
+
+### Erreur 3 : "app is not defined"
+**Cause :** Code incomplet, déclaration de `app` manquante  
+**Solution :** S'assurer d'avoir `const app = express();` au début du fichier
+
+---
+
+## 12. Démarrage du serveur
+
+### Commande utilisée
+```bash
+node server.js
+```
+
+### Résultat attendu
+```
+═══════════════════════════════════════
+🚀 Proxy Goalserve démarré
+📡 Port: 3000
+🌐 Accessible sur: http://3.233.18.235:3000
+🔑 API Key: ✓ Configurée
+═══════════════════════════════════════
+```
+
+---
+
+## 13. Tests du serveur proxy
+
+### Test 1 : Route de santé (depuis PC Windows - PowerShell)
+```powershell
+curl http://3.233.18.235:3000/health
+```
+
+**Résultat attendu :**
+```json
+{"status":"OK","timestamp":"2025-01-20T...","proxy":"Goalserve"}
+```
+
+### Test 2 : Endpoint Goalserve - NFL Scores
+```powershell
+curl http://3.233.18.235:3000/goalserve/football/nfl-scores
+```
+
+**Résultat :** ✅ **SUCCÈS** - Données XML de Goalserve reçues dans le terminal
+
+### Test 3 : Endpoint avec query params
+```powershell
+curl http://3.233.18.235:3000/goalserve/football/nfl-scores?date=18.05.2018
+```
+
+**Résultat :** ✅ Fonctionne (query params préservés)
+
+---
+
+## ✅ ÉTAT ACTUEL
+
+**Statut :** 🟢 **SERVEUR PROXY OPÉRATIONNEL**
+
+- ✅ Serveur Express démarré sur EC2
+- ✅ Proxy fonctionnel et accessible depuis Internet
+- ✅ Communication avec Goalserve établie
+- ✅ Données renvoyées correctement
+- ✅ Support de tous les sports (football, hockey, basketball)
+- ✅ Support des query params
+
+**URL du proxy :** `http://3.233.18.235:3000`
+
+**Routes disponibles :**
+- `GET /health` - Vérification de santé
+- `GET /goalserve/*` - Proxy vers Goalserve (tous les endpoints)
+
+**Exemples d'endpoints :**
+- `http://3.233.18.235:3000/goalserve/football/nfl-scores`
+- `http://3.233.18.235:3000/goalserve/hockey/nhl-scores`
+- `http://3.233.18.235:3000/goalserve/basketball/nba-scores`
+
+---
+
+## 📋 PROCHAINES ÉTAPES
+
+1. **Configurer le serveur pour qu'il tourne en arrière-plan** (PM2 ou screen)
+2. **Intégrer le proxy dans l'app mobile** (remplacer les appels directs à Goalserve)
+3. **Ajouter le Security Group pour le port 3000** (si pas déjà fait)
+4. **Tester depuis l'app mobile** (React Native/Expo)
+
+---
+
+## 🔒 Sécurité
+
+**Important :** Assure-toi que le Security Group AWS permet les connexions sur le port 3000 :
+- Type : Custom TCP
+- Port : 3000
+- Source : 0.0.0.0/0 (ou ton IP publique si tu veux limiter)

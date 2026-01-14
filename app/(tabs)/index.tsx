@@ -8,10 +8,10 @@ import { Image, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function HomeScreen() {
-  const [selectedLeague, setSelectedLeague] = useState("ALL")
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
-  const handleLeagueChange = (league: string) => {
-    setSelectedLeague(league)
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date)
   }
 
   return (
@@ -27,10 +27,10 @@ export default function HomeScreen() {
         />
       </View>
       
-      <SportLeagues onLeagueChange={handleLeagueChange} />
-      <Calendar />
+      <SportLeagues />
+      <Calendar selectedDate={selectedDate} onDateChange={handleDateChange} />
       <View style={styles.content}>
-        <MatchList selectedLeague={selectedLeague} />
+        <MatchList selectedDate={selectedDate} />
       </View>
     </SafeAreaView>
   )

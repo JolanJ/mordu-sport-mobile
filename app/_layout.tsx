@@ -3,6 +3,9 @@ import { colors } from '@/theme/colors'
 import { Stack } from 'expo-router'
 import { useState } from 'react'
 import { View } from 'react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient()
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true)
@@ -20,8 +23,10 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <QueryClientProvider client={queryClient}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </QueryClientProvider>
   )
 }

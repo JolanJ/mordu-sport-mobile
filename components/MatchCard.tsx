@@ -1,7 +1,7 @@
 import { Match } from '@/lib/types'
 import { colors } from '@/theme/colors'
 import { ChevronRight } from 'lucide-react-native'
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
 interface MatchCardProps {
   match: Match
@@ -9,8 +9,42 @@ interface MatchCardProps {
 }
 
 export function MatchCard({ match, onPress }: MatchCardProps) {
+  // Vérifier si le match est d'aujourd'hui (comparer les dates en format string YYYY-MM-DD)
+  const isToday = () => {
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0] // Format: YYYY-MM-DD
+    return match.date === todayStr
+  }
+
   const handlePress = () => {
-    onPress?.(match.id)
+    // Vérifier si le match est d'aujourd'hui
+    if (isToday()) {
+      // Permettre la navigation seulement si le match est d'aujourd'hui
+      onPress?.(match.id)
+    } else {
+      // Afficher un message stylé si le match n'est pas d'aujourd'hui
+      // Parser la date du match (format YYYY-MM-DD)
+      const [year, month, day] = match.date.split('-').map(Number)
+      const matchDate = new Date(year, month - 1, day) // month - 1 car les mois sont 0-indexés
+      
+      const dateStr = matchDate.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })
+      
+      Alert.alert(
+        '🚫 Room verrouillée',
+        `La room de ce match sera disponible le ${dateStr}.\n\nRevenez ce jour-là pour suivre le match en direct ! 🔥`,
+        [
+          {
+            text: 'Compris',
+            style: 'default'
+          }
+        ]
+      )
+    }
   }
 
   const getStatusColor = () => {
@@ -56,9 +90,11 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
       style={styles.container}
       onPress={handlePress}
     >
-      {/* Ligne en haut : Bell Centre à gauche, Heure à droite */}
+      {/* Ligne en haut : Venue à gauche, Heure à droite */}
       <View style={styles.headerRow}>
-        <Text style={styles.venueText}>Bell Centre</Text>
+        <Text style={styles.venueText} numberOfLines={1}>
+          {match.venue || 'Stade non disponible'}
+        </Text>
         <View style={styles.spacer} />
         <Text style={styles.timeText}>{getStatusText()}</Text>
       </View>
@@ -68,11 +104,15 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
         <View style={styles.teamRow}>
           {/* Colonne 1: Logo */}
           <View style={styles.logoContainer}>
-            <Image
-              source={typeof match.awayTeam.logo === 'string' ? { uri: match.awayTeam.logo } : match.awayTeam.logo}
-              style={styles.teamLogo}
-              resizeMode="contain"
-            />
+            {match.awayTeam.logo ? (
+              <Image
+                source={{ uri: match.awayTeam.logo }}
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={styles.logoPlaceholder}>{match.awayTeam.abbr.substring(0, 2)}</Text>
+            )}
           </View>
           
           {/* Colonne 2: Nom */}
@@ -99,11 +139,15 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
         <View style={styles.teamRow}>
           {/* Colonne 1: Logo */}
           <View style={styles.logoContainer}>
-            <Image
-              source={typeof match.homeTeam.logo === 'string' ? { uri: match.homeTeam.logo } : match.homeTeam.logo}
-              style={styles.teamLogo}
-              resizeMode="contain"
-            />
+            {match.homeTeam.logo ? (
+              <Image
+                source={{ uri: match.homeTeam.logo }}
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={styles.logoPlaceholder}>{match.homeTeam.abbr.substring(0, 2)}</Text>
+            )}
           </View>
           
           {/* Colonne 2: Nom */}
@@ -189,6 +233,11 @@ const styles = StyleSheet.create({
   teamLogo: {
     width: 26,
     height: 26,
+  },
+  logoPlaceholder: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: colors.foreground,
   },
   teamName: {
     fontSize: 15,

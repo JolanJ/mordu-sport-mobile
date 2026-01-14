@@ -22,9 +22,15 @@ const isSameDay = (date1: Date, date2: Date) => {
          date1.getFullYear() === date2.getFullYear()
 }
 
-export function Calendar() {
+interface CalendarProps {
+  selectedDate?: Date
+  onDateChange?: (date: Date) => void
+}
+
+export function Calendar({ selectedDate: propSelectedDate, onDateChange }: CalendarProps) {
   const today = new Date()
-  const [selectedDate, setSelectedDate] = useState(today)
+  const [internalSelectedDate, setInternalSelectedDate] = useState(propSelectedDate || today)
+  const selectedDate = propSelectedDate || internalSelectedDate
   const [currentWeek, setCurrentWeek] = useState(0)
 
   // Générer les 15 jours (7 avant + 7 après aujourd'hui)
@@ -46,7 +52,8 @@ export function Calendar() {
   const canGoRight = currentWeek < 1
 
   const handleDatePress = (date: Date) => {
-    setSelectedDate(date)
+    setInternalSelectedDate(date)
+    onDateChange?.(date)
   }
 
   const handlePreviousWeek = () => {

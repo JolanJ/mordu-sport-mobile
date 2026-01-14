@@ -1,5 +1,5 @@
 import { colors } from '@/theme/colors'
-import { StyleSheet, Text, View } from 'react-native'
+import { Image, StyleSheet, Text, View } from 'react-native'
 
 interface TeamBannerProps {
   abbr: string
@@ -10,6 +10,7 @@ interface TeamBannerProps {
   losses: number
   otLosses: number
   points: number
+  logo?: string // URI de l'image (peut être data:image/png;base64,...)
 }
 
 export function TeamBanner({ 
@@ -20,7 +21,8 @@ export function TeamBanner({
   wins, 
   losses, 
   otLosses, 
-  points 
+  points,
+  logo
 }: TeamBannerProps) {
   return (
     <View style={styles.container}>
@@ -28,7 +30,15 @@ export function TeamBanner({
         <View style={styles.row}>
           {/* Logo/Abréviation */}
           <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>{abbr}</Text>
+            {logo ? (
+              <Image
+                source={{ uri: logo }}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={styles.logoText}>{abbr}</Text>
+            )}
           </View>
 
           {/* Infos équipe */}
@@ -76,6 +86,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.primary,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   info: {
     flex: 1,
