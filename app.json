@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/images/Logo - Bouche Mordu (1).png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.jostinjarry1.mordusportmobile"
     },
     "web": {
       "output": "static",
