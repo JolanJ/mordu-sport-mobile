@@ -1,7 +1,8 @@
 import { HomeHeader } from '@/components/HomeHeader'
+import { useAuth } from '@/contexts/AuthContext'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
-import { ArrowLeft, Check } from 'lucide-react-native'
+import { ArrowLeft, Check, LogOut } from 'lucide-react-native'
 import { useState } from 'react'
 import {
     Alert,
@@ -24,9 +25,25 @@ const availableAvatars = [
 ]
 
 export default function Profile() {
+  const { user, signOut } = useAuth()
   const [username, setUsername] = useState('@Luxevo')
   const [selectedAvatar, setSelectedAvatar] = useState(3) // Avatar par défaut
   const [isEditing, setIsEditing] = useState(false)
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Déconnexion',
+          style: 'destructive',
+          onPress: () => signOut()
+        }
+      ]
+    )
+  }
 
   const handleSave = () => {
     if (username.trim().length < 3) {
@@ -153,6 +170,23 @@ export default function Profile() {
               <Text style={styles.infoValue}>5</Text>
             </View>
           </View>
+        </View>
+
+        {/* Section compte */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Compte</Text>
+          {user && (
+            <View style={styles.infoCard}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Email</Text>
+                <Text style={styles.infoValue}>{user.email}</Text>
+              </View>
+            </View>
+          )}
+          <Pressable style={styles.logoutButton} onPress={handleSignOut}>
+            <LogOut size={20} color={colors.destructive} />
+            <Text style={styles.logoutButtonText}>Se déconnecter</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -307,5 +341,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.foreground,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.destructive,
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 16,
+  },
+  logoutButtonText: {
+    color: colors.destructive,
+    fontSize: 16,
+    fontWeight: '600',
   },
 })
