@@ -60,40 +60,22 @@ export default function RegisterScreen() {
     setLoading(true)
     setError('')
 
-    // 1. Créer le compte Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Créer le compte avec les données du profil dans user_metadata
+    // Le trigger Supabase créera automatiquement le profil
+    const { error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          username: username.trim(),
+          avatar_id: selectedAvatar,
+          address: address.trim() || null,
+        }
+      }
     })
 
     if (authError) {
       setError(authError.message)
-      setLoading(false)
-      return
-    }
-
-    if (!authData.user) {
-      setError('Erreur lors de la création du compte')
-      setLoading(false)
-      return
-    }
-
-    // 2. Créer le profil utilisateur
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: authData.user.id,
-      username: username.trim(),
-      email: email.trim(),
-      address: address.trim() || null,
-      avatar_id: selectedAvatar,
-    })
-
-    if (profileError) {
-      // Si le username existe déjà
-      if (profileError.code === '23505') {
-        setError('Ce nom d\'utilisateur est déjà pris')
-      } else {
-        setError(profileError.message)
-      }
       setLoading(false)
       return
     }
