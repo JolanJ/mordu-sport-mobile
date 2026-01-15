@@ -19,10 +19,10 @@ import {
 
 // Avatars disponibles
 const avatars: Record<number, ImageSourcePropType> = {
-  1: require('@/assets/images/Avatar 1.png'),
-  2: require('@/assets/images/Avatar 2.png'),
-  3: require('@/assets/images/Avatar 3.png'),
-  4: require('@/assets/images/Avatar 4.png'),
+  1: require('@/assets/images/avatar-1.png'),
+  2: require('@/assets/images/avatar-2.png'),
+  3: require('@/assets/images/avatar-3.png'),
+  4: require('@/assets/images/avatar-4.png'),
 }
 
 interface ChatRoomProps {

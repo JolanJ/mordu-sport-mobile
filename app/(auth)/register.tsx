@@ -18,10 +18,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 // Avatars disponibles
 const availableAvatars: { id: number; name: string; source: ImageSourcePropType }[] = [
-  { id: 1, name: 'Hockey', source: require('@/assets/images/Avatar 1.png') },
-  { id: 2, name: 'Basketball', source: require('@/assets/images/Avatar 2.png') },
-  { id: 3, name: 'Football', source: require('@/assets/images/Avatar 3.png') },
-  { id: 4, name: 'Soccer', source: require('@/assets/images/Avatar 4.png') },
+  { id: 1, name: 'Hockey', source: require('@/assets/images/avatar-1.png') },
+  { id: 2, name: 'Basketball', source: require('@/assets/images/avatar-2.png') },
+  { id: 3, name: 'Football', source: require('@/assets/images/avatar-3.png') },
+  { id: 4, name: 'Soccer', source: require('@/assets/images/avatar-4.png') },
 ]
 
 export default function RegisterScreen() {

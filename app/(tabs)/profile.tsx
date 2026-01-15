@@ -19,10 +19,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 // Avatars disponibles (style cartoon sport)
 const availableAvatars = [
-  { id: 1, name: 'Hockey Player', source: require('@/assets/images/Avatar 1.png') },
-  { id: 2, name: 'Basketball Player', source: require('@/assets/images/Avatar 2.png') },
-  { id: 3, name: 'Football Player', source: require('@/assets/images/Avatar 3.png') },
-  { id: 4, name: 'Soccer Player', source: require('@/assets/images/Avatar 4.png') },
+  { id: 1, name: 'Hockey Player', source: require('@/assets/images/avatar-1.png') },
+  { id: 2, name: 'Basketball Player', source: require('@/assets/images/avatar-2.png') },
+  { id: 3, name: 'Football Player', source: require('@/assets/images/avatar-3.png') },
+  { id: 4, name: 'Soccer Player', source: require('@/assets/images/avatar-4.png') },
 ]
 
 export default function Profile() {
