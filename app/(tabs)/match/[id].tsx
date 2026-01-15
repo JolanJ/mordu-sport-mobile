@@ -1,10 +1,11 @@
+import { ChatRoom } from '@/components/ChatRoom'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
-import { Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
+import { Image, Pressable, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useMatches } from '@/hooks/useMatches'
 import { useState, useEffect } from 'react'
-import { fetchMatches } from '@/lib/services/api'
 import { Match } from '@/lib/types'
 
 export default function MatchRoom() {
@@ -91,95 +92,56 @@ export default function MatchRoom() {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Duel - Les deux équipes */}
-        <View style={styles.duelContainer}>
-          <View style={styles.teamCard}>
-            {match.awayTeam.logo ? (
-              <Image
-                source={{ uri: match.awayTeam.logo }}
-                style={styles.teamLogo}
-                resizeMode="contain"
-              />
-            ) : (
-              <View style={styles.logoPlaceholder}>
-                <Text style={styles.logoPlaceholderText}>{match.awayTeam.abbr}</Text>
-              </View>
-            )}
-            <Text style={styles.teamName}>{match.awayTeam.name}</Text>
-            {match.awayTeam.score !== undefined && (
-              <Text style={styles.teamScore}>{match.awayTeam.score}</Text>
-            )}
-          </View>
-
-          <Text style={styles.vsText}>VS</Text>
-
-          <View style={styles.teamCard}>
-            {match.homeTeam.logo ? (
-              <Image
-                source={{ uri: match.homeTeam.logo }}
-                style={styles.teamLogo}
-                resizeMode="contain"
-              />
-            ) : (
-              <View style={styles.logoPlaceholder}>
-                <Text style={styles.logoPlaceholderText}>{match.homeTeam.abbr}</Text>
-              </View>
-            )}
-            <Text style={styles.teamName}>{match.homeTeam.name}</Text>
-            {match.homeTeam.score !== undefined && (
-              <Text style={styles.teamScore}>{match.homeTeam.score}</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Infos du match */}
-        <View style={styles.infoContainer}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Date:</Text>
-            <Text style={styles.infoValue}>
-              {(() => {
-                // Parser la date du match (format YYYY-MM-DD) pour éviter les problèmes de timezone
-                const [year, month, day] = match.date.split('-').map(Number)
-                const matchDate = new Date(year, month - 1, day) // month - 1 car les mois sont 0-indexés
-                return matchDate.toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })
-              })()}
-            </Text>
-          </View>
-          
-          {match.time && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Heure:</Text>
-              <Text style={styles.infoValue}>{match.time}</Text>
+      {/* Match Info - Compact */}
+      <View style={styles.matchInfoCompact}>
+        <View style={styles.teamCompact}>
+          {match.awayTeam.logo ? (
+            <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
+          ) : (
+            <View style={styles.logoPlaceholderSmall}>
+              <Text style={styles.logoPlaceholderTextSmall}>{match.awayTeam.abbr}</Text>
             </View>
           )}
-          
-          {match.venue && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Lieu:</Text>
-              <Text style={styles.infoValue}>{match.venue}</Text>
+          <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
+          {match.awayTeam.score !== undefined && (
+            <Text style={styles.teamScoreCompact}>{match.awayTeam.score}</Text>
+          )}
+        </View>
+
+        <View style={styles.matchStatus}>
+          <Text style={[styles.statusBadge, {
+            backgroundColor: match.status === 'live' ? colors.live :
+                           match.status === 'finished' ? colors.muted :
+                           colors.primary
+          }]}>
+            {match.status === 'live' ? 'LIVE' :
+             match.status === 'finished' ? 'FIN' :
+             match.time || 'À venir'}
+          </Text>
+          {match.venue && <Text style={styles.venueText}>{match.venue}</Text>}
+        </View>
+
+        <View style={styles.teamCompact}>
+          {match.homeTeam.logo ? (
+            <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
+          ) : (
+            <View style={styles.logoPlaceholderSmall}>
+              <Text style={styles.logoPlaceholderTextSmall}>{match.homeTeam.abbr}</Text>
             </View>
           )}
-          
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Statut:</Text>
-            <Text style={[styles.infoValue, styles.statusText, {
-              color: match.status === 'live' ? colors.live : 
-                     match.status === 'finished' ? colors.mutedForeground : 
-                     colors.neonBlue
-            }]}>
-              {match.status === 'live' ? 'En direct' : 
-               match.status === 'finished' ? 'Terminé' : 
-               'À venir'}
-            </Text>
-          </View>
+          <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
+          {match.homeTeam.score !== undefined && (
+            <Text style={styles.teamScoreCompact}>{match.homeTeam.score}</Text>
+          )}
         </View>
-      </ScrollView>
+      </View>
+
+      {/* Chat Room */}
+      <ChatRoom
+        matchId={match.id}
+        username="Fan"
+        avatarId={1}
+      />
     </SafeAreaView>
   )
 }
@@ -209,83 +171,69 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  content: {
+  // Match Info Compact
+  matchInfoCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  teamCompact: {
+    alignItems: 'center',
+    gap: 4,
     flex: 1,
   },
-  duelContainer: {
-    padding: 24,
-    alignItems: 'center',
-    gap: 24,
+  teamLogoSmall: {
+    width: 40,
+    height: 40,
   },
-  teamCard: {
-    alignItems: 'center',
-    gap: 12,
-    padding: 20,
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    width: '100%',
-    borderWidth: 2,
-    borderColor: colors.neonBlue,
-  },
-  teamLogo: {
-    width: 80,
-    height: 80,
-  },
-  logoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  logoPlaceholderSmall: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: colors.muted,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoPlaceholderText: {
-    fontSize: 24,
+  logoPlaceholderTextSmall: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: colors.foreground,
   },
-  teamName: {
+  teamNameCompact: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.foreground,
+  },
+  teamScoreCompact: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.foreground,
+    color: colors.neonGreen,
+  },
+  matchStatus: {
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.background,
+    overflow: 'hidden',
+  },
+  venueText: {
+    fontSize: 10,
+    color: colors.mutedForeground,
     textAlign: 'center',
   },
-  teamScore: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.neonBlue,
-  },
-  vsText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.mutedForeground,
-  },
-  infoContainer: {
-    padding: 20,
-    gap: 16,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  infoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.mutedForeground,
-  },
-  infoValue: {
-    fontSize: 16,
-    color: colors.foreground,
-    flex: 1,
-    textAlign: 'right',
-  },
-  statusText: {
-    fontWeight: 'bold',
-  },
+  // Loading & Error states
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
