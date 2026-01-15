@@ -1,23 +1,36 @@
+import { useAuth } from '@/contexts/AuthContext'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
 import { Bell, Search } from 'lucide-react-native'
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native'
+
+const avatars: Record<number, ImageSourcePropType> = {
+  1: require('@/assets/images/Avatar 1.png'),
+  2: require('@/assets/images/Avatar 2.png'),
+  3: require('@/assets/images/Avatar 3.png'),
+  4: require('@/assets/images/Avatar 4.png'),
+}
 
 export function HomeHeader() {
+  const { profile } = useAuth()
+
+  const avatarSource = avatars[profile?.avatar_id || 1] || avatars[1]
+  const username = profile?.username || 'Utilisateur'
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         {/* Section gauche : Avatar + Username */}
-        <Pressable 
+        <Pressable
           style={styles.leftSection}
           onPress={() => router.push('/profile')}
         >
-          <Image 
-            source={require('@/assets/images/Avatar 3.png')} 
-            style={styles.avatar} 
+          <Image
+            source={avatarSource}
+            style={styles.avatar}
             resizeMode="cover"
           />
-          <Text style={styles.username}>@Luxevo</Text>
+          <Text style={styles.username}>@{username}</Text>
         </Pressable>
 
        
