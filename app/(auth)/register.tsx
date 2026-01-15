@@ -1,30 +1,49 @@
-import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
 import { Link } from 'expo-router'
+import { Check } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   ActivityIndicator,
+  Image,
+  ImageSourcePropType,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+// Avatars disponibles
+const availableAvatars: { id: number; name: string; source: ImageSourcePropType }[] = [
+  { id: 1, name: 'Hockey', source: require('@/assets/images/Avatar 1.png') },
+  { id: 2, name: 'Basketball', source: require('@/assets/images/Avatar 2.png') },
+  { id: 3, name: 'Football', source: require('@/assets/images/Avatar 3.png') },
+  { id: 4, name: 'Soccer', source: require('@/assets/images/Avatar 4.png') },
+]
+
 export default function RegisterScreen() {
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
+  const [address, setAddress] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [selectedAvatar, setSelectedAvatar] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const { signUp } = useAuth()
 
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
-      setError('Veuillez remplir tous les champs')
+    // Validation
+    if (!username || !email || !password || !confirmPassword) {
+      setError('Veuillez remplir tous les champs obligatoires')
+      return
+    }
+
+    if (username.length < 3) {
+      setError('Le nom d\'utilisateur doit contenir au moins 3 caractères')
       return
     }
 
@@ -41,15 +60,46 @@ export default function RegisterScreen() {
     setLoading(true)
     setError('')
 
-    const { error } = await signUp(email, password)
+    // 1. Créer le compte Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    })
 
-    if (error) {
-      setError(error.message)
+    if (authError) {
+      setError(authError.message)
       setLoading(false)
-    } else {
-      setSuccess(true)
-      setLoading(false)
+      return
     }
+
+    if (!authData.user) {
+      setError('Erreur lors de la création du compte')
+      setLoading(false)
+      return
+    }
+
+    // 2. Créer le profil utilisateur
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: authData.user.id,
+      username: username.trim(),
+      email: email.trim(),
+      address: address.trim() || null,
+      avatar_id: selectedAvatar,
+    })
+
+    if (profileError) {
+      // Si le username existe déjà
+      if (profileError.code === '23505') {
+        setError('Ce nom d\'utilisateur est déjà pris')
+      } else {
+        setError(profileError.message)
+      }
+      setLoading(false)
+      return
+    }
+
+    setSuccess(true)
+    setLoading(false)
   }
 
   if (success) {
@@ -77,6 +127,7 @@ export default function RegisterScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Créer un compte</Text>
@@ -84,8 +135,48 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.form}>
+          {/* Sélection d'avatar */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Choisissez votre avatar</Text>
+            <View style={styles.avatarGrid}>
+              {availableAvatars.map((avatar) => (
+                <Pressable
+                  key={avatar.id}
+                  style={[
+                    styles.avatarOption,
+                    selectedAvatar === avatar.id && styles.avatarSelected,
+                  ]}
+                  onPress={() => setSelectedAvatar(avatar.id)}
+                >
+                  <Image source={avatar.source} style={styles.avatarImage} />
+                  {selectedAvatar === avatar.id && (
+                    <View style={styles.avatarCheck}>
+                      <Check size={16} color={colors.background} />
+                    </View>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Username */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nom d'utilisateur *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="VotrePseudo"
+              placeholderTextColor={colors.mutedForeground}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              maxLength={20}
+            />
+            <Text style={styles.hint}>Sera affiché dans le chat et votre profil</Text>
+          </View>
+
+          {/* Email */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Courriel *</Text>
             <TextInput
               style={styles.input}
               placeholder="votre@email.com"
@@ -97,8 +188,22 @@ export default function RegisterScreen() {
             />
           </View>
 
+          {/* Adresse */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mot de passe</Text>
+            <Text style={styles.label}>Adresse</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="123 Rue Exemple, Montréal"
+              placeholderTextColor={colors.mutedForeground}
+              value={address}
+              onChangeText={setAddress}
+            />
+            <Text style={styles.hint}>Optionnel</Text>
+          </View>
+
+          {/* Mot de passe */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Mot de passe *</Text>
             <TextInput
               style={styles.input}
               placeholder="Minimum 6 caractères"
@@ -109,8 +214,9 @@ export default function RegisterScreen() {
             />
           </View>
 
+          {/* Confirmer mot de passe */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirmer le mot de passe</Text>
+            <Text style={styles.label}>Confirmer le mot de passe *</Text>
             <TextInput
               style={styles.input}
               placeholder="Confirmez votre mot de passe"
@@ -160,13 +266,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 32,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 32,
   },
   title: {
     fontSize: 32,
@@ -189,6 +294,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.foreground,
   },
+  hint: {
+    fontSize: 12,
+    color: colors.mutedForeground,
+  },
   input: {
     height: 52,
     backgroundColor: colors.card,
@@ -199,6 +308,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.foreground,
   },
+  // Avatar selection
+  avatarGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  avatarOption: {
+    flex: 1,
+    aspectRatio: 1,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+  },
+  avatarSelected: {
+    borderColor: colors.neonGreen,
+    backgroundColor: colors.muted,
+  },
+  avatarImage: {
+    width: '80%',
+    height: '80%',
+    resizeMode: 'contain',
+  },
+  avatarCheck: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.neonGreen,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Error & Success
   errorContainer: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
     borderWidth: 1,

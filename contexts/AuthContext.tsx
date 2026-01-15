@@ -2,32 +2,90 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
+export type Profile = {
+  id: string
+  username: string
+  email: string
+  address: string | null
+  avatar_id: number
+  created_at: string
+  updated_at: string
+}
+
 type AuthContextType = {
   user: User | null
+  profile: Profile | null
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
+  refreshProfile: () => Promise<void>
+  updateProfile: (updates: Partial<Pick<Profile, 'username' | 'address' | 'avatar_id'>>) => Promise<{ error: Error | null }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Récupérer le profil utilisateur
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    if (!error && data) {
+      setProfile(data)
+    }
+  }
+
+  // Rafraîchir le profil
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id)
+    }
+  }
+
+  // Mettre à jour le profil
+  const updateProfile = async (updates: Partial<Pick<Profile, 'username' | 'address' | 'avatar_id'>>) => {
+    if (!user) return { error: new Error('Non authentifié') }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', user.id)
+
+    if (!error) {
+      await fetchProfile(user.id)
+    }
+
+    return { error }
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchProfile(session.user.id)
+      }
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchProfile(session.user.id)
+      } else {
+        setProfile(null)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -45,10 +103,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut()
+    setProfile(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{
+      user,
+      profile,
+      session,
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      refreshProfile,
+      updateProfile
+    }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,4 +1,5 @@
 import { ChatRoom } from '@/components/ChatRoom'
+import { useAuth } from '@/contexts/AuthContext'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
@@ -11,6 +12,7 @@ import { Match } from '@/lib/types'
 export default function MatchRoom() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
+  const { profile } = useAuth()
   const [match, setMatch] = useState<Match | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   
@@ -139,8 +141,8 @@ export default function MatchRoom() {
       {/* Chat Room */}
       <ChatRoom
         matchId={match.id}
-        username="Fan"
-        avatarId={1}
+        username={profile?.username || 'Fan'}
+        avatarId={profile?.avatar_id || 1}
       />
     </SafeAreaView>
   )

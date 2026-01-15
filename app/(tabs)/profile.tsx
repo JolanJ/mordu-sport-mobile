@@ -3,16 +3,17 @@ import { useAuth } from '@/contexts/AuthContext'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
 import { ArrowLeft, Check, LogOut } from 'lucide-react-native'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
-    Alert,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -25,10 +26,21 @@ const availableAvatars = [
 ]
 
 export default function Profile() {
-  const { user, signOut } = useAuth()
-  const [username, setUsername] = useState('@Luxevo')
-  const [selectedAvatar, setSelectedAvatar] = useState(3) // Avatar par défaut
+  const { profile, signOut, updateProfile } = useAuth()
+  const [username, setUsername] = useState('')
+  const [address, setAddress] = useState('')
+  const [selectedAvatar, setSelectedAvatar] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  // Initialiser avec les données du profil
+  useEffect(() => {
+    if (profile) {
+      setUsername(profile.username)
+      setAddress(profile.address || '')
+      setSelectedAvatar(profile.avatar_id)
+    }
+  }, [profile])
 
   const handleSignOut = () => {
     Alert.alert(
@@ -45,24 +57,60 @@ export default function Profile() {
     )
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (username.trim().length < 3) {
       Alert.alert('Erreur', 'Le nom d\'utilisateur doit contenir au moins 3 caractères')
       return
     }
 
-    if (!username.startsWith('@')) {
-      setUsername('@' + username.replace('@', ''))
-    }
+    setSaving(true)
 
-    setIsEditing(false)
-    Alert.alert('Succès', 'Profil mis à jour avec succès!')
+    const { error } = await updateProfile({
+      username: username.trim(),
+      address: address.trim() || null,
+      avatar_id: selectedAvatar,
+    })
+
+    setSaving(false)
+
+    if (error) {
+      if (error.message.includes('duplicate') || error.message.includes('23505')) {
+        Alert.alert('Erreur', 'Ce nom d\'utilisateur est déjà pris')
+      } else {
+        Alert.alert('Erreur', error.message)
+      }
+    } else {
+      setIsEditing(false)
+      Alert.alert('Succès', 'Profil mis à jour avec succès!')
+    }
   }
 
   const handleCancel = () => {
-    setUsername('@Luxevo') // Reset to default
-    setSelectedAvatar(3)
+    if (profile) {
+      setUsername(profile.username)
+      setAddress(profile.address || '')
+      setSelectedAvatar(profile.avatar_id)
+    }
     setIsEditing(false)
+  }
+
+  const formatMemberSince = (dateString?: string) => {
+    if (!dateString) return 'Récemment'
+    const date = new Date(dateString)
+    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  }
+
+  // Affichage si pas de profil chargé
+  if (!profile) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <HomeHeader />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.neonGreen} />
+          <Text style={styles.loadingText}>Chargement du profil...</Text>
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
@@ -72,7 +120,7 @@ export default function Profile() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header avec bouton retour */}
         <View style={styles.header}>
-          <Pressable 
+          <Pressable
             style={styles.backButton}
             onPress={() => router.back()}
           >
@@ -93,7 +141,8 @@ export default function Profile() {
                   styles.avatarContainer,
                   selectedAvatar === avatar.id && styles.avatarSelected
                 ]}
-                onPress={() => setSelectedAvatar(avatar.id)}
+                onPress={() => isEditing && setSelectedAvatar(avatar.id)}
+                disabled={!isEditing}
               >
                 <Image
                   source={avatar.source}
@@ -115,40 +164,62 @@ export default function Profile() {
           <Text style={styles.sectionTitle}>Nom d'utilisateur</Text>
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, !isEditing && styles.textInputDisabled]}
               value={username}
               onChangeText={setUsername}
-              placeholder="@nom_utilisateur"
+              placeholder="Votre pseudo"
               placeholderTextColor={colors.mutedForeground}
               editable={isEditing}
               autoCapitalize="none"
               autoCorrect={false}
+              maxLength={20}
             />
-            <Pressable
-              style={styles.editButton}
-              onPress={() => setIsEditing(!isEditing)}
-            >
-              <Text style={styles.editButtonText}>
-                {isEditing ? 'Annuler' : 'Modifier'}
-              </Text>
-            </Pressable>
           </View>
         </View>
 
-        {/* Boutons d'action */}
-        {isEditing && (
+        {/* Section Adresse */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Adresse</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[styles.textInput, !isEditing && styles.textInputDisabled]}
+              value={address}
+              onChangeText={setAddress}
+              placeholder="Votre adresse (optionnel)"
+              placeholderTextColor={colors.mutedForeground}
+              editable={isEditing}
+              autoCorrect={false}
+            />
+          </View>
+        </View>
+
+        {/* Bouton Modifier / Sauvegarder */}
+        {!isEditing ? (
+          <Pressable
+            style={styles.editProfileButton}
+            onPress={() => setIsEditing(true)}
+          >
+            <Text style={styles.editProfileButtonText}>Modifier le profil</Text>
+          </Pressable>
+        ) : (
           <View style={styles.actionButtons}>
             <Pressable
               style={[styles.button, styles.cancelButton]}
               onPress={handleCancel}
+              disabled={saving}
             >
               <Text style={styles.cancelButtonText}>Annuler</Text>
             </Pressable>
             <Pressable
-              style={[styles.button, styles.saveButton]}
+              style={[styles.button, styles.saveButton, saving && styles.buttonDisabled]}
               onPress={handleSave}
+              disabled={saving}
             >
-              <Text style={styles.saveButtonText}>Sauvegarder</Text>
+              {saving ? (
+                <ActivityIndicator size="small" color={colors.background} />
+              ) : (
+                <Text style={styles.saveButtonText}>Sauvegarder</Text>
+              )}
             </Pressable>
           </View>
         )}
@@ -159,15 +230,15 @@ export default function Profile() {
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Membre depuis</Text>
-              <Text style={styles.infoValue}>Janvier 2025</Text>
+              <Text style={styles.infoValue}>{formatMemberSince(profile.created_at)}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Matchs favoris</Text>
-              <Text style={styles.infoValue}>12</Text>
+              <Text style={styles.infoValue}>0</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Équipes suivies</Text>
-              <Text style={styles.infoValue}>5</Text>
+              <Text style={styles.infoValue}>0</Text>
             </View>
           </View>
         </View>
@@ -175,14 +246,12 @@ export default function Profile() {
         {/* Section compte */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Compte</Text>
-          {user && (
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Email</Text>
-                <Text style={styles.infoValue}>{user.email}</Text>
-              </View>
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoValue}>{profile.email}</Text>
             </View>
-          )}
+          </View>
           <Pressable style={styles.logoutButton} onPress={handleSignOut}>
             <LogOut size={20} color={colors.destructive} />
             <Text style={styles.logoutButtonText}>Se déconnecter</Text>
@@ -201,6 +270,16 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    color: colors.mutedForeground,
+    fontSize: 14,
   },
   header: {
     flexDirection: 'row',
@@ -223,7 +302,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
@@ -281,21 +360,26 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     backgroundColor: colors.card,
   },
-  editButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.neonGreen,
-    borderRadius: 8,
+  textInputDisabled: {
+    opacity: 0.7,
   },
-  editButtonText: {
+  editProfileButton: {
+    height: 48,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  editProfileButtonText: {
     color: colors.background,
+    fontSize: 16,
     fontWeight: '600',
-    fontSize: 14,
   },
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   button: {
     flex: 1,
@@ -303,6 +387,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   cancelButton: {
     backgroundColor: colors.card,
@@ -341,6 +428,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.foreground,
+    maxWidth: '60%',
+    textAlign: 'right',
   },
   logoutButton: {
     flexDirection: 'row',
