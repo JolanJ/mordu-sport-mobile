@@ -4,11 +4,11 @@ import { TabsNavigation } from '@/components/TabsNavigation'
 import { TeamBanner } from '@/components/TeamBanner'
 import { TeamRosterComponent } from '@/components/TeamRosterComponent'
 import { TeamStatsComponent } from '@/components/TeamStatsComponent'
-import { mockTeamDetail } from '@/lib/mockTeamDetail'
+import { useTeamData } from '@/hooks/useTeamData'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 type TabType = 'players' | 'stats' | 'injuries'
@@ -17,10 +17,32 @@ export default function TeamDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [activeTab, setActiveTab] = useState<TabType>('players')
 
-  // Charger les données mock de l'équipe
-  const teamData = id ? mockTeamDetail[id] : null
+  // Utiliser le hook pour fetcher les vraies données
+  const {
+    teamBasicInfo,
+    roster,
+    teamInfo,
+    teamStats,
+    injuries,
+    isLoading,
+    hasGoalserveId,
+  } = useTeamData({ teamId: id || '' })
 
-  if (!teamData) {
+  // Loading state
+  if (isLoading && hasGoalserveId) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <HomeHeader />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.neonGreen} />
+          <Text style={styles.loadingText}>Chargement des données...</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  // Équipe non trouvée
+  if (!teamBasicInfo) {
     return (
       <SafeAreaView edges={['top']} style={styles.container}>
         <HomeHeader />
@@ -31,7 +53,92 @@ export default function TeamDetail() {
     )
   }
 
-  const { teamInfo, teamStats, roster, injuries } = teamData
+  // Transformer les données pour les composants
+  const displayTeamInfo = {
+    id: teamBasicInfo.id,
+    name: teamInfo?.name || teamBasicInfo.name,
+    abbr: teamInfo?.abbr || teamBasicInfo.abbr,
+    city: teamBasicInfo.city,
+    league: teamBasicInfo.league,
+    conference: teamBasicInfo.conference,
+    division: teamBasicInfo.division,
+  }
+
+  const displayTeamStats = teamStats ? {
+    wins: teamStats.wins,
+    losses: teamStats.losses,
+    otLosses: teamStats.otLosses,
+    points: teamStats.points,
+    gamesPlayed: teamStats.gamesPlayed,
+    goalsFor: teamStats.goalsFor,
+    goalsAgainst: teamStats.goalsAgainst,
+    shotsPerGame: teamStats.shotsPerGame,
+    shotsAllowedPerGame: teamStats.shotsAgainstPerGame,
+    powerPlayPercentage: teamStats.powerPlayPercentage,
+    powerPlayGoals: 0, // Non disponible dans l'API
+    powerPlayOpportunities: 0,
+    penaltyKillPercentage: teamStats.penaltyKillPercentage,
+    faceoffWinPercentage: '50%', // Non disponible
+  } : teamBasicInfo.stats ? {
+    wins: teamBasicInfo.stats.wins,
+    losses: teamBasicInfo.stats.losses,
+    otLosses: teamBasicInfo.stats.otLosses || 0,
+    points: teamBasicInfo.stats.points,
+    gamesPlayed: 0,
+    goalsFor: 0,
+    goalsAgainst: 0,
+    shotsPerGame: 0,
+    shotsAllowedPerGame: 0,
+    powerPlayPercentage: '0%',
+    powerPlayGoals: 0,
+    powerPlayOpportunities: 0,
+    penaltyKillPercentage: '0%',
+    faceoffWinPercentage: '0%',
+  } : null
+
+  // Transformer le roster pour le composant
+  const displayRoster = roster ? {
+    forwards: roster.forwards.map(p => ({
+      id: p.id,
+      name: p.name,
+      number: p.number,
+      position: p.position,
+      gamesPlayed: p.gamesPlayed,
+      birthplace: p.birthplace,
+      points: 0,
+      goals: 0,
+      assists: 0,
+    })),
+    defensemen: roster.defensemen.map(p => ({
+      id: p.id,
+      name: p.name,
+      number: p.number,
+      position: p.position,
+      gamesPlayed: p.gamesPlayed,
+      birthplace: p.birthplace,
+      points: 0,
+      goals: 0,
+      assists: 0,
+    })),
+    goalies: roster.goalies.map(p => ({
+      id: p.id,
+      name: p.name,
+      number: p.number,
+      position: p.position,
+      gamesPlayed: p.gamesPlayed,
+      birthplace: p.birthplace,
+    })),
+  } : { forwards: [], defensemen: [], goalies: [] }
+
+  // Transformer les blessures pour le composant
+  const displayInjuries = injuries.map(inj => ({
+    playerId: inj.playerId,
+    playerName: inj.playerName,
+    position: '', // Non disponible dans l'API
+    injury: inj.description,
+    status: inj.status as 'OUT' | 'Day-to-Day' | 'IR',
+    date: inj.date,
+  }))
 
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
@@ -48,28 +155,28 @@ export default function TeamDetail() {
 
       {/* Team Banner - Sticky */}
       <TeamBanner
-        abbr={teamInfo.abbr}
-        name={teamInfo.name}
-        division={teamInfo.division}
-        conference={teamInfo.conference}
-        wins={teamStats.wins}
-        losses={teamStats.losses}
-        otLosses={teamStats.otLosses}
-        points={teamStats.points}
+        abbr={displayTeamInfo.abbr}
+        name={displayTeamInfo.name}
+        division={displayTeamInfo.division}
+        conference={displayTeamInfo.conference}
+        wins={displayTeamStats?.wins || 0}
+        losses={displayTeamStats?.losses || 0}
+        otLosses={displayTeamStats?.otLosses || 0}
+        points={displayTeamStats?.points || 0}
       />
 
       {/* Tabs Navigation - Sticky */}
       <TabsNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Contenu scrollable selon l'onglet actif */}
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {activeTab === 'players' && <TeamRosterComponent roster={roster} />}
-        {activeTab === 'stats' && <TeamStatsComponent stats={teamStats} />}
-        {activeTab === 'injuries' && <InjuryReport injuries={injuries} />}
+        {activeTab === 'players' && <TeamRosterComponent roster={displayRoster} />}
+        {activeTab === 'stats' && displayTeamStats && <TeamStatsComponent stats={displayTeamStats} />}
+        {activeTab === 'injuries' && <InjuryReport injuries={displayInjuries} />}
       </ScrollView>
     </SafeAreaView>
   )
@@ -98,6 +205,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 80, // Espace pour le bottom nav
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: colors.mutedForeground,
+  },
   errorContainer: {
     flex: 1,
     alignItems: 'center',
@@ -109,4 +227,3 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
   },
 })
-

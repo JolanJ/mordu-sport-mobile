@@ -1,6 +1,7 @@
 import { Player, TeamRoster } from '@/lib/teamTypes'
 import { colors } from '@/theme/colors'
 import { StyleSheet, Text, View } from 'react-native'
+import { PlayerAvatar } from './PlayerAvatar'
 
 interface TeamRosterComponentProps {
   roster: TeamRoster
@@ -12,12 +13,13 @@ export function TeamRosterComponent({ roster }: TeamRosterComponentProps) {
 
     return (
       <View key={player.id} style={styles.playerCard}>
-        {/* Cercle numéro */}
-        <View style={[styles.numberCircle, { backgroundColor: `${positionColor}1A` }]}>
-          <Text style={[styles.numberCircleText, { color: positionColor }]}>
-            #{player.number}
-          </Text>
-        </View>
+        {/* Photo du joueur */}
+        <PlayerAvatar
+          playerId={player.id}
+          playerNumber={player.number}
+          size={56}
+          color={positionColor}
+        />
 
         {/* Infos joueur */}
         <View style={styles.playerInfo}>
@@ -118,17 +120,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  numberCircle: {
-    height: 56,
-    width: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  numberCircleText: {
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   playerInfo: {
     flex: 1,

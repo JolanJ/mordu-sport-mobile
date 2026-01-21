@@ -2,7 +2,7 @@
  * Service API pour récupérer les matchs depuis Goalserve
  */
 
-import { API_BASE_URL, API_ENDPOINTS, formatDate, getTeamRosterUrl } from '@/config/api'
+import { API_BASE_URL, API_ENDPOINTS, formatDate, getTeamRosterUrl, getTeamStatsUrl, getPlayerStatsUrl, getTeamInjuriesUrl, getPlayerImageUrl } from '@/config/api'
 import { Player, TeamRoster } from '@/lib/teamTypes'
 import { Match } from '@/lib/types'
 import { XMLParser } from 'fast-xml-parser'
@@ -22,19 +22,47 @@ const xmlParser = new XMLParser({
 })
 
 /**
+ * Formate une date en YYYY-MM-DD en heure locale
+ */
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Vérifie si une date est aujourd'hui (en heure locale)
+ */
+function isToday(date?: Date): boolean {
+  const today = new Date()
+  const checkDate = date || today
+  return formatLocalDate(checkDate) === formatLocalDate(today)
+}
+
+/**
  * Récupère les matchs pour une ligue et une date
  * @param withLogos Si true, enrichit les matchs avec les logos des équipes
+ *
+ * Pour les matchs d'aujourd'hui, utilise l'endpoint nhl-scores pour avoir les scores en direct.
+ * Pour les autres dates, utilise l'endpoint nhl-shedule.
  */
 export async function fetchMatches(league: League, date?: Date, withLogos: boolean = false): Promise<Match[]> {
-  const endpoint = API_ENDPOINTS[league.toLowerCase() as keyof typeof API_ENDPOINTS]
+  const useScoresEndpoint = isToday(date)
+
+  // Utiliser nhl-scores pour aujourd'hui (scores en direct), sinon nhl-shedule
+  const endpoint = useScoresEndpoint
+    ? API_ENDPOINTS.nhlScores
+    : API_ENDPOINTS[league.toLowerCase() as keyof typeof API_ENDPOINTS]
+
   let url = `${API_BASE_URL}${endpoint}`
-  
+
   // Ajouter la date si fournie (utiliser date1 comme paramètre)
-  if (date) {
+  if (date && !useScoresEndpoint) {
     const dateStr = formatDate(date)
     url += `?date1=${dateStr}`
   }
-  
+
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -42,19 +70,23 @@ export async function fetchMatches(league: League, date?: Date, withLogos: boole
         'Accept': 'application/xml',
       },
     })
-    
+
     if (!response.ok) {
       throw new Error(`Erreur HTTP: ${response.status}`)
     }
-    
+
     const xml = await response.text()
-    const matches = parseXMLMatches(xml, league, date)
-    
+
+    // Parser selon le type d'endpoint
+    const matches = useScoresEndpoint
+      ? parseXMLScores(xml, league)
+      : parseXMLMatches(xml, league, date)
+
     // Enrichir avec les logos si demandé
     if (withLogos && matches.length > 0) {
       return await enrichMatchesWithLogos(matches)
     }
-    
+
     return matches
   } catch (error) {
     return []
@@ -153,9 +185,55 @@ function parseXMLMatches(xml: string, league: League, requestedDate?: Date): Mat
       }
     }
     
-    // Filtrer par date si une date est fournie
-    const targetDate = requestedDate ? requestedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    // Filtrer par date si une date est fournie (en heure locale)
+    const targetDate = formatLocalDate(requestedDate || new Date())
     return matches.filter(match => match.date === targetDate)
+  } catch (error) {
+    return []
+  }
+}
+
+/**
+ * Parse le XML des scores en direct (nhl-scores) en tableau de Match
+ * Structure: scores.category.match
+ */
+function parseXMLScores(xml: string, league: League): Match[] {
+  try {
+    if (!xml || xml.trim().length === 0) {
+      return []
+    }
+
+    const parsed = xmlParser.parse(xml)
+    const matches: Match[] = []
+    let matchArray: any[] = []
+
+    // Structure nhl-scores: scores.category.match
+    if (parsed.scores?.category?.match) {
+      const matchesData = parsed.scores.category.match
+      matchArray = Array.isArray(matchesData) ? matchesData : [matchesData]
+    }
+    // Structure alternative: scores.category peut être un tableau
+    else if (parsed.scores?.category) {
+      const categories = Array.isArray(parsed.scores.category)
+        ? parsed.scores.category
+        : [parsed.scores.category]
+      for (const cat of categories) {
+        if (cat.match) {
+          const catMatches = Array.isArray(cat.match) ? cat.match : [cat.match]
+          matchArray.push(...catMatches)
+        }
+      }
+    }
+
+    // Transformer chaque match
+    for (const matchData of matchArray) {
+      const match = transformMatch(matchData, league)
+      if (match) {
+        matches.push(match)
+      }
+    }
+
+    return matches
   } catch (error) {
     return []
   }
@@ -180,8 +258,14 @@ function transformMatch(matchData: any, league: League): Match | null {
     // Extraire les scores depuis totalscore
     const awayScore = awayTeam['@_totalscore']
     const homeScore = homeTeam['@_totalscore']
-    const awayScoreNum = awayScore && awayScore !== '' ? parseInt(String(awayScore), 10) : undefined
-    const homeScoreNum = homeScore && homeScore !== '' ? parseInt(String(homeScore), 10) : undefined
+    // Note: on vérifie !== undefined et !== '' car 0 est une valeur valide
+    const parseScore = (score: any): number | undefined => {
+      if (score === undefined || score === '') return undefined
+      const parsed = parseInt(String(score), 10)
+      return isNaN(parsed) ? undefined : parsed
+    }
+    const awayScoreNum = parseScore(awayScore)
+    const homeScoreNum = parseScore(homeScore)
     
     // Déterminer le statut
     let status: 'upcoming' | 'live' | 'finished' = 'upcoming'
@@ -396,6 +480,327 @@ function parseTeamRosterXML(xml: string): TeamRosterData | null {
       },
       roster,
     }
+  } catch (error) {
+    return null
+  }
+}
+
+// ============================================
+// TEAM STATS API
+// ============================================
+
+export interface GoalserveTeamStats {
+  wins: number
+  losses: number
+  otLosses: number
+  points: number
+  gamesPlayed: number
+  goalsFor: number
+  goalsAgainst: number
+  goalsForPerGame: number
+  goalsAgainstPerGame: number
+  shotsPerGame: number
+  shotsAgainstPerGame: number
+  powerPlayPercentage: string
+  penaltyKillPercentage: string
+  savePercentage: string
+}
+
+/**
+ * Récupère les stats globales d'une équipe
+ */
+export async function fetchTeamStats(teamId: string): Promise<GoalserveTeamStats | null> {
+  const url = getTeamStatsUrl(teamId)
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/xml' },
+    })
+
+    if (!response.ok) return null
+
+    const xml = await response.text()
+    if (!xml || xml.includes('Server Error')) return null
+
+    return parseTeamStatsXML(xml)
+  } catch (error) {
+    return null
+  }
+}
+
+function parseTeamStatsXML(xml: string): GoalserveTeamStats | null {
+  try {
+    const parsed = xmlParser.parse(xml)
+    const team = parsed.team
+
+    if (!team) return null
+
+    // Les stats sont divisées en "Skating" et "Goaltending"
+    const categories = Array.isArray(team.category) ? team.category : [team.category]
+
+    let skating: any = {}
+    let goaltending: any = {}
+
+    for (const cat of categories) {
+      if (cat?.['@_name'] === 'Skating') {
+        skating = cat
+      } else if (cat?.['@_name'] === 'Goaltending') {
+        goaltending = cat
+      }
+    }
+
+    return {
+      wins: parseInt(goaltending['@_wins'] || '0', 10),
+      losses: parseInt(goaltending['@_losses'] || '0', 10),
+      otLosses: parseInt(goaltending['@_ot_losses'] || '0', 10),
+      points: (parseInt(goaltending['@_wins'] || '0', 10) * 2) + parseInt(goaltending['@_ot_losses'] || '0', 10),
+      gamesPlayed: parseInt(skating['@_games_played'] || '0', 10),
+      goalsFor: Math.round(parseFloat(skating['@_goals_for_per_game'] || '0') * parseInt(skating['@_games_played'] || '1', 10)),
+      goalsAgainst: parseInt(goaltending['@_goals_against'] || '0', 10),
+      goalsForPerGame: parseFloat(skating['@_goals_for_per_game'] || '0'),
+      goalsAgainstPerGame: parseFloat(goaltending['@_goals_against_per_game'] || '0'),
+      shotsPerGame: parseFloat(skating['@_shots'] || '0') / Math.max(parseInt(skating['@_games_played'] || '1', 10), 1),
+      shotsAgainstPerGame: parseFloat(goaltending['@_shots_against'] || '0') / Math.max(parseInt(skating['@_games_played'] || '1', 10), 1),
+      powerPlayPercentage: `${skating['@_power_play_pct'] || '0'}%`,
+      penaltyKillPercentage: `${skating['@_penalty_kill_pct'] || '0'}%`,
+      savePercentage: `${(parseFloat(goaltending['@_saves_pct'] || '0') * 100).toFixed(1)}%`,
+    }
+  } catch (error) {
+    return null
+  }
+}
+
+// ============================================
+// PLAYER STATS API
+// ============================================
+
+export interface GoalservePlayerStats {
+  id: string
+  name: string
+  position: string
+  gamesPlayed: number
+  goals: number
+  assists: number
+  points: number
+  plusMinus: number
+  penaltyMinutes: number
+  powerPlayGoals: number
+  powerPlayAssists: number
+  shots: number
+  // Goalie specific
+  wins?: number
+  losses?: number
+  otLosses?: number
+  savePercentage?: number
+  goalsAgainst?: number
+  shutouts?: number
+}
+
+/**
+ * Récupère les stats des joueurs d'une équipe
+ */
+export async function fetchPlayerStats(teamId: string): Promise<GoalservePlayerStats[]> {
+  const url = getPlayerStatsUrl(teamId)
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/xml' },
+    })
+
+    if (!response.ok) return []
+
+    const xml = await response.text()
+    if (!xml || xml.includes('Server Error')) return []
+
+    return parsePlayerStatsXML(xml)
+  } catch (error) {
+    return []
+  }
+}
+
+function parsePlayerStatsXML(xml: string): GoalservePlayerStats[] {
+  try {
+    const parsed = xmlParser.parse(xml)
+    const team = parsed.team
+
+    if (!team) return []
+
+    const players: GoalservePlayerStats[] = []
+    const categories = Array.isArray(team.category) ? team.category : [team.category]
+
+    for (const cat of categories) {
+      if (!cat?.player) continue
+
+      const categoryPlayers = Array.isArray(cat.player) ? cat.player : [cat.player]
+      const isGoalie = cat['@_name'] === 'Goaltending'
+
+      for (const p of categoryPlayers) {
+        if (isGoalie) {
+          players.push({
+            id: String(p['@_id'] || ''),
+            name: String(p['@_name'] || ''),
+            position: 'G',
+            gamesPlayed: parseInt(p['@_games_played'] || '0', 10),
+            goals: 0,
+            assists: 0,
+            points: 0,
+            plusMinus: 0,
+            penaltyMinutes: parseInt(p['@_penalty_minutes'] || '0', 10),
+            powerPlayGoals: 0,
+            powerPlayAssists: 0,
+            shots: 0,
+            wins: parseInt(p['@_wins'] || '0', 10),
+            losses: parseInt(p['@_losses'] || '0', 10),
+            otLosses: parseInt(p['@_ot_losses'] || '0', 10),
+            savePercentage: parseFloat(p['@_saves_pct'] || '0'),
+            goalsAgainst: parseInt(p['@_total_goals_against'] || '0', 10),
+            shutouts: parseInt(p['@_shutouts'] || '0', 10),
+          })
+        } else {
+          players.push({
+            id: String(p['@_id'] || ''),
+            name: String(p['@_name'] || ''),
+            position: String(p['@_pos'] || ''),
+            gamesPlayed: parseInt(p['@_games_played'] || '0', 10),
+            goals: parseInt(p['@_goals'] || '0', 10),
+            assists: parseInt(p['@_assists'] || '0', 10),
+            points: parseInt(p['@_points'] || '0', 10),
+            plusMinus: parseInt(p['@_plus_minus'] || '0', 10),
+            penaltyMinutes: parseInt(p['@_penalty_minutes'] || '0', 10),
+            powerPlayGoals: parseInt(p['@_pp_goals'] || '0', 10),
+            powerPlayAssists: parseInt(p['@_pp_assists'] || '0', 10),
+            shots: parseInt(p['@_shots'] || '0', 10),
+          })
+        }
+      }
+    }
+
+    return players
+  } catch (error) {
+    return []
+  }
+}
+
+// ============================================
+// INJURIES API
+// ============================================
+
+export interface GoalserveInjury {
+  playerId: string
+  playerName: string
+  status: string
+  description: string
+  date: string
+}
+
+/**
+ * Récupère les blessures d'une équipe
+ */
+export async function fetchTeamInjuries(teamId: string): Promise<GoalserveInjury[]> {
+  const url = getTeamInjuriesUrl(teamId)
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/xml' },
+    })
+
+    if (!response.ok) return []
+
+    const xml = await response.text()
+    if (!xml || xml.includes('Server Error')) return []
+
+    return parseInjuriesXML(xml)
+  } catch (error) {
+    return []
+  }
+}
+
+function parseInjuriesXML(xml: string): GoalserveInjury[] {
+  try {
+    const parsed = xmlParser.parse(xml)
+    const team = parsed.team
+
+    if (!team?.report) return []
+
+    const reports = Array.isArray(team.report) ? team.report : [team.report]
+
+    return reports.map((r: any) => ({
+      playerId: String(r['@_player_id'] || ''),
+      playerName: String(r['@_player_name'] || ''),
+      status: String(r['@_status'] || ''),
+      description: String(r['@_description'] || ''),
+      date: String(r['@_date'] || ''),
+    }))
+  } catch (error) {
+    return []
+  }
+}
+
+// ============================================
+// PLAYER IMAGE API
+// ============================================
+
+// Cache global pour les images de joueurs
+const playerImageCache = new Map<string, string>()
+
+/**
+ * Récupère l'image d'un joueur (retourne une URI base64)
+ */
+export async function fetchPlayerImage(playerId: string): Promise<string | null> {
+  // Vérifier le cache d'abord
+  if (playerImageCache.has(playerId)) {
+    return playerImageCache.get(playerId) || null
+  }
+
+  const url = getPlayerImageUrl(playerId)
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/xml' },
+    })
+
+    if (!response.ok) return null
+
+    const xml = await response.text()
+    if (!xml || xml.includes('Server Error')) return null
+
+    const imageUri = parsePlayerImageXML(xml)
+
+    // Mettre en cache si on a une image
+    if (imageUri) {
+      playerImageCache.set(playerId, imageUri)
+    }
+
+    return imageUri
+  } catch (error) {
+    return null
+  }
+}
+
+function parsePlayerImageXML(xml: string): string | null {
+  try {
+    const parsed = xmlParser.parse(xml)
+
+    let imageBase64 = ''
+
+    // L'image peut être dans différents formats selon le parser
+    if (typeof parsed.image === 'string') {
+      imageBase64 = parsed.image.trim()
+    } else if (parsed.image?.['#text']) {
+      imageBase64 = String(parsed.image['#text']).trim()
+    } else if (parsed.image) {
+      imageBase64 = String(parsed.image).trim()
+    }
+
+    if (!imageBase64 || imageBase64.length === 0) {
+      return null
+    }
+
+    return base64ToDataUri(imageBase64)
   } catch (error) {
     return null
   }

@@ -2,11 +2,12 @@ import { ConferenceSection } from '@/components/ConferenceSection'
 import { HomeHeader } from '@/components/HomeHeader'
 import { LeagueFilter } from '@/components/LeagueFilter'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
-import { getTeamsByLeague, mockTeams, Team } from '@/lib/teamData'
+import { useTeamsWithLogos } from '@/hooks/useTeamsWithLogos'
+import { Team } from '@/lib/teamData'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
 import { useRef, useState } from 'react'
-import { Animated, Image, ScrollView, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Animated, Image, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const leagues = ['NHL', 'NFL', 'NBA']
@@ -16,6 +17,9 @@ export default function Teams() {
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollY = useRef(new Animated.Value(0)).current
 
+  // Utiliser le hook pour avoir les équipes avec logos
+  const { teams, isLoading } = useTeamsWithLogos(selectedLeague)
+
   const scrollToTop = () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
   }
@@ -24,10 +28,8 @@ export default function Teams() {
     router.push(`/teams/${teamId}`)
   }
 
-  const teams = getTeamsByLeague(selectedLeague)
-  
   // Grouper les équipes par conférence
-  const teamsByConference = teams.reduce((acc, team) => {
+  const teamsByConference = teams.reduce((acc: Record<string, Team[]>, team: Team) => {
     if (!acc[team.conference]) {
       acc[team.conference] = []
     }
@@ -56,28 +58,35 @@ export default function Teams() {
       />
 
       <View style={styles.content}>
-        <Animated.ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
-          )}
-          scrollEventThrottle={16}
-        >
-          <View style={styles.scrollContent}>
-            {/* Liste des équipes par conférence */}
-            {Object.entries(teamsByConference).map(([conference, conferenceTeams]) => (
-              <ConferenceSection
-                key={conference}
-                conference={conference}
-                teams={conferenceTeams}
-                onTeamPress={handleTeamPress}
-              />
-            ))}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.neonGreen} />
+            <Text style={styles.loadingText}>Chargement des équipes...</Text>
           </View>
-        </Animated.ScrollView>
+        ) : (
+          <Animated.ScrollView
+            ref={scrollViewRef}
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+              { useNativeDriver: false }
+            )}
+            scrollEventThrottle={16}
+          >
+            <View style={styles.scrollContent}>
+              {/* Liste des équipes par conférence */}
+              {Object.entries(teamsByConference).map(([conference, conferenceTeams]) => (
+                <ConferenceSection
+                  key={conference}
+                  conference={conference}
+                  teams={conferenceTeams as Team[]}
+                  onTeamPress={handleTeamPress}
+                />
+              ))}
+            </View>
+          </Animated.ScrollView>
+        )}
         <ScrollToTopButton scrollY={scrollY} onPress={scrollToTop} />
       </View>
     </SafeAreaView>
@@ -109,5 +118,16 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: colors.mutedForeground,
   },
 });

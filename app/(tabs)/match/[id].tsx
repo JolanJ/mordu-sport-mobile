@@ -31,10 +31,13 @@ export default function MatchRoom() {
     // Chercher uniquement dans les matchs d'aujourd'hui
     const foundMatch = todayMatches.find(m => String(m.id).trim() === normalizedId)
     if (foundMatch) {
-      // Vérifier que le match est bien d'aujourd'hui (comparer les dates en format string YYYY-MM-DD)
+      // Vérifier que le match est bien d'aujourd'hui (comparer les dates en heure locale)
       const today = new Date()
-      const todayStr = today.toISOString().split('T')[0] // Format: YYYY-MM-DD
-      
+      const year = today.getFullYear()
+      const month = String(today.getMonth() + 1).padStart(2, '0')
+      const day = String(today.getDate()).padStart(2, '0')
+      const todayStr = `${year}-${month}-${day}` // Format: YYYY-MM-DD en heure locale
+
       if (foundMatch.date === todayStr) {
         setMatch(foundMatch)
       }

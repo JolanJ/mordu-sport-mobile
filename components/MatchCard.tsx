@@ -12,7 +12,11 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
   // Vérifier si le match est d'aujourd'hui (comparer les dates en format string YYYY-MM-DD)
   const isToday = () => {
     const today = new Date()
-    const todayStr = today.toISOString().split('T')[0] // Format: YYYY-MM-DD
+    // Utiliser l'heure locale au lieu de UTC
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    const todayStr = `${year}-${month}-${day}` // Format: YYYY-MM-DD en heure locale
     return match.date === todayStr
   }
 
@@ -128,7 +132,7 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
               <Text style={styles.scoreNormal}>-</Text>
             )}
           </View>
-          
+
           {/* Colonne 4: Cotes */}
           <View style={styles.oddsColumn}>
             <Text style={styles.oddsTextOrange}>1.85</Text>
@@ -163,7 +167,7 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
               <Text style={styles.scoreNormal}>-</Text>
             )}
           </View>
-          
+
           {/* Colonne 4: Flèche */}
           <View style={styles.arrowColumn}>
             <ChevronRight size={20} color="#F27020" />

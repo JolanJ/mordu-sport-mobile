@@ -7,6 +7,7 @@ export const API_BASE_URL = 'https://www.goalserve.com/getfeed'
 
 export const API_ENDPOINTS = {
   nhl: `/${GOALSERVE_TOKEN}/hockey/nhl-shedule`, // "shedule" est la faute d'orthographe de Goalserve pour "schedule"
+  nhlScores: `/${GOALSERVE_TOKEN}/hockey/nhl-scores`, // Scores en direct
 } as const
 
 /**
@@ -14,6 +15,34 @@ export const API_ENDPOINTS = {
  */
 export function getTeamRosterUrl(teamId: string): string {
   return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/${teamId}_rosters`
+}
+
+/**
+ * Construit l'URL pour récupérer les stats globales d'une équipe
+ */
+export function getTeamStatsUrl(teamId: string): string {
+  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/${teamId}_team_stats`
+}
+
+/**
+ * Construit l'URL pour récupérer les stats des joueurs d'une équipe
+ */
+export function getPlayerStatsUrl(teamId: string): string {
+  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/${teamId}_stats`
+}
+
+/**
+ * Construit l'URL pour récupérer les blessures d'une équipe
+ */
+export function getTeamInjuriesUrl(teamId: string): string {
+  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/${teamId}_injuries`
+}
+
+/**
+ * Construit l'URL pour récupérer l'image d'un joueur
+ */
+export function getPlayerImageUrl(playerId: string): string {
+  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/usa?playerimage=${playerId}`
 }
 
 /**
