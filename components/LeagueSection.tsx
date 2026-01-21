@@ -7,6 +7,8 @@ interface LeagueSectionProps {
   league: string
   matches: Match[]
   onMatchPress?: (matchId: string) => void
+  isFavorite?: (matchId: string) => boolean
+  onToggleFavorite?: (match: Match) => void
 }
 
 const getLeagueLogo = (league: string) => {
@@ -22,7 +24,7 @@ const getLeagueLogo = (league: string) => {
   }
 }
 
-export function LeagueSection({ league, matches, onMatchPress }: LeagueSectionProps) {
+export function LeagueSection({ league, matches, onMatchPress, isFavorite, onToggleFavorite }: LeagueSectionProps) {
   const logo = getLeagueLogo(league)
 
   if (matches.length === 0) {
@@ -50,6 +52,8 @@ export function LeagueSection({ league, matches, onMatchPress }: LeagueSectionPr
             key={match.id}
             match={match}
             onPress={onMatchPress}
+            isFavorite={isFavorite?.(match.id)}
+            onToggleFavorite={onToggleFavorite}
           />
         ))}
       </View>

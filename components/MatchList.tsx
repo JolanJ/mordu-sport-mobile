@@ -1,5 +1,6 @@
 import { LeagueSection } from '@/components/LeagueSection'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
+import { useFavorites } from '@/contexts/FavoritesContext'
 import { useMatches } from '@/hooks/useMatches'
 import { colors } from '@/theme/colors'
 import { useRouter } from 'expo-router'
@@ -20,6 +21,9 @@ export function MatchList({ selectedDate }: MatchListProps) {
   const { data: matches = [], isLoading, isError } = useMatches({
     date: queryDate,
   })
+
+  // Gestion des favoris
+  const { isFavorite, toggleFavorite } = useFavorites()
 
   const scrollToTop = () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
@@ -78,6 +82,8 @@ export function MatchList({ selectedDate }: MatchListProps) {
           league="NHL"
           matches={matches}
           onMatchPress={handleMatchPress}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
         />
       </Animated.ScrollView>
       <ScrollToTopButton scrollY={scrollY} onPress={scrollToTop} />

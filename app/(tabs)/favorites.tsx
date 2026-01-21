@@ -1,44 +1,91 @@
 import { HomeHeader } from '@/components/HomeHeader'
-import { LeagueSection } from '@/components/LeagueSection'
+import { MatchCard } from '@/components/MatchCard'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
-import { mockFavoriteMatches } from '@/lib/mockFavorites'
+import { useFavorites } from '@/contexts/FavoritesContext'
 import { colors } from '@/theme/colors'
+import { useRouter } from 'expo-router'
 import { Star } from 'lucide-react-native'
-import { useRef, useState } from 'react'
-import { Animated, Image, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useRef } from 'react'
+import {
+  ActivityIndicator,
+  Animated,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Favorites() {
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollY = useRef(new Animated.Value(0)).current
-  const [selectedLeague, setSelectedLeague] = useState("ALL")
+  const router = useRouter()
+
+  const { favorites, loading, isFavorite, toggleFavorite, isAuthenticated } = useFavorites()
 
   const scrollToTop = () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
   }
 
   const handleMatchPress = (matchId: string) => {
-    console.log(`Favorite match ${matchId} pressed`)
-    // TODO: Navigation vers la page de détail du match
+    router.push(`/(tabs)/match/${matchId}` as any)
   }
 
-  // Filtrer les matchs favoris par ligue
-  const filteredMatches = selectedLeague === "ALL" 
-    ? mockFavoriteMatches 
-    : mockFavoriteMatches.filter(match => match.league === selectedLeague)
+  // Non connecté
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <HomeHeader />
 
-  // Grouper par ligue
-  const nhlMatches = filteredMatches.filter(match => match.league === "NHL")
-  const nbaMatches = filteredMatches.filter(match => match.league === "NBA")
-  const nflMatches = filteredMatches.filter(match => match.league === "NFL")
+        <View style={styles.adSpace}>
+          <Image
+            source={require('@/assets/images/ROC-Display-320x50-FR (1).jpg')}
+            style={styles.adImage}
+            resizeMode="cover"
+          />
+        </View>
+
+        <View style={styles.emptyState}>
+          <Star size={64} color={colors.mutedForeground} />
+          <Text style={styles.emptyTitle}>Connexion requise</Text>
+          <Text style={styles.emptySubtext}>
+            Connectez-vous pour sauvegarder vos matchs favoris
+          </Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  // Chargement
+  if (loading) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <HomeHeader />
+
+        <View style={styles.adSpace}>
+          <Image
+            source={require('@/assets/images/ROC-Display-320x50-FR (1).jpg')}
+            style={styles.adImage}
+            resizeMode="cover"
+          />
+        </View>
+
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.neonGreen} />
+          <Text style={styles.loadingText}>Chargement des favoris...</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
       <HomeHeader />
-      
+
       {/* Espace publicitaire */}
       <View style={styles.adSpace}>
-        <Image 
+        <Image
           source={require('@/assets/images/ROC-Display-320x50-FR (1).jpg')}
           style={styles.adImage}
           resizeMode="cover"
@@ -50,12 +97,12 @@ export default function Favorites() {
         <View style={styles.titleRow}>
           <Star size={20} color={colors.accent} fill={colors.accent} />
           <Text style={styles.title}>
-            {filteredMatches.length} match{filteredMatches.length > 1 ? 's' : ''} favori{filteredMatches.length > 1 ? 's' : ''}
+            {favorites.length} match{favorites.length > 1 ? 's' : ''} favori{favorites.length > 1 ? 's' : ''}
           </Text>
         </View>
       </View>
 
-      {filteredMatches.length === 0 ? (
+      {favorites.length === 0 ? (
         <View style={styles.emptyState}>
           <Star size={64} color={colors.mutedForeground} />
           <Text style={styles.emptyTitle}>Aucun favori</Text>
@@ -74,30 +121,17 @@ export default function Favorites() {
               { useNativeDriver: false }
             )}
             scrollEventThrottle={16}
+            contentContainerStyle={styles.matchesContainer}
           >
-            {nhlMatches.length > 0 && (
-              <LeagueSection
-                league="NHL"
-                matches={nhlMatches}
-                onMatchPress={handleMatchPress}
+            {favorites.map((favorite) => (
+              <MatchCard
+                key={favorite.id}
+                match={favorite.match_data}
+                onPress={handleMatchPress}
+                isFavorite={isFavorite(favorite.match_id)}
+                onToggleFavorite={toggleFavorite}
               />
-            )}
-            
-            {nbaMatches.length > 0 && (
-              <LeagueSection
-                league="NBA"
-                matches={nbaMatches}
-                onMatchPress={handleMatchPress}
-              />
-            )}
-            
-            {nflMatches.length > 0 && (
-              <LeagueSection
-                league="NFL"
-                matches={nflMatches}
-                onMatchPress={handleMatchPress}
-              />
-            )}
+            ))}
           </Animated.ScrollView>
           <ScrollToTopButton scrollY={scrollY} onPress={scrollToTop} />
         </View>
@@ -145,6 +179,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  matchesContainer: {
+    paddingVertical: 8,
+  },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -162,5 +199,15 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
     textAlign: 'center',
     paddingHorizontal: 32,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.mutedForeground,
   },
 })

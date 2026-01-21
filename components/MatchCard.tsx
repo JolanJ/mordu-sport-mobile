@@ -1,14 +1,33 @@
+import { useAuth } from '@/contexts/AuthContext'
 import { Match } from '@/lib/types'
 import { colors } from '@/theme/colors'
-import { ChevronRight } from 'lucide-react-native'
+import { ChevronRight, Plus, Star } from 'lucide-react-native'
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
 interface MatchCardProps {
   match: Match
   onPress?: (matchId: string) => void
+  isFavorite?: boolean
+  onToggleFavorite?: (match: Match) => void
 }
 
-export function MatchCard({ match, onPress }: MatchCardProps) {
+export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite }: MatchCardProps) {
+  const { user } = useAuth()
+
+  // Afficher le bouton favoris seulement pour les matchs live ou upcoming (pas finished)
+  const showFavoriteButton = match.status !== 'finished'
+
+  const handleFavoritePress = () => {
+    if (!user) {
+      Alert.alert(
+        'Connexion requise',
+        'Connectez-vous pour ajouter des matchs en favoris',
+        [{ text: 'OK', style: 'default' }]
+      )
+      return
+    }
+    onToggleFavorite?.(match)
+  }
   // Vérifier si le match est d'aujourd'hui (comparer les dates en format string YYYY-MM-DD)
   const isToday = () => {
     const today = new Date()
@@ -94,13 +113,28 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
       style={styles.container}
       onPress={handlePress}
     >
-      {/* Ligne en haut : Venue à gauche, Heure à droite */}
+      {/* Ligne en haut : Venue à gauche, Heure + Favori à droite */}
       <View style={styles.headerRow}>
         <Text style={styles.venueText} numberOfLines={1}>
           {match.venue || 'Stade non disponible'}
         </Text>
         <View style={styles.spacer} />
-        <Text style={styles.timeText}>{getStatusText()}</Text>
+        <View style={styles.headerRight}>
+          <Text style={styles.timeText}>{getStatusText()}</Text>
+          {showFavoriteButton && (
+            <Pressable
+              style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
+              onPress={handleFavoritePress}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              {isFavorite ? (
+                <Star size={16} color={colors.accent} fill={colors.accent} />
+              ) : (
+                <Plus size={16} color={colors.mutedForeground} />
+              )}
+            </Pressable>
+          )}
+        </View>
       </View>
 
       <View style={styles.teamsSection}>
@@ -205,6 +239,25 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  favoriteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  favoriteButtonActive: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderColor: colors.accent,
   },
   oddsTextOrange: {
     fontSize: 14,
