@@ -10,6 +10,11 @@ export interface Player {
   points?: number
   goals?: number
   assists?: number
+
+  // Stats pour gardiens
+  wins?: number
+  losses?: number
+  savePercentage?: number
 }
 
 export interface TeamRoster {

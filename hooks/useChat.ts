@@ -2,6 +2,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useCallback } from 'react'
 
+export type Locale = 'fr' | 'en'
+
 export interface ChatMessage {
   id: string
   match_id: string
@@ -9,20 +11,22 @@ export interface ChatMessage {
   username: string
   avatar_id: number
   content: string
+  locale: Locale
   created_at: string
 }
 
 interface UseChatOptions {
   matchId: string
+  locale: Locale
 }
 
-export function useChat({ matchId }: UseChatOptions) {
+export function useChat({ matchId, locale }: UseChatOptions) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
 
-  // Charger les messages existants
+  // Charger les messages existants (filtrés par locale)
   useEffect(() => {
     if (!matchId) return
 
@@ -32,6 +36,7 @@ export function useChat({ matchId }: UseChatOptions) {
         .from('chat_messages')
         .select('*')
         .eq('match_id', matchId)
+        .eq('locale', locale)
         .order('created_at', { ascending: true })
         .limit(100)
 
@@ -42,14 +47,14 @@ export function useChat({ matchId }: UseChatOptions) {
     }
 
     fetchMessages()
-  }, [matchId])
+  }, [matchId, locale])
 
-  // Écouter les nouveaux messages en temps réel
+  // Écouter les nouveaux messages en temps réel (filtrés par locale)
   useEffect(() => {
     if (!matchId) return
 
     const channel = supabase
-      .channel(`chat:${matchId}`)
+      .channel(`chat:${matchId}:${locale}`)
       .on(
         'postgres_changes',
         {
@@ -60,7 +65,10 @@ export function useChat({ matchId }: UseChatOptions) {
         },
         (payload) => {
           const newMessage = payload.new as ChatMessage
-          setMessages((prev) => [...prev, newMessage])
+          // Ne pas ajouter si ce n'est pas la bonne locale
+          if (newMessage.locale === locale) {
+            setMessages((prev) => [...prev, newMessage])
+          }
         }
       )
       .on(
@@ -81,9 +89,9 @@ export function useChat({ matchId }: UseChatOptions) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [matchId])
+  }, [matchId, locale])
 
-  // Envoyer un message
+  // Envoyer un message (avec la locale)
   const sendMessage = useCallback(
     async (content: string, username: string, avatarId: number = 1) => {
       if (!user || !matchId || !content.trim()) return { error: new Error('Invalid data') }
@@ -96,13 +104,14 @@ export function useChat({ matchId }: UseChatOptions) {
         username,
         avatar_id: avatarId,
         content: content.trim(),
+        locale,
       })
 
       setSending(false)
 
       return { error }
     },
-    [user, matchId]
+    [user, matchId, locale]
   )
 
   // Supprimer un message

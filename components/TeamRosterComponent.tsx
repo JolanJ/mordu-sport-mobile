@@ -9,7 +9,7 @@ interface TeamRosterComponentProps {
 
 export function TeamRosterComponent({ roster }: TeamRosterComponentProps) {
   const renderPlayerCard = (player: Player, positionColor: string) => {
-    const hasStats = player.position !== 'G'
+    const isGoalie = player.position === 'G'
 
     return (
       <View key={player.id} style={styles.playerCard}>
@@ -36,10 +36,10 @@ export function TeamRosterComponent({ roster }: TeamRosterComponentProps) {
 
           <View style={styles.playerDetailsRow}>
             <Text style={styles.playerDetail}>{player.position}</Text>
-            {player.gamesPlayed && (
+            {player.gamesPlayed !== undefined && (
               <>
                 <Text style={styles.playerDetail}>•</Text>
-                <Text style={styles.playerDetail}>{player.gamesPlayed} GP</Text>
+                <Text style={styles.playerDetail}>{player.gamesPlayed} PJ</Text>
               </>
             )}
             {player.birthplace && (
@@ -53,15 +53,26 @@ export function TeamRosterComponent({ roster }: TeamRosterComponentProps) {
           </View>
         </View>
 
-        {/* Stats points */}
-        {hasStats && (
-          <View style={styles.statsColumn}>
-            <Text style={styles.statsPoints}>{player.points || 0}</Text>
-            <Text style={styles.statsBreakdown}>
-              {player.goals || 0}B-{player.assists || 0}A
-            </Text>
-          </View>
-        )}
+        {/* Stats - différent pour gardiens vs joueurs */}
+        <View style={styles.statsColumn}>
+          {isGoalie ? (
+            <>
+              <Text style={styles.statsPoints}>
+                {player.wins || 0}-{player.losses || 0}
+              </Text>
+              <Text style={styles.statsBreakdown}>
+                {player.savePercentage ? `${(player.savePercentage * 100).toFixed(1)}%` : '-'}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.statsPoints}>{player.points || 0}</Text>
+              <Text style={styles.statsBreakdown}>
+                {player.goals || 0}B-{player.assists || 0}A
+              </Text>
+            </>
+          )}
+        </View>
       </View>
     )
   }

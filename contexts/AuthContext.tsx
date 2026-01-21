@@ -2,12 +2,15 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
+export type Locale = 'fr' | 'en'
+
 export type Profile = {
   id: string
   username: string
   email: string
   address: string | null
   avatar_id: number
+  preferred_locale: Locale
   created_at: string
   updated_at: string
 }
@@ -21,7 +24,7 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
-  updateProfile: (updates: Partial<Pick<Profile, 'username' | 'address' | 'avatar_id'>>) => Promise<{ error: Error | null }>
+  updateProfile: (updates: Partial<Pick<Profile, 'username' | 'address' | 'avatar_id' | 'preferred_locale'>>) => Promise<{ error: Error | null }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)

@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext'
-import { ChatMessage, useChat } from '@/hooks/useChat'
+import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
 import { colors } from '@/theme/colors'
 import { Send } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
@@ -32,10 +32,26 @@ interface ChatRoomProps {
 }
 
 export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRoomProps) {
-  const { user } = useAuth()
-  const { messages, loading, sending, sendMessage, isAuthenticated } = useChat({ matchId })
+  const { user, profile, updateProfile } = useAuth()
+  const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'fr')
+  const { messages, loading, sending, sendMessage, isAuthenticated } = useChat({ matchId, locale })
   const [inputText, setInputText] = useState('')
   const flatListRef = useRef<FlatList>(null)
+
+  // Mettre à jour la locale si le profil change
+  useEffect(() => {
+    if (profile?.preferred_locale) {
+      setLocale(profile.preferred_locale)
+    }
+  }, [profile?.preferred_locale])
+
+  // Changer de langue et sauvegarder la préférence
+  const handleLocaleChange = async (newLocale: Locale) => {
+    setLocale(newLocale)
+    if (user) {
+      await updateProfile({ preferred_locale: newLocale })
+    }
+  }
 
   // Scroll vers le bas quand nouveaux messages
   useEffect(() => {
@@ -107,9 +123,25 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
       <View style={styles.header}>
         <View style={styles.liveIndicator}>
           <View style={styles.liveDot} />
-          <Text style={styles.liveText}>Chat en direct</Text>
+          <Text style={styles.liveText}>{locale === 'fr' ? 'Chat en direct' : 'Live Chat'}</Text>
         </View>
-        <Text style={styles.participantsText}>{messages.length} messages</Text>
+        <View style={styles.headerRight}>
+          <View style={styles.localeToggle}>
+            <Pressable
+              style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
+              onPress={() => handleLocaleChange('fr')}
+            >
+              <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
+              onPress={() => handleLocaleChange('en')}
+            >
+              <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>EN</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.participantsText}>{messages.length}</Text>
+        </View>
       </View>
 
       {loading ? (
@@ -126,7 +158,9 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Soyez le premier à envoyer un message !</Text>
+              <Text style={styles.emptyText}>
+                {locale === 'fr' ? 'Soyez le premier à envoyer un message !' : 'Be the first to send a message!'}
+              </Text>
             </View>
           }
         />
@@ -135,7 +169,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Écrivez un message..."
+          placeholder={locale === 'fr' ? 'Écrivez un message...' : 'Write a message...'}
           placeholderTextColor={colors.mutedForeground}
           value={inputText}
           onChangeText={setInputText}
@@ -193,6 +227,33 @@ const styles = StyleSheet.create({
   participantsText: {
     color: colors.mutedForeground,
     fontSize: 12,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  localeToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    padding: 2,
+  },
+  localeButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  localeButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  localeButtonText: {
+    color: colors.mutedForeground,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  localeButtonTextActive: {
+    color: colors.background,
   },
   loadingContainer: {
     flex: 1,

@@ -450,16 +450,26 @@ function parseTeamRosterXML(xml: string): TeamRosterData | null {
       
       const players = Array.isArray(position.player) ? position.player : [position.player]
       const positionName = String(position['@_name'] || '').toLowerCase()
-      
+
+      // Mapper les noms de position vers les abréviations
+      const getPositionAbbr = (name: string): string => {
+        if (name.includes('center')) return 'C'
+        if (name.includes('left wing')) return 'LW'
+        if (name.includes('right wing')) return 'RW'
+        if (name.includes('defense')) return 'D'
+        if (name.includes('goalie')) return 'G'
+        return name.toUpperCase().substring(0, 2)
+      }
+
       for (const playerData of players) {
         const player: Player = {
           id: String(playerData['@_id'] || ''),
           name: String(playerData['@_name'] || ''),
           number: String(playerData['@_number'] || ''),
-          position: String(positionName),
+          position: getPositionAbbr(positionName),
           birthplace: playerData['@_birth_place'] ? String(playerData['@_birth_place']) : undefined,
         }
-        
+
         // Classer par position
         if (positionName.includes('center') || positionName.includes('wing')) {
           roster.forwards.push(player)
@@ -532,36 +542,46 @@ export async function fetchTeamStats(teamId: string): Promise<GoalserveTeamStats
 function parseTeamStatsXML(xml: string): GoalserveTeamStats | null {
   try {
     const parsed = xmlParser.parse(xml)
-    const team = parsed.team
+    const statistic = parsed.statistic
 
-    if (!team) return null
+    if (!statistic) return null
 
-    // Les stats sont divisées en "Skating" et "Goaltending"
-    const categories = Array.isArray(team.category) ? team.category : [team.category]
+    // Structure: <statistic> → <category name="Skating/Goaltending"> → <team ...stats />
+    const categories = Array.isArray(statistic.category) ? statistic.category : [statistic.category]
 
     let skating: any = {}
     let goaltending: any = {}
 
     for (const cat of categories) {
-      if (cat?.['@_name'] === 'Skating') {
-        skating = cat
-      } else if (cat?.['@_name'] === 'Goaltending') {
-        goaltending = cat
+      if (!cat) continue
+      const catName = cat['@_name'] || ''
+      // Les stats sont dans l'élément <team> à l'intérieur de <category>
+      const teamStats = cat.team || {}
+
+      if (catName === 'Skating') {
+        skating = teamStats
+      } else if (catName === 'Goaltending') {
+        goaltending = teamStats
       }
     }
 
+    const wins = parseInt(goaltending['@_wins'] || '0', 10)
+    const losses = parseInt(goaltending['@_losses'] || '0', 10)
+    const otLosses = parseInt(goaltending['@_ot_losses'] || '0', 10)
+    const gamesPlayed = parseInt(goaltending['@_games_played'] || skating['@_games_played'] || '0', 10)
+
     return {
-      wins: parseInt(goaltending['@_wins'] || '0', 10),
-      losses: parseInt(goaltending['@_losses'] || '0', 10),
-      otLosses: parseInt(goaltending['@_ot_losses'] || '0', 10),
-      points: (parseInt(goaltending['@_wins'] || '0', 10) * 2) + parseInt(goaltending['@_ot_losses'] || '0', 10),
-      gamesPlayed: parseInt(skating['@_games_played'] || '0', 10),
-      goalsFor: Math.round(parseFloat(skating['@_goals_for_per_game'] || '0') * parseInt(skating['@_games_played'] || '1', 10)),
+      wins,
+      losses,
+      otLosses,
+      points: (wins * 2) + otLosses,
+      gamesPlayed,
+      goalsFor: Math.round(parseFloat(skating['@_goals_for_per_game'] || '0') * gamesPlayed),
       goalsAgainst: parseInt(goaltending['@_goals_against'] || '0', 10),
       goalsForPerGame: parseFloat(skating['@_goals_for_per_game'] || '0'),
       goalsAgainstPerGame: parseFloat(goaltending['@_goals_against_per_game'] || '0'),
-      shotsPerGame: parseFloat(skating['@_shots'] || '0') / Math.max(parseInt(skating['@_games_played'] || '1', 10), 1),
-      shotsAgainstPerGame: parseFloat(goaltending['@_shots_against'] || '0') / Math.max(parseInt(skating['@_games_played'] || '1', 10), 1),
+      shotsPerGame: parseFloat(skating['@_shots'] || '0') / Math.max(gamesPlayed, 1),
+      shotsAgainstPerGame: parseFloat(goaltending['@_shots_against'] || '0') / Math.max(gamesPlayed, 1),
       powerPlayPercentage: `${skating['@_power_play_pct'] || '0'}%`,
       penaltyKillPercentage: `${skating['@_penalty_kill_pct'] || '0'}%`,
       savePercentage: `${(parseFloat(goaltending['@_saves_pct'] || '0') * 100).toFixed(1)}%`,
@@ -623,57 +643,63 @@ export async function fetchPlayerStats(teamId: string): Promise<GoalservePlayerS
 function parsePlayerStatsXML(xml: string): GoalservePlayerStats[] {
   try {
     const parsed = xmlParser.parse(xml)
-    const team = parsed.team
+    const statistic = parsed.statistic
 
-    if (!team) return []
+    if (!statistic) return []
 
     const players: GoalservePlayerStats[] = []
-    const categories = Array.isArray(team.category) ? team.category : [team.category]
 
-    for (const cat of categories) {
-      if (!cat?.player) continue
+    // Parser les joueurs de champ (dans <team>)
+    if (statistic.team?.player) {
+      const teamPlayers = Array.isArray(statistic.team.player)
+        ? statistic.team.player
+        : [statistic.team.player]
 
-      const categoryPlayers = Array.isArray(cat.player) ? cat.player : [cat.player]
-      const isGoalie = cat['@_name'] === 'Goaltending'
+      for (const p of teamPlayers) {
+        players.push({
+          id: String(p['@_id'] || ''),
+          name: String(p['@_name'] || ''),
+          position: String(p['@_pos'] || ''),
+          gamesPlayed: parseInt(p['@_games_played'] || '0', 10),
+          goals: parseInt(p['@_goals'] || '0', 10),
+          assists: parseInt(p['@_assists'] || '0', 10),
+          points: parseInt(p['@_points'] || '0', 10),
+          plusMinus: parseInt(p['@_plus_minus'] || '0', 10),
+          penaltyMinutes: parseInt(p['@_penalty_minutes'] || '0', 10),
+          powerPlayGoals: parseInt(p['@_pp_goals'] || '0', 10),
+          powerPlayAssists: parseInt(p['@_pp_assists'] || '0', 10),
+          shots: parseInt(p['@_shots'] || '0', 10),
+        })
+      }
+    }
 
-      for (const p of categoryPlayers) {
-        if (isGoalie) {
-          players.push({
-            id: String(p['@_id'] || ''),
-            name: String(p['@_name'] || ''),
-            position: 'G',
-            gamesPlayed: parseInt(p['@_games_played'] || '0', 10),
-            goals: 0,
-            assists: 0,
-            points: 0,
-            plusMinus: 0,
-            penaltyMinutes: parseInt(p['@_penalty_minutes'] || '0', 10),
-            powerPlayGoals: 0,
-            powerPlayAssists: 0,
-            shots: 0,
-            wins: parseInt(p['@_wins'] || '0', 10),
-            losses: parseInt(p['@_losses'] || '0', 10),
-            otLosses: parseInt(p['@_ot_losses'] || '0', 10),
-            savePercentage: parseFloat(p['@_saves_pct'] || '0'),
-            goalsAgainst: parseInt(p['@_total_goals_against'] || '0', 10),
-            shutouts: parseInt(p['@_shutouts'] || '0', 10),
-          })
-        } else {
-          players.push({
-            id: String(p['@_id'] || ''),
-            name: String(p['@_name'] || ''),
-            position: String(p['@_pos'] || ''),
-            gamesPlayed: parseInt(p['@_games_played'] || '0', 10),
-            goals: parseInt(p['@_goals'] || '0', 10),
-            assists: parseInt(p['@_assists'] || '0', 10),
-            points: parseInt(p['@_points'] || '0', 10),
-            plusMinus: parseInt(p['@_plus_minus'] || '0', 10),
-            penaltyMinutes: parseInt(p['@_penalty_minutes'] || '0', 10),
-            powerPlayGoals: parseInt(p['@_pp_goals'] || '0', 10),
-            powerPlayAssists: parseInt(p['@_pp_assists'] || '0', 10),
-            shots: parseInt(p['@_shots'] || '0', 10),
-          })
-        }
+    // Parser les gardiens (dans <goalkeepers>)
+    if (statistic.goalkeepers?.player) {
+      const goalies = Array.isArray(statistic.goalkeepers.player)
+        ? statistic.goalkeepers.player
+        : [statistic.goalkeepers.player]
+
+      for (const p of goalies) {
+        players.push({
+          id: String(p['@_id'] || ''),
+          name: String(p['@_name'] || ''),
+          position: 'G',
+          gamesPlayed: parseInt(p['@_games_played'] || '0', 10),
+          goals: 0,
+          assists: 0,
+          points: 0,
+          plusMinus: 0,
+          penaltyMinutes: parseInt(p['@_penalty_minutes'] || '0', 10),
+          powerPlayGoals: 0,
+          powerPlayAssists: 0,
+          shots: 0,
+          wins: parseInt(p['@_wins'] || '0', 10),
+          losses: parseInt(p['@_losses'] || '0', 10),
+          otLosses: parseInt(p['@_ot_losses'] || '0', 10),
+          savePercentage: parseFloat(p['@_saves_pct'] || '0'),
+          goalsAgainst: parseInt(p['@_total_goals_against'] || '0', 10),
+          shutouts: parseInt(p['@_shutouts'] || '0', 10),
+        })
       }
     }
 

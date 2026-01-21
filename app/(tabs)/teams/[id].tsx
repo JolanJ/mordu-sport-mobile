@@ -23,10 +23,16 @@ export default function TeamDetail() {
     roster,
     teamInfo,
     teamStats,
+    playerStats,
     injuries,
     isLoading,
     hasGoalserveId,
   } = useTeamData({ teamId: id || '' })
+
+  // Helper pour trouver les stats d'un joueur par son nom
+  const findPlayerStats = (playerName: string) => {
+    return playerStats.find(ps => ps.name.toLowerCase() === playerName.toLowerCase())
+  }
 
   // Loading state
   if (isLoading && hasGoalserveId) {
@@ -96,38 +102,51 @@ export default function TeamDetail() {
     faceoffWinPercentage: '0%',
   } : null
 
-  // Transformer le roster pour le composant
+  // Transformer le roster pour le composant avec les vraies stats
   const displayRoster = roster ? {
-    forwards: roster.forwards.map(p => ({
-      id: p.id,
-      name: p.name,
-      number: p.number,
-      position: p.position,
-      gamesPlayed: p.gamesPlayed,
-      birthplace: p.birthplace,
-      points: 0,
-      goals: 0,
-      assists: 0,
-    })),
-    defensemen: roster.defensemen.map(p => ({
-      id: p.id,
-      name: p.name,
-      number: p.number,
-      position: p.position,
-      gamesPlayed: p.gamesPlayed,
-      birthplace: p.birthplace,
-      points: 0,
-      goals: 0,
-      assists: 0,
-    })),
-    goalies: roster.goalies.map(p => ({
-      id: p.id,
-      name: p.name,
-      number: p.number,
-      position: p.position,
-      gamesPlayed: p.gamesPlayed,
-      birthplace: p.birthplace,
-    })),
+    forwards: roster.forwards.map(p => {
+      const stats = findPlayerStats(p.name)
+      return {
+        id: p.id,
+        name: p.name,
+        number: p.number,
+        position: p.position,
+        gamesPlayed: stats?.gamesPlayed || p.gamesPlayed,
+        birthplace: p.birthplace,
+        points: stats?.points || 0,
+        goals: stats?.goals || 0,
+        assists: stats?.assists || 0,
+      }
+    }),
+    defensemen: roster.defensemen.map(p => {
+      const stats = findPlayerStats(p.name)
+      return {
+        id: p.id,
+        name: p.name,
+        number: p.number,
+        position: p.position,
+        gamesPlayed: stats?.gamesPlayed || p.gamesPlayed,
+        birthplace: p.birthplace,
+        points: stats?.points || 0,
+        goals: stats?.goals || 0,
+        assists: stats?.assists || 0,
+      }
+    }),
+    goalies: roster.goalies.map(p => {
+      const stats = findPlayerStats(p.name)
+      return {
+        id: p.id,
+        name: p.name,
+        number: p.number,
+        position: p.position,
+        gamesPlayed: stats?.gamesPlayed || p.gamesPlayed,
+        birthplace: p.birthplace,
+        // Stats spécifiques aux gardiens
+        wins: stats?.wins,
+        losses: stats?.losses,
+        savePercentage: stats?.savePercentage,
+      }
+    }),
   } : { forwards: [], defensemen: [], goalies: [] }
 
   // Transformer les blessures pour le composant
@@ -163,6 +182,7 @@ export default function TeamDetail() {
         losses={displayTeamStats?.losses || 0}
         otLosses={displayTeamStats?.otLosses || 0}
         points={displayTeamStats?.points || 0}
+        logo={teamInfo?.logo}
       />
 
       {/* Tabs Navigation - Sticky */}
