@@ -1,13 +1,16 @@
 import { ChatRoom } from '@/components/ChatRoom'
+import { MatchEventsComponent } from '@/components/MatchEventsComponent'
 import { useAuth } from '@/contexts/AuthContext'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeft } from 'lucide-react-native'
+import { ArrowLeft, BarChart3, MessageCircle } from 'lucide-react-native'
 import { Image, Pressable, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useMatches } from '@/hooks/useMatches'
 import { useState, useEffect } from 'react'
 import { Match } from '@/lib/types'
+
+type TabType = 'events' | 'chat'
 
 export default function MatchRoom() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -15,6 +18,7 @@ export default function MatchRoom() {
   const { profile } = useAuth()
   const [match, setMatch] = useState<Match | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<TabType>('events')
   
   // Normaliser l'ID en string pour éviter les problèmes de comparaison
   const normalizedId = id ? String(id).trim() : null
@@ -141,12 +145,38 @@ export default function MatchRoom() {
         </View>
       </View>
 
-      {/* Chat Room */}
-      <ChatRoom
-        matchId={match.id}
-        username={profile?.username || 'Fan'}
-        avatarId={profile?.avatar_id || 1}
-      />
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        <Pressable
+          style={[styles.tab, activeTab === 'events' && styles.tabActive]}
+          onPress={() => setActiveTab('events')}
+        >
+          <BarChart3 size={18} color={activeTab === 'events' ? colors.neonGreen : colors.mutedForeground} />
+          <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>Événements</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tab, activeTab === 'chat' && styles.tabActive]}
+          onPress={() => setActiveTab('chat')}
+        >
+          <MessageCircle size={18} color={activeTab === 'chat' ? colors.neonGreen : colors.mutedForeground} />
+          <Text style={[styles.tabText, activeTab === 'chat' && styles.tabTextActive]}>Chat</Text>
+        </Pressable>
+      </View>
+
+      {/* Tab Content */}
+      {activeTab === 'events' ? (
+        <MatchEventsComponent
+          matchId={match.id}
+          homeTeamAbbr={match.homeTeam.abbr}
+          awayTeamAbbr={match.awayTeam.abbr}
+        />
+      ) : (
+        <ChatRoom
+          matchId={match.id}
+          username={profile?.username || 'Fan'}
+          avatarId={profile?.avatar_id || 1}
+        />
+      )}
     </SafeAreaView>
   )
 }
@@ -270,6 +300,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.background,
     fontWeight: '600',
+  },
+  // Tab Bar
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: colors.neonGreen,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.mutedForeground,
+  },
+  tabTextActive: {
+    color: colors.neonGreen,
   },
 })
 

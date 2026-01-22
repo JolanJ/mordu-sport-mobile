@@ -302,6 +302,10 @@ function transformMatch(matchData: any, league: League): Match | null {
     if (matchData['@_period']) {
       const periodNum = parseInt(String(matchData['@_period']), 10)
       period = league === 'NHL' ? `${periodNum}e période` : `${periodNum}e quart`
+    } else if (matchData['@_timer'] && statusValue) {
+      // Si on a un timer mais pas de période, utiliser le statut comme période
+      // Le statut peut contenir "1st", "2nd", "3rd", "OT", etc.
+      period = String(matchData['@_status'] || 'En cours')
     }
     
     // Utiliser l'ID Goalserve (toujours présent et unique)
@@ -829,6 +833,282 @@ function parsePlayerImageXML(xml: string): string | null {
     return base64ToDataUri(imageBase64)
   } catch (error) {
     return null
+  }
+}
+
+// ============================================
+// MATCH DETAILS / EVENTS API
+// ============================================
+
+import {
+  GoalEvent,
+  PenaltyEvent,
+  MatchEvent,
+  TeamMatchStats,
+  PlayerMatchStats,
+  GoalkeeperMatchStats,
+  PowerplayStats,
+  MatchDetails,
+} from '@/lib/types'
+
+/**
+ * Récupère les détails d'un match en direct (événements, stats, etc.)
+ * Utilise l'endpoint nhl-scores qui contient les données détaillées
+ */
+export async function fetchMatchDetails(matchId: string): Promise<MatchDetails | null> {
+  const url = `${API_BASE_URL}${API_ENDPOINTS.nhlScores}`
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/xml' },
+    })
+
+    if (!response.ok) return null
+
+    const xml = await response.text()
+    if (!xml || xml.includes('Server Error')) return null
+
+    return parseMatchDetailsXML(xml, matchId)
+  } catch (error) {
+    return null
+  }
+}
+
+/**
+ * Parse le XML pour extraire les détails d'un match spécifique
+ */
+function parseMatchDetailsXML(xml: string, matchId: string): MatchDetails | null {
+  try {
+    const parsed = xmlParser.parse(xml)
+    let matchArray: any[] = []
+
+    // Structure nhl-scores: scores.category.match
+    if (parsed.scores?.category?.match) {
+      const matchesData = parsed.scores.category.match
+      matchArray = Array.isArray(matchesData) ? matchesData : [matchesData]
+    } else if (parsed.scores?.category) {
+      const categories = Array.isArray(parsed.scores.category)
+        ? parsed.scores.category
+        : [parsed.scores.category]
+      for (const cat of categories) {
+        if (cat.match) {
+          const catMatches = Array.isArray(cat.match) ? cat.match : [cat.match]
+          matchArray.push(...catMatches)
+        }
+      }
+    }
+
+    // Trouver le match correspondant
+    const matchData = matchArray.find(m => String(m['@_id']) === matchId)
+    if (!matchData) return null
+
+    // Parser les événements
+    const events: MatchEvent[] = []
+
+    // Parser les buts
+    const scoring = matchData.scoring || {}
+    const periods = ['firstperiod', 'secondperiod', 'thirdperiod', 'overtime', 'shootout']
+    const periodNames = ['1ère', '2e', '3e', 'Prolongation', 'Tirs de barrage']
+
+    periods.forEach((periodKey, index) => {
+      const periodData = scoring[periodKey]
+      if (!periodData?.event) return
+
+      const periodEvents = Array.isArray(periodData.event) ? periodData.event : [periodData.event]
+      for (const event of periodEvents) {
+        if (!event) continue
+
+        const goalEvent: GoalEvent = {
+          type: 'goal',
+          team: event['@_team'] === 'hometeam' ? 'home' : 'away',
+          period: periodNames[index],
+          time: String(event['@_min'] || ''),
+          player: String(event['@_player'] || ''),
+          playerId: String(event['@_player_id'] || ''),
+          assists: event['@_assist'] ? String(event['@_assist']).split(', ') : [],
+          assistIds: [
+            event['@_assist_id1'] ? String(event['@_assist_id1']) : '',
+            event['@_assist_id2'] ? String(event['@_assist_id2']) : '',
+          ].filter(Boolean),
+          goalType: parseGoalType(event['@_goal_type']),
+          homeScore: parseInt(event['@_home_score'] || '0', 10),
+          awayScore: parseInt(event['@_away_score'] || '0', 10),
+        }
+        events.push(goalEvent)
+      }
+    })
+
+    // Parser les pénalités
+    const penalties = matchData.penalties || {}
+    periods.forEach((periodKey, index) => {
+      const periodData = penalties[periodKey]
+      if (!periodData?.penalty) return
+
+      const periodPenalties = Array.isArray(periodData.penalty) ? periodData.penalty : [periodData.penalty]
+      for (const penalty of periodPenalties) {
+        if (!penalty) continue
+
+        const penaltyEvent: PenaltyEvent = {
+          type: 'penalty',
+          team: penalty['@_team'] === 'hometeam' ? 'home' : 'away',
+          period: periodNames[index],
+          time: String(penalty['@_min'] || ''),
+          player: String(penalty['@_player'] || ''),
+          playerId: String(penalty['@_player_id'] || ''),
+          reason: String(penalty['@_reason'] || ''),
+        }
+        events.push(penaltyEvent)
+      }
+    })
+
+    // Trier les événements par période et temps
+    events.sort((a, b) => {
+      const periodOrder = periodNames.indexOf(a.period) - periodNames.indexOf(b.period)
+      if (periodOrder !== 0) return periodOrder
+      return parseTime(a.time) - parseTime(b.time)
+    })
+
+    // Parser les stats d'équipe
+    const teamStatsData = matchData.team_stats || {}
+    const homeTeamStats = parseTeamMatchStats(teamStatsData.hometeam)
+    const awayTeamStats = parseTeamMatchStats(teamStatsData.awayteam)
+
+    // Parser les stats de joueurs
+    const playerStatsData = matchData.player_stats || {}
+    const homePlayerStats = parsePlayerMatchStats(playerStatsData.hometeam)
+    const awayPlayerStats = parsePlayerMatchStats(playerStatsData.awayteam)
+
+    // Parser les stats de gardiens
+    const goalkeeperStatsData = matchData.goalkeeper_stats || {}
+    const homeGoalkeeperStats = parseGoalkeeperMatchStats(goalkeeperStatsData.hometeam)
+    const awayGoalkeeperStats = parseGoalkeeperMatchStats(goalkeeperStatsData.awayteam)
+
+    // Parser le powerplay
+    const powerplayData = matchData.powerplay || {}
+    const homePowerplay = parsePowerplayStats(powerplayData.hometeam)
+    const awayPowerplay = parsePowerplayStats(powerplayData.awayteam)
+
+    // Parser les scores par période
+    const homeTeam = matchData.hometeam || {}
+    const awayTeam = matchData.awayteam || {}
+    const periodScores = {
+      home: [
+        parseInt(homeTeam['@_p1'] || '0', 10) || 0,
+        parseInt(homeTeam['@_p2'] || '0', 10) || 0,
+        parseInt(homeTeam['@_p3'] || '0', 10) || 0,
+      ],
+      away: [
+        parseInt(awayTeam['@_p1'] || '0', 10) || 0,
+        parseInt(awayTeam['@_p2'] || '0', 10) || 0,
+        parseInt(awayTeam['@_p3'] || '0', 10) || 0,
+      ],
+    }
+
+    // Ajouter OT et SO si présents
+    if (homeTeam['@_ot'] || awayTeam['@_ot']) {
+      periodScores.home.push(parseInt(homeTeam['@_ot'] || '0', 10) || 0)
+      periodScores.away.push(parseInt(awayTeam['@_ot'] || '0', 10) || 0)
+    }
+
+    return {
+      matchId,
+      events,
+      teamStats: {
+        home: homeTeamStats,
+        away: awayTeamStats,
+      },
+      playerStats: {
+        home: homePlayerStats,
+        away: awayPlayerStats,
+      },
+      goalkeeperStats: {
+        home: homeGoalkeeperStats,
+        away: awayGoalkeeperStats,
+      },
+      powerplay: {
+        home: homePowerplay,
+        away: awayPowerplay,
+      },
+      periodScores,
+    }
+  } catch (error) {
+    return null
+  }
+}
+
+function parseGoalType(type: string | undefined): GoalEvent['goalType'] {
+  const t = String(type || 'reg').toLowerCase()
+  if (t.includes('pp') || t.includes('power')) return 'pp'
+  if (t.includes('sh') || t.includes('short')) return 'sh'
+  if (t.includes('en') || t.includes('empty')) return 'en'
+  if (t.includes('ps') || t.includes('penalty')) return 'ps'
+  return 'reg'
+}
+
+function parseTime(timeStr: string): number {
+  const parts = timeStr.split(':')
+  if (parts.length === 2) {
+    return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10)
+  }
+  return 0
+}
+
+function parseTeamMatchStats(data: any): TeamMatchStats {
+  if (!data) {
+    return { shots: 0, penaltyMinutes: 0, hits: 0, giveaways: 0, takeaways: 0, faceoffsWon: 0 }
+  }
+  return {
+    shots: parseInt(data.shots?.['@_total'] || '0', 10),
+    penaltyMinutes: parseInt(data.penalty_minutes?.['@_total'] || '0', 10),
+    hits: parseInt(data.hits?.['@_total'] || '0', 10),
+    giveaways: parseInt(data.giveaways?.['@_total'] || '0', 10),
+    takeaways: parseInt(data.takeaways?.['@_total'] || '0', 10),
+    faceoffsWon: parseInt(data.faceoffs_won?.['@_total'] || '0', 10),
+  }
+}
+
+function parsePlayerMatchStats(data: any): PlayerMatchStats[] {
+  if (!data?.player) return []
+  const players = Array.isArray(data.player) ? data.player : [data.player]
+
+  return players.map((p: any) => ({
+    id: String(p['@_id'] || ''),
+    name: String(p['@_name'] || ''),
+    goals: parseInt(p['@_goals'] || '0', 10),
+    assists: parseInt(p['@_assists'] || '0', 10),
+    shots: parseInt(p['@_shots_on_goal'] || '0', 10),
+    plusMinus: parseInt(p['@_plus_minus'] || '0', 10),
+    penaltyMinutes: parseInt(p['@_penalty_minutes'] || '0', 10),
+    hits: parseInt(p['@_hits'] || '0', 10),
+    timeOnIce: String(p['@_time_on_ice'] || '0:00'),
+    faceoffsWon: parseInt(p['@_faceoffs_won'] || '0', 10),
+    faceoffsLost: parseInt(p['@_faceoffs_lost'] || '0', 10),
+  }))
+}
+
+function parseGoalkeeperMatchStats(data: any): GoalkeeperMatchStats[] {
+  if (!data?.player) return []
+  const players = Array.isArray(data.player) ? data.player : [data.player]
+
+  return players.map((p: any) => ({
+    id: String(p['@_id'] || ''),
+    name: String(p['@_name'] || ''),
+    shotsAgainst: parseInt(p['@_shots_against'] || '0', 10),
+    goalsAgainst: parseInt(p['@_goals_against'] || '0', 10),
+    saves: parseInt(p['@_saves'] || '0', 10),
+    savePercentage: String(p['@_saves_pct'] || '0'),
+    timeOnIce: String(p['@_time_on_ice'] || '0:00'),
+  }))
+}
+
+function parsePowerplayStats(data: any): PowerplayStats {
+  if (!data) {
+    return { opportunities: 0, goals: 0 }
+  }
+  return {
+    opportunities: parseInt(data['@_opportunities'] || '0', 10),
+    goals: parseInt(data['@_goals'] || '0', 10),
   }
 }
 

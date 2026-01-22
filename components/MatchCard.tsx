@@ -14,8 +14,8 @@ interface MatchCardProps {
 export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite }: MatchCardProps) {
   const { user } = useAuth()
 
-  // Afficher le bouton favoris seulement pour les matchs live ou upcoming (pas finished)
-  const showFavoriteButton = match.status !== 'finished'
+  // Afficher le bouton favoris si: pas terminé OU a une période (match en cours mal détecté)
+  const showFavoriteButton = match.status !== 'finished' || !!match.period
 
   const handleFavoritePress = () => {
     if (!user) {
@@ -84,9 +84,14 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
   }
 
   const getStatusText = () => {
+    // Si on a une période, le match est en cours
+    if (match.period) {
+      return match.period
+    }
+
     switch (match.status) {
       case 'live':
-        return match.time
+        return 'En cours'
       case 'upcoming':
         return match.time
       case 'finished':
@@ -158,12 +163,12 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
           
           {/* Colonne 3: Score */}
           <View style={styles.scoreContainer}>
-            {match.awayTeam.score !== undefined ? (
-              <Text style={getScoreStyle(match.awayTeam.score, match.homeTeam.score)}>
-                {match.awayTeam.score}
-              </Text>
-            ) : (
+            {match.status === 'upcoming' ? (
               <Text style={styles.scoreNormal}>-</Text>
+            ) : (
+              <Text style={getScoreStyle(match.awayTeam.score ?? 0, match.homeTeam.score ?? 0)}>
+                {match.awayTeam.score ?? 0}
+              </Text>
             )}
           </View>
 
@@ -187,18 +192,18 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
               <Text style={styles.logoPlaceholder}>{match.homeTeam.abbr.substring(0, 2)}</Text>
             )}
           </View>
-          
+
           {/* Colonne 2: Nom */}
           <Text style={styles.teamName}>{match.homeTeam.abbr}</Text>
-          
+
           {/* Colonne 3: Score */}
           <View style={styles.scoreContainer}>
-            {match.homeTeam.score !== undefined ? (
-              <Text style={getScoreStyle(match.homeTeam.score, match.awayTeam.score)}>
-                {match.homeTeam.score}
-              </Text>
-            ) : (
+            {match.status === 'upcoming' ? (
               <Text style={styles.scoreNormal}>-</Text>
+            ) : (
+              <Text style={getScoreStyle(match.homeTeam.score ?? 0, match.awayTeam.score ?? 0)}>
+                {match.homeTeam.score ?? 0}
+              </Text>
             )}
           </View>
 
