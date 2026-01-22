@@ -2,7 +2,7 @@
   "expo": {
     "name": "mordu-sport-mobile",
     "slug": "mordu-sport-mobile",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/Logo - Bouche Mordu (1).png",
     "scheme": "mordusportmobile",
