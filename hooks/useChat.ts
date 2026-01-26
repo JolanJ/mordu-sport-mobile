@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useCallback } from 'react'
 
-export type Locale = 'fr' | 'en'
+export type Locale = 'fr' | 'all'
 
 export interface ChatMessage {
   id: string
@@ -26,17 +26,23 @@ export function useChat({ matchId, locale }: UseChatOptions) {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
 
-  // Charger les messages existants (filtrés par locale)
+  // Charger les messages existants (filtrés par locale ou tous si 'all')
   useEffect(() => {
     if (!matchId) return
 
     const fetchMessages = async () => {
       setLoading(true)
-      const { data, error } = await supabase
+      let query = supabase
         .from('chat_messages')
         .select('*')
         .eq('match_id', matchId)
-        .eq('locale', locale)
+
+      // Filtrer par locale seulement si ce n'est pas 'all'
+      if (locale !== 'all') {
+        query = query.eq('locale', locale)
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: true })
         .limit(100)
 
@@ -65,8 +71,8 @@ export function useChat({ matchId, locale }: UseChatOptions) {
         },
         (payload) => {
           const newMessage = payload.new as ChatMessage
-          // Ne pas ajouter si ce n'est pas la bonne locale
-          if (newMessage.locale === locale) {
+          // Ajouter si locale 'all' ou si c'est la bonne locale
+          if (locale === 'all' || newMessage.locale === locale) {
             setMessages((prev) => [...prev, newMessage])
           }
         }
@@ -91,12 +97,15 @@ export function useChat({ matchId, locale }: UseChatOptions) {
     }
   }, [matchId, locale])
 
-  // Envoyer un message (avec la locale)
+  // Envoyer un message (avec la locale, défaut 'fr' si 'all')
   const sendMessage = useCallback(
     async (content: string, username: string, avatarId: number = 1) => {
       if (!user || !matchId || !content.trim()) return { error: new Error('Invalid data') }
 
       setSending(true)
+
+      // Si locale est 'all', on envoie en 'fr' par défaut
+      const messageLocale = locale === 'all' ? 'fr' : locale
 
       const { error } = await supabase.from('chat_messages').insert({
         match_id: matchId,
@@ -104,7 +113,7 @@ export function useChat({ matchId, locale }: UseChatOptions) {
         username,
         avatar_id: avatarId,
         content: content.trim(),
-        locale,
+        locale: messageLocale,
       })
 
       setSending(false)

@@ -8,6 +8,7 @@ import {
   FlatList,
   Image,
   ImageSourcePropType,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -33,9 +34,10 @@ interface ChatRoomProps {
 
 export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRoomProps) {
   const { user, profile, updateProfile } = useAuth()
-  const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'fr')
+  const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'all')
   const { messages, loading, sending, sendMessage, isAuthenticated } = useChat({ matchId, locale })
   const [inputText, setInputText] = useState('')
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
   const flatListRef = useRef<FlatList>(null)
 
   // Mettre à jour la locale si le profil change
@@ -62,6 +64,25 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
     }
   }, [messages.length])
 
+  // Gérer l'ouverture/fermeture du keyboard
+  useEffect(() => {
+    const keyboardDidShow = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true)
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true })
+      }, 100)
+    })
+
+    const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false)
+    })
+
+    return () => {
+      keyboardDidShow.remove()
+      keyboardDidHide.remove()
+    }
+  }, [])
+
   const handleSend = async () => {
     if (!inputText.trim() || sending) return
 
@@ -85,9 +106,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
           <Image source={avatarSource} style={styles.avatar} />
         )}
         <View style={[styles.messageBubble, isOwnMessage && styles.ownMessageBubble]}>
-          {!isOwnMessage && (
-            <Text style={styles.username}>{item.username}</Text>
-          )}
+          <Text style={[styles.username, isOwnMessage && styles.ownUsername]}>{item.username}</Text>
           <Text style={[styles.messageText, isOwnMessage && styles.ownMessageText]}>
             {item.content}
           </Text>
@@ -117,32 +136,33 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}
     >
-      <View style={styles.header}>
-        <View style={styles.liveIndicator}>
-          <View style={styles.liveDot} />
-          <Text style={styles.liveText}>{locale === 'fr' ? 'Chat en direct' : 'Live Chat'}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <View style={styles.localeToggle}>
-            <Pressable
-              style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
-              onPress={() => handleLocaleChange('fr')}
-            >
-              <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
-              onPress={() => handleLocaleChange('en')}
-            >
-              <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>EN</Text>
-            </Pressable>
+      {!keyboardVisible && (
+        <View style={styles.header}>
+          <View style={styles.liveIndicator}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>{locale === 'fr' ? 'Chat en direct' : 'Live Chat'}</Text>
           </View>
-          <Text style={styles.participantsText}>{messages.length}</Text>
+          <View style={styles.headerRight}>
+            <View style={styles.localeToggle}>
+              <Pressable
+                style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
+                onPress={() => handleLocaleChange('fr')}
+              >
+                <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.localeButton, locale === 'all' && styles.localeButtonActive]}
+                onPress={() => handleLocaleChange('all')}
+              >
+                <Text style={[styles.localeButtonText, locale === 'all' && styles.localeButtonTextActive]}>ALL</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
-      </View>
+      )}
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -166,29 +186,44 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
         />
       )}
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder={locale === 'fr' ? 'Écrivez un message...' : 'Write a message...'}
-          placeholderTextColor={colors.mutedForeground}
-          value={inputText}
-          onChangeText={setInputText}
-          multiline
-          maxLength={500}
-          onSubmitEditing={handleSend}
-          blurOnSubmit={false}
-        />
-        <Pressable
-          style={[styles.sendButton, (!inputText.trim() || sending) && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={!inputText.trim() || sending}
-        >
-          {sending ? (
-            <ActivityIndicator size="small" color={colors.background} />
-          ) : (
-            <Send size={20} color={colors.background} />
-          )}
-        </Pressable>
+      <View style={styles.inputWrapper}>
+        {/* Quick emoji reactions */}
+        <View style={styles.quickEmojis}>
+          {['👍', '👎', '🔥', '💀'].map((emoji) => (
+            <Pressable
+              key={emoji}
+              style={styles.emojiButton}
+              onPress={() => sendMessage(emoji, username, avatarId)}
+              disabled={sending}
+            >
+              <Text style={styles.emojiText}>{emoji}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder={locale === 'fr' ? 'Écrivez un message...' : 'Write a message...'}
+            placeholderTextColor={colors.mutedForeground}
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+            maxLength={500}
+            onSubmitEditing={handleSend}
+          />
+          <Pressable
+            style={[styles.sendButton, (!inputText.trim() || sending) && styles.sendButtonDisabled]}
+            onPress={handleSend}
+            disabled={!inputText.trim() || sending}
+          >
+            {sending ? (
+              <ActivityIndicator size="small" color={colors.background} />
+            ) : (
+              <Send size={20} color={colors.background} />
+            )}
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   )
@@ -299,6 +334,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
   },
+  ownUsername: {
+    color: 'rgba(13, 13, 13, 0.8)',
+  },
   messageText: {
     color: colors.foreground,
     fontSize: 14,
@@ -327,15 +365,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
+  inputWrapper: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
+    paddingTop: 8,
+  },
+  quickEmojis: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  emojiButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  emojiText: {
+    fontSize: 22,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.background,
+    paddingBottom: 12,
   },
   input: {
     flex: 1,

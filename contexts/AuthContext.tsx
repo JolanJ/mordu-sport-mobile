@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
-export type Locale = 'fr' | 'en'
+export type Locale = 'fr' | 'all'
 
 export type Profile = {
   id: string
