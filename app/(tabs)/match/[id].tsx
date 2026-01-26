@@ -18,7 +18,7 @@ export default function MatchRoom() {
   const { profile } = useAuth()
   const [match, setMatch] = useState<Match | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<TabType>('events')
+  const [activeTab, setActiveTab] = useState<TabType>('chat')
   
   // Normaliser l'ID en string pour éviter les problèmes de comparaison
   const normalizedId = id ? String(id).trim() : null
@@ -104,13 +104,13 @@ export default function MatchRoom() {
       {/* Match Info - Compact */}
       <View style={styles.matchInfoCompact}>
         <View style={styles.teamCompact}>
-          {match.awayTeam.logo ? (
-            <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
-          ) : (
-            <View style={styles.logoPlaceholderSmall}>
+          <View style={styles.logoContainerSmall}>
+            {match.awayTeam.logo ? (
+              <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
+            ) : (
               <Text style={styles.logoPlaceholderTextSmall}>{match.awayTeam.abbr}</Text>
-            </View>
-          )}
+            )}
+          </View>
           <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
           {match.awayTeam.score !== undefined && (
             <Text style={styles.teamScoreCompact}>{match.awayTeam.score}</Text>
@@ -131,13 +131,13 @@ export default function MatchRoom() {
         </View>
 
         <View style={styles.teamCompact}>
-          {match.homeTeam.logo ? (
-            <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
-          ) : (
-            <View style={styles.logoPlaceholderSmall}>
+          <View style={styles.logoContainerSmall}>
+            {match.homeTeam.logo ? (
+              <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
+            ) : (
               <Text style={styles.logoPlaceholderTextSmall}>{match.homeTeam.abbr}</Text>
-            </View>
-          )}
+            )}
+          </View>
           <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
           {match.homeTeam.score !== undefined && (
             <Text style={styles.teamScoreCompact}>{match.homeTeam.score}</Text>
@@ -148,18 +148,18 @@ export default function MatchRoom() {
       {/* Tab Bar */}
       <View style={styles.tabBar}>
         <Pressable
-          style={[styles.tab, activeTab === 'events' && styles.tabActive]}
-          onPress={() => setActiveTab('events')}
-        >
-          <BarChart3 size={18} color={activeTab === 'events' ? colors.neonGreen : colors.mutedForeground} />
-          <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>Événements</Text>
-        </Pressable>
-        <Pressable
           style={[styles.tab, activeTab === 'chat' && styles.tabActive]}
           onPress={() => setActiveTab('chat')}
         >
           <MessageCircle size={18} color={activeTab === 'chat' ? colors.neonGreen : colors.mutedForeground} />
           <Text style={[styles.tabText, activeTab === 'chat' && styles.tabTextActive]}>Chat</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tab, activeTab === 'events' && styles.tabActive]}
+          onPress={() => setActiveTab('events')}
+        >
+          <BarChart3 size={18} color={activeTab === 'events' ? colors.neonGreen : colors.mutedForeground} />
+          <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>Événements</Text>
         </Pressable>
       </View>
 
@@ -222,17 +222,19 @@ const styles = StyleSheet.create({
     gap: 4,
     flex: 1,
   },
-  teamLogoSmall: {
-    width: 40,
-    height: 40,
-  },
-  logoPlaceholderSmall: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.muted,
+  logoContainerSmall: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.neonBlue,
+  },
+  teamLogoSmall: {
+    width: 32,
+    height: 32,
   },
   logoPlaceholderTextSmall: {
     fontSize: 14,

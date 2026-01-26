@@ -4,9 +4,9 @@ import { Home, Star, Users } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 interface Tab {
-  id: "results" | "teams" | "favorites" | "mordu"
-  route: string
-  icon: React.ComponentType<any> | string
+  id: "results" | "teams" | "favorites"
+  route: "/" | "/teams" | "/favorites"
+  icon: React.ComponentType<any>
   label: string
   color: string
   glowColor: string
@@ -17,7 +17,7 @@ const tabs: Tab[] = [
     id: "results",
     route: "/",
     icon: Home,
-    label: "Accueil",
+    label: "Matchs",
     color: "#00C4FF",
     glowColor: "rgba(0,196,255,0.5)"
   },
@@ -36,14 +36,6 @@ const tabs: Tab[] = [
     label: "Favoris",
     color: "#FFD700",
     glowColor: "rgba(255,215,0,0.5)"
-  },
-  {
-    id: "mordu",
-    route: "/mordusport",
-    icon: "logo",
-    label: "Mordu Sport",
-    color: "#9D4EDD",
-    glowColor: "rgba(157,78,221,0.5)"
   }
 ]
 
@@ -54,7 +46,6 @@ export function BottomNav() {
     if (pathname === "/") return "results"
     if (pathname === "/teams") return "teams"
     if (pathname === "/favorites") return "favorites"
-    if (pathname === "/mordusport") return "mordu"
     return "results"
   }
 
@@ -80,16 +71,10 @@ export function BottomNav() {
                     elevation: 8,
                   }
                 ]}>
-                  {tab.icon === "logo" ? (
-                    <Text style={[styles.logoText, { color: isActive ? tab.color : colors.mutedForeground }]}>
-                      M
-                    </Text>
-                  ) : (
-                    <IconComponent 
-                      size={20} 
-                      color={isActive ? tab.color : colors.mutedForeground} 
-                    />
-                  )}
+                  <IconComponent
+                    size={20}
+                    color={isActive ? tab.color : colors.mutedForeground}
+                  />
                 </View>
                 <Text style={[
                   styles.label,
@@ -132,10 +117,6 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  logoText: {
-    fontSize: 24,
-    fontWeight: 'bold',
   },
   label: {
     fontSize: 12,

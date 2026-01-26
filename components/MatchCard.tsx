@@ -120,10 +120,9 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
     >
       {/* Ligne en haut : Venue à gauche, Heure + Favori à droite */}
       <View style={styles.headerRow}>
-        <Text style={styles.venueText} numberOfLines={1}>
+        <Text style={styles.venueText} numberOfLines={1} ellipsizeMode="tail">
           {match.venue || 'Stade non disponible'}
         </Text>
-        <View style={styles.spacer} />
         <View style={styles.headerRight}>
           <Text style={styles.timeText}>{getStatusText()}</Text>
           {showFavoriteButton && (
@@ -239,16 +238,14 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 8,
-  },
-  spacer: {
-    flex: 1,
+    gap: 8,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flexShrink: 0,
   },
   favoriteButton: {
     width: 28,
@@ -286,7 +283,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.muted,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -349,6 +346,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: colors.mutedForeground,
+    flex: 1,
+    flexShrink: 1,
   },
   chatColumn: {
     width: 75,

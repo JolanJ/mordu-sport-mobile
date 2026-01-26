@@ -39,7 +39,7 @@ export function TeamCard({ team, onPress }: TeamCardProps) {
       ]}
       onPress={handlePress}
     >
-      <View style={[styles.logoContainer, { backgroundColor: conferenceColor + '10' }]}>
+      <View style={[styles.logoContainer, { borderColor: conferenceColor + '50' }]}>
         {team.logo ? (
           <Image
             source={typeof team.logo === 'string' ? { uri: team.logo } : team.logo}
@@ -89,6 +89,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderWidth: 2,
+    overflow: 'hidden',
   },
   logoText: {
     fontSize: 20,

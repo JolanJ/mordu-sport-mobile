@@ -4,7 +4,17 @@
 
 import { API_BASE_URL, API_ENDPOINTS, formatDate, getTeamRosterUrl, getTeamStatsUrl, getPlayerStatsUrl, getTeamInjuriesUrl, getPlayerImageUrl } from '@/config/api'
 import { Player, TeamRoster } from '@/lib/teamTypes'
-import { Match } from '@/lib/types'
+import {
+  Match,
+  GoalEvent,
+  PenaltyEvent,
+  MatchEvent,
+  TeamMatchStats,
+  PlayerMatchStats,
+  GoalkeeperMatchStats,
+  PowerplayStats,
+  MatchDetails,
+} from '@/lib/types'
 import { XMLParser } from 'fast-xml-parser'
 
 // Cache simple pour les logos d'équipes (évite les appels API répétés)
@@ -839,17 +849,6 @@ function parsePlayerImageXML(xml: string): string | null {
 // ============================================
 // MATCH DETAILS / EVENTS API
 // ============================================
-
-import {
-  GoalEvent,
-  PenaltyEvent,
-  MatchEvent,
-  TeamMatchStats,
-  PlayerMatchStats,
-  GoalkeeperMatchStats,
-  PowerplayStats,
-  MatchDetails,
-} from '@/lib/types'
 
 /**
  * Récupère les détails d'un match en direct (événements, stats, etc.)

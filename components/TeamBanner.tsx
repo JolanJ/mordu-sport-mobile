@@ -78,9 +78,12 @@ const styles = StyleSheet.create({
     height: 56,
     width: 56,
     borderRadius: 28,
-    backgroundColor: `${colors.primary}1A`, // 10% opacity
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.primary,
+    overflow: 'hidden',
   },
   logoText: {
     fontSize: 20,
@@ -88,8 +91,8 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   logoImage: {
-    width: '100%',
-    height: '100%',
+    width: 40,
+    height: 40,
   },
   info: {
     flex: 1,
