@@ -1,3 +1,4 @@
+import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
 import { BarChart3, Hospital, Users } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
@@ -10,10 +11,12 @@ interface TabsNavigationProps {
 }
 
 export function TabsNavigation({ activeTab, onTabChange }: TabsNavigationProps) {
+  const { t } = useTranslation()
+
   const tabs = [
-    { id: 'players' as TabType, label: 'Joueurs', icon: Users, color: colors.primary },
-    { id: 'stats' as TabType, label: 'Équipe', icon: BarChart3, color: colors.accent },
-    { id: 'injuries' as TabType, label: 'Blessures', icon: Hospital, color: colors.destructive },
+    { id: 'players' as TabType, label: t('players'), icon: Users, color: colors.primary },
+    { id: 'stats' as TabType, label: t('team'), icon: BarChart3, color: colors.accent },
+    { id: 'injuries' as TabType, label: t('injuries'), icon: Hospital, color: colors.destructive },
   ]
 
   return (
@@ -27,17 +30,17 @@ export function TabsNavigation({ activeTab, onTabChange }: TabsNavigationProps) 
             key={tab.id}
             style={[
               styles.tab,
-              isActive && { 
+              isActive && {
                 backgroundColor: `${tab.color}0D`, // 5% opacity
                 borderBottomWidth: 2,
-                borderBottomColor: tab.color 
+                borderBottomColor: tab.color
               }
             ]}
             onPress={() => onTabChange(tab.id)}
           >
-            <Icon 
-              size={20} 
-              color={isActive ? tab.color : colors.mutedForeground} 
+            <Icon
+              size={20}
+              color={isActive ? tab.color : colors.mutedForeground}
             />
             <Text
               style={[
@@ -75,4 +78,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 })
-

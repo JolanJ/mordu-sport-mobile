@@ -2,6 +2,7 @@ import { ConferenceSection } from '@/components/ConferenceSection'
 import { HomeHeader } from '@/components/HomeHeader'
 import { LeagueFilter } from '@/components/LeagueFilter'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { useTeamsWithLogos } from '@/hooks/useTeamsWithLogos'
 import { Team } from '@/lib/teamData'
 import { colors } from '@/theme/colors'
@@ -16,6 +17,7 @@ export default function Teams() {
   const [selectedLeague, setSelectedLeague] = useState(leagues[0])
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollY = useRef(new Animated.Value(0)).current
+  const { t } = useTranslation()
 
   // Utiliser le hook pour avoir les équipes avec logos
   const { teams, isLoading } = useTeamsWithLogos(selectedLeague)
@@ -40,16 +42,16 @@ export default function Teams() {
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
       <HomeHeader />
-      
+
       {/* Espace publicitaire */}
       <View style={styles.adSpace}>
-        <Image 
+        <Image
           source={require('@/assets/images/ROC-Display-320x50-FR (1).jpg')}
           style={styles.adImage}
           resizeMode="cover"
         />
       </View>
-      
+
       <LeagueFilter
         leagues={leagues}
         selectedLeague={selectedLeague}
@@ -61,7 +63,7 @@ export default function Teams() {
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.neonGreen} />
-            <Text style={styles.loadingText}>Chargement des équipes...</Text>
+            <Text style={styles.loadingText}>{t('loadingTeams')}</Text>
           </View>
         ) : (
           <Animated.ScrollView

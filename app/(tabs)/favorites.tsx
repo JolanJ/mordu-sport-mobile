@@ -2,6 +2,7 @@ import { HomeHeader } from '@/components/HomeHeader'
 import { MatchCard } from '@/components/MatchCard'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 import { useFavorites } from '@/contexts/FavoritesContext'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
 import { useRouter } from 'expo-router'
 import { Star } from 'lucide-react-native'
@@ -21,6 +22,7 @@ export default function Favorites() {
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollY = useRef(new Animated.Value(0)).current
   const router = useRouter()
+  const { t, locale } = useTranslation()
 
   const { favorites, loading, isFavorite, toggleFavorite, isAuthenticated } = useFavorites()
 
@@ -30,6 +32,14 @@ export default function Favorites() {
 
   const handleMatchPress = (matchId: string, matchDate: string) => {
     router.push(`/(tabs)/match/${matchId}?date=${matchDate}` as any)
+  }
+
+  const getFavoritesCountText = () => {
+    const count = favorites.length
+    if (locale === 'fr') {
+      return `${count} match${count > 1 ? 's' : ''} favori${count > 1 ? 's' : ''}`
+    }
+    return `${count} favorite match${count !== 1 ? 'es' : ''}`
   }
 
   // Non connecté
@@ -48,9 +58,9 @@ export default function Favorites() {
 
         <View style={styles.emptyState}>
           <Star size={64} color={colors.mutedForeground} />
-          <Text style={styles.emptyTitle}>Connexion requise</Text>
+          <Text style={styles.emptyTitle}>{t('loginRequired')}</Text>
           <Text style={styles.emptySubtext}>
-            Connectez-vous pour sauvegarder vos matchs favoris
+            {t('loginToSaveFavorites')}
           </Text>
         </View>
       </SafeAreaView>
@@ -73,7 +83,7 @@ export default function Favorites() {
 
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.neonGreen} />
-          <Text style={styles.loadingText}>Chargement des favoris...</Text>
+          <Text style={styles.loadingText}>{t('loadingFavorites')}</Text>
         </View>
       </SafeAreaView>
     )
@@ -96,18 +106,16 @@ export default function Favorites() {
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Star size={20} color={colors.accent} fill={colors.accent} />
-          <Text style={styles.title}>
-            {favorites.length} match{favorites.length > 1 ? 's' : ''} favori{favorites.length > 1 ? 's' : ''}
-          </Text>
+          <Text style={styles.title}>{getFavoritesCountText()}</Text>
         </View>
       </View>
 
       {favorites.length === 0 ? (
         <View style={styles.emptyState}>
           <Star size={64} color={colors.mutedForeground} />
-          <Text style={styles.emptyTitle}>Aucun favori</Text>
+          <Text style={styles.emptyTitle}>{t('noFavorites')}</Text>
           <Text style={styles.emptySubtext}>
-            Ajoutez des matchs à vos favoris pour les retrouver ici
+            {t('addFavoritesHint')}
           </Text>
         </View>
       ) : (

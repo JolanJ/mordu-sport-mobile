@@ -1,20 +1,11 @@
+import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
-import { ChevronLeft, ChevronRight } from 'lucide-react-native'
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
-// Format de date simple sans date-fns pour l'instant
-const formatDate = (date: Date, today: Date) => {
-  const isToday = isSameDay(date, today)
-  if (isToday) {
-    return "Aujourd'hui"
-  }
-  
-  const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'jun', 'jul', 'aoû', 'sep', 'oct', 'nov', 'déc']
-  const month = months[date.getMonth()]
-  const day = date.getDate()
-  return `${month} ${day}`
-}
+const DAYS_BEFORE = 2
+const DAYS_AFTER = 7
+const ITEM_WIDTH = 44
 
 const isSameDay = (date1: Date, date2: Date) => {
   return date1.getDate() === date2.getDate() &&
@@ -28,112 +19,84 @@ interface CalendarProps {
 }
 
 export function Calendar({ selectedDate: propSelectedDate, onDateChange }: CalendarProps) {
+  const { t, locale } = useTranslation()
   const today = new Date()
-  const [internalSelectedDate, setInternalSelectedDate] = useState(propSelectedDate || today)
-  const selectedDate = propSelectedDate || internalSelectedDate
-  const [currentWeek, setCurrentWeek] = useState(0)
+  const selectedDate = propSelectedDate || today
+  const scrollViewRef = useRef<ScrollView>(null)
 
-  // Générer les 15 jours (7 avant + 7 après aujourd'hui)
+  const getDayName = (date: Date) => {
+    const dayIndex = date.getDay()
+    const dayKeys: Array<'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'> = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+    return t(dayKeys[dayIndex])
+  }
+
+  // Générer les dates: 2 jours avant + aujourd'hui + 7 jours après = 10 jours
   const generateDates = () => {
     const dates = []
-    const startDate = new Date(today)
-    startDate.setDate(today.getDate() + (currentWeek * 7))
-    
-    for (let i = 0; i < 15; i++) {
-      const date = new Date(startDate)
-      date.setDate(startDate.getDate() + i)
+    for (let i = -DAYS_BEFORE; i <= DAYS_AFTER; i++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() + i)
       dates.push(date)
     }
     return dates
   }
 
   const dates = generateDates()
-  const canGoLeft = currentWeek > -1
-  const canGoRight = currentWeek < 1
+
+  // Scroll vers aujourd'hui au chargement
+  useEffect(() => {
+    setTimeout(() => {
+      const todayIndex = DAYS_BEFORE // Index d'aujourd'hui dans le tableau
+      scrollViewRef.current?.scrollTo({
+        x: todayIndex * ITEM_WIDTH - 100, // Centrer un peu
+        animated: false,
+      })
+    }, 100)
+  }, [])
 
   const handleDatePress = (date: Date) => {
-    setInternalSelectedDate(date)
     onDateChange?.(date)
-  }
-
-  const handlePreviousWeek = () => {
-    if (canGoLeft) {
-      setCurrentWeek(currentWeek - 1)
-    }
-  }
-
-  const handleNextWeek = () => {
-    if (canGoRight) {
-      setCurrentWeek(currentWeek + 1)
-    }
-  }
-
-  const getDateStyle = (date: Date) => {
-    const isSelected = isSameDay(date, selectedDate)
-    const isToday = isSameDay(date, today)
-    const isDisabled = Math.abs(date.getTime() - today.getTime()) > (7 * 24 * 60 * 60 * 1000) // 7 jours
-
-    if (isDisabled) {
-      return styles.dateTextDisabled
-    }
-    if (isSelected) {
-      return isToday ? styles.dateTextTodaySelected : styles.dateTextSelected
-    }
-    if (isToday) {
-      return styles.dateTextToday
-    }
-    return styles.dateTextNormal
   }
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Flèche gauche */}
-        <Pressable
-          onPress={handlePreviousWeek}
-          disabled={!canGoLeft}
-          style={[styles.arrowButton, !canGoLeft && styles.arrowButtonDisabled]}
-        >
-          <ChevronLeft 
-            size={16} 
-            color={canGoLeft ? colors.mutedForeground : `${colors.mutedForeground}4D`} 
-          />
-        </Pressable>
-
-        {/* Dates */}
         {dates.map((date, index) => {
           const isSelected = isSameDay(date, selectedDate)
-          const isDisabled = Math.abs(date.getTime() - today.getTime()) > (7 * 24 * 60 * 60 * 1000)
-          
+          const isToday = isSameDay(date, today)
+
           return (
             <Pressable
               key={index}
-              onPress={() => !isDisabled && handleDatePress(date)}
-              disabled={isDisabled}
-              style={styles.dateButton}
+              onPress={() => handleDatePress(date)}
+              style={[
+                styles.dateItem,
+                isSelected && styles.dateItemSelected,
+              ]}
             >
-              <Text style={getDateStyle(date)}>
-                {formatDate(date, today)}
+              <Text style={[
+                styles.dayName,
+                isToday && styles.dayNameToday,
+                isSelected && styles.dayNameSelected,
+              ]}>
+                {getDayName(date)}
               </Text>
+              <Text style={[
+                styles.dayNumber,
+                isToday && styles.dayNumberToday,
+                isSelected && styles.dayNumberSelected,
+              ]}>
+                {date.getDate()}
+              </Text>
+              {isToday && <View style={[styles.todayDot, isSelected && styles.todayDotSelected]} />}
             </Pressable>
           )
         })}
-
-        {/* Flèche droite */}
-        <Pressable
-          onPress={handleNextWeek}
-          disabled={!canGoRight}
-          style={[styles.arrowButton, !canGoRight && styles.arrowButtonDisabled]}
-        >
-          <ChevronRight 
-            size={16} 
-            color={canGoRight ? colors.mutedForeground : `${colors.mutedForeground}4D`} 
-          />
-        </Pressable>
       </ScrollView>
     </View>
   )
@@ -141,53 +104,54 @@ export function Calendar({ selectedDate: propSelectedDate, onDateChange }: Calen
 
 const styles = StyleSheet.create({
   container: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
     backgroundColor: colors.background,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  arrowButton: {
-    paddingVertical: 12,
     paddingHorizontal: 8,
+    gap: 2,
+  },
+  dateItem: {
+    width: ITEM_WIDTH,
+    paddingVertical: 4,
     alignItems: 'center',
     justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  arrowButtonDisabled: {
-    opacity: 0.3,
+  dateItemSelected: {
+    borderBottomColor: colors.neonGreen,
   },
-  dateButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateTextNormal: {
-    fontSize: 14,
-    fontWeight: '600',
+  dayName: {
+    fontSize: 9,
+    fontWeight: '500',
     color: colors.mutedForeground,
+    marginBottom: 1,
   },
-  dateTextToday: {
-    fontSize: 14,
-    fontWeight: '600',
+  dayNameToday: {
     color: colors.foreground,
   },
-  dateTextSelected: {
-    fontSize: 14,
-    fontWeight: '600',
+  dayNameSelected: {
     color: colors.neonGreen,
   },
-  dateTextTodaySelected: {
-    fontSize: 14,
-    fontWeight: '600',
+  dayNumber: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.mutedForeground,
+  },
+  dayNumberToday: {
+    color: colors.foreground,
+  },
+  dayNumberSelected: {
     color: colors.neonGreen,
   },
-  dateTextDisabled: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: `${colors.mutedForeground}4D`, // 30% opacity
+  todayDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.neonGreen,
+    marginTop: 2,
+  },
+  todayDotSelected: {
+    backgroundColor: colors.neonGreen,
   },
 })

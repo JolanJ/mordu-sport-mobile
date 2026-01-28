@@ -1,0 +1,357 @@
+export type Locale = 'fr' | 'en'
+
+export const translations = {
+  fr: {
+    // Navigation
+    matches: 'Matchs',
+    teams: 'Équipes',
+    favorites: 'Favoris',
+    profile: 'Profil',
+    back: 'Retour',
+    close: 'Fermer',
+    cancel: 'Annuler',
+    save: 'Sauvegarder',
+    error: 'Erreur',
+    success: 'Succès',
+    loading: 'Chargement...',
+
+    // Login
+    appName: 'Ultra Sports Fans',
+    loginSubtitle: 'Connecte-toi pour continuer',
+    email: 'Email',
+    emailPlaceholder: 'ton@email.com',
+    password: 'Mot de passe',
+    passwordPlaceholder: 'Ton mot de passe',
+    fillAllFields: 'Remplis tous les champs',
+    signIn: 'Se connecter',
+    noAccount: 'Pas encore de compte ? ',
+    signUp: "S'inscrire",
+    continueAsVisitor: 'Continuer en tant que visiteur',
+    visitor: 'Visiteur',
+    alreadyHaveAccount: 'Tu as déjà un compte ? ',
+
+    // Profile
+    logout: 'Déconnexion',
+    logoutConfirm: 'Es-tu sûr de vouloir te déconnecter ?',
+    usernameMinError: 'Le nom d\'utilisateur doit contenir au moins 3 caractères',
+    usernameTaken: 'Ce nom d\'utilisateur est déjà pris',
+    profileUpdated: 'Profil mis à jour avec succès!',
+    loadingProfile: 'Chargement du profil...',
+    loginToAccessProfile: 'Connecte-toi pour accéder à ton profil',
+    avatar: 'Avatar',
+    username: 'Nom d\'utilisateur',
+    usernamePlaceholder: 'Ton pseudo',
+    editProfile: 'Modifier le profil',
+    fanStats: 'Mes statistiques de fan',
+    memberSince: 'Membre depuis',
+    favoriteMatches: 'Matchs favoris',
+    followedTeams: 'Équipes suivies',
+    account: 'Compte',
+    disconnect: 'Se déconnecter',
+    recently: 'Récemment',
+
+    // Avatar names
+    avatarHockey: 'Joueur de hockey',
+    avatarBasketball: 'Joueur de basketball',
+    avatarFootball: 'Joueur de football',
+    avatarSoccer: 'Joueur de soccer',
+
+    // Matches
+    loadingMatches: 'Chargement des matchs...',
+    loadingMatch: 'Chargement du match...',
+    matchNotFound: 'Match non trouvé',
+    loadingError: 'Erreur de chargement',
+    loadingErrorMessage: 'Impossible de charger les matchs. Vérifie ta connexion.',
+    noMatchesScheduled: 'Aucun match prévu',
+    noMatchesForDate: 'Aucun match NHL prévu pour le {date}',
+    venueNotAvailable: 'Stade non disponible',
+    live: 'En cours',
+    finished: 'TERMINÉ',
+    upcoming: 'À venir',
+    end: 'FIN',
+
+    // Favorites
+    loginRequired: 'Connexion requise',
+    loginToSaveFavorites: 'Connecte-toi pour sauvegarder tes matchs favoris',
+    loginToAddFavorites: 'Connecte-toi pour ajouter des matchs en favoris',
+    noFavorites: 'Aucun favori',
+    addFavoritesHint: 'Ajoute des matchs à tes favoris pour les retrouver ici',
+    loadingFavorites: 'Chargement des favoris...',
+    match: 'match',
+    matchPlural: 'matchs',
+    favorite: 'favori',
+    favoritePlural: 'favoris',
+
+    // Teams
+    loadingTeams: 'Chargement des équipes...',
+    loadingData: 'Chargement des données...',
+    teamNotFound: 'Équipe non trouvée',
+    east: 'Est',
+    west: 'Ouest',
+    conference: 'CONFÉRENCE {name}',
+    all: 'TOUS',
+
+    // Tabs
+    chat: 'Chat',
+    events: 'Événements',
+    players: 'Joueurs',
+    team: 'Équipe',
+    injuries: 'Blessures',
+
+    // Chat
+    loginToChat: 'Connecte-toi pour participer au chat',
+    liveChat: 'Chat en direct',
+    writeMessage: 'Écris un message...',
+    beFirstToMessage: 'Sois le premier à envoyer un message !',
+    messageBlocked: 'Message bloqué',
+    messageBlockedReason: 'Ton message contient du contenu inapproprié (violence, haine, spam ou liens). Merci de reformuler.',
+
+    // Calendar days
+    sun: 'Dim',
+    mon: 'Lun',
+    tue: 'Mar',
+    wed: 'Mer',
+    thu: 'Jeu',
+    fri: 'Ven',
+    sat: 'Sam',
+
+    // Injuries
+    noInjuries: 'Aucune blessure',
+    teamHealthy: 'L\'équipe est en pleine santé!',
+    player: 'joueur',
+    playerPlural: 'joueurs',
+    injured: 'blessé',
+    injuredPlural: 'blessés',
+    since: 'Depuis le {date}',
+
+    // Team Stats
+    record: 'Record',
+    points: 'Points',
+    winPercentage: '% victoires',
+    gamesPlayed: 'matchs joués',
+    offensive: 'OFFENSIVE',
+    goalsFor: 'Buts pour',
+    perGame: '/ match',
+    shotsPerGame: 'Tirs par match',
+    powerPlay: 'Avantage numérique',
+    faceoffs: 'Mises au jeu',
+    defensive: 'DÉFENSIVE',
+    goalsAgainst: 'Buts contre',
+    shotsAllowed: 'Tirs alloués',
+    penaltyKill: 'Infériorité numérique',
+
+    // Roster
+    forwards: 'ATTAQUANTS',
+    defensemen: 'DÉFENSEURS',
+    goalies: 'GARDIENS',
+    gp: 'PJ',
+    goals: 'B',
+    assists: 'A',
+
+    // Match Events
+    loadingEvents: 'Chargement des événements...',
+    eventsNotAvailable: 'Événements non disponibles',
+    scoreByPeriod: 'Score par période',
+    goalsCount: 'Buts ({count})',
+    noGoals: 'Aucun but marqué',
+    assistsLabel: 'Passes: {assists}',
+    penaltiesCount: 'Pénalités ({count})',
+    noPenalties: 'Aucune pénalité',
+    statistics: 'Statistiques',
+    shots: 'Tirs',
+    hits: 'Mises en échec',
+    faceoffsWon: 'Mises au jeu',
+    giveaways: 'Revirements',
+    takeaways: 'Récupérations',
+    powerPlayShort: 'Avantage num.',
+    // Goal types
+    goalTypePP: 'AN',
+    goalTypeSH: 'DN',
+    goalTypeEN: 'FV',
+    goalTypeSO: 'TB',
+  },
+
+  en: {
+    // Navigation
+    matches: 'Matches',
+    teams: 'Teams',
+    favorites: 'Favorites',
+    profile: 'Profile',
+    back: 'Back',
+    close: 'Close',
+    cancel: 'Cancel',
+    save: 'Save',
+    error: 'Error',
+    success: 'Success',
+    loading: 'Loading...',
+
+    // Login
+    appName: 'Ultra Sports Fans',
+    loginSubtitle: 'Sign in to continue',
+    email: 'Email',
+    emailPlaceholder: 'your@email.com',
+    password: 'Password',
+    passwordPlaceholder: 'Your password',
+    fillAllFields: 'Please fill in all fields',
+    signIn: 'Sign in',
+    noAccount: "Don't have an account? ",
+    signUp: 'Sign up',
+    continueAsVisitor: 'Continue as visitor',
+    visitor: 'Visitor',
+    alreadyHaveAccount: 'Already have an account? ',
+
+    // Profile
+    logout: 'Logout',
+    logoutConfirm: 'Are you sure you want to logout?',
+    usernameMinError: 'Username must be at least 3 characters',
+    usernameTaken: 'This username is already taken',
+    profileUpdated: 'Profile updated successfully!',
+    loadingProfile: 'Loading profile...',
+    loginToAccessProfile: 'Sign in to access your profile',
+    avatar: 'Avatar',
+    username: 'Username',
+    usernamePlaceholder: 'Your username',
+    editProfile: 'Edit profile',
+    fanStats: 'My fan statistics',
+    memberSince: 'Member since',
+    favoriteMatches: 'Favorite matches',
+    followedTeams: 'Followed teams',
+    account: 'Account',
+    disconnect: 'Disconnect',
+    recently: 'Recently',
+
+    // Avatar names
+    avatarHockey: 'Hockey Player',
+    avatarBasketball: 'Basketball Player',
+    avatarFootball: 'Football Player',
+    avatarSoccer: 'Soccer Player',
+
+    // Matches
+    loadingMatches: 'Loading matches...',
+    loadingMatch: 'Loading match...',
+    matchNotFound: 'Match not found',
+    loadingError: 'Loading error',
+    loadingErrorMessage: 'Unable to load matches. Check your connection.',
+    noMatchesScheduled: 'No matches scheduled',
+    noMatchesForDate: 'No NHL matches scheduled for {date}',
+    venueNotAvailable: 'Venue not available',
+    live: 'Live',
+    finished: 'FINISHED',
+    upcoming: 'Upcoming',
+    end: 'END',
+
+    // Favorites
+    loginRequired: 'Login required',
+    loginToSaveFavorites: 'Sign in to save your favorite matches',
+    loginToAddFavorites: 'Sign in to add matches to your favorites',
+    noFavorites: 'No favorites',
+    addFavoritesHint: 'Add matches to your favorites to find them here',
+    loadingFavorites: 'Loading favorites...',
+    match: 'match',
+    matchPlural: 'matches',
+    favorite: 'favorite',
+    favoritePlural: 'favorites',
+
+    // Teams
+    loadingTeams: 'Loading teams...',
+    loadingData: 'Loading data...',
+    teamNotFound: 'Team not found',
+    east: 'East',
+    west: 'West',
+    conference: '{name} CONFERENCE',
+    all: 'ALL',
+
+    // Tabs
+    chat: 'Chat',
+    events: 'Events',
+    players: 'Players',
+    team: 'Team',
+    injuries: 'Injuries',
+
+    // Chat
+    loginToChat: 'Sign in to participate in chat',
+    liveChat: 'Live Chat',
+    writeMessage: 'Write a message...',
+    beFirstToMessage: 'Be the first to send a message!',
+    messageBlocked: 'Message blocked',
+    messageBlockedReason: 'Your message contains inappropriate content (violence, hate, spam or links). Please rephrase.',
+
+    // Calendar days
+    sun: 'Sun',
+    mon: 'Mon',
+    tue: 'Tue',
+    wed: 'Wed',
+    thu: 'Thu',
+    fri: 'Fri',
+    sat: 'Sat',
+
+    // Injuries
+    noInjuries: 'No injuries',
+    teamHealthy: 'The team is in perfect health!',
+    player: 'player',
+    playerPlural: 'players',
+    injured: 'injured',
+    injuredPlural: 'injured',
+    since: 'Since {date}',
+
+    // Team Stats
+    record: 'Record',
+    points: 'Points',
+    winPercentage: 'Win %',
+    gamesPlayed: 'games played',
+    offensive: 'OFFENSIVE',
+    goalsFor: 'Goals for',
+    perGame: '/ game',
+    shotsPerGame: 'Shots per game',
+    powerPlay: 'Power play',
+    faceoffs: 'Faceoffs',
+    defensive: 'DEFENSIVE',
+    goalsAgainst: 'Goals against',
+    shotsAllowed: 'Shots allowed',
+    penaltyKill: 'Penalty kill',
+
+    // Roster
+    forwards: 'FORWARDS',
+    defensemen: 'DEFENSEMEN',
+    goalies: 'GOALIES',
+    gp: 'GP',
+    goals: 'G',
+    assists: 'A',
+
+    // Match Events
+    loadingEvents: 'Loading events...',
+    eventsNotAvailable: 'Events not available',
+    scoreByPeriod: 'Score by period',
+    goalsCount: 'Goals ({count})',
+    noGoals: 'No goals scored',
+    assistsLabel: 'Assists: {assists}',
+    penaltiesCount: 'Penalties ({count})',
+    noPenalties: 'No penalties',
+    statistics: 'Statistics',
+    shots: 'Shots',
+    hits: 'Hits',
+    faceoffsWon: 'Faceoffs won',
+    giveaways: 'Giveaways',
+    takeaways: 'Takeaways',
+    powerPlayShort: 'Power play',
+    // Goal types
+    goalTypePP: 'PP',
+    goalTypeSH: 'SH',
+    goalTypeEN: 'EN',
+    goalTypeSO: 'SO',
+  },
+} as const
+
+export type TranslationKey = keyof typeof translations.fr
+
+export function getTranslation(locale: Locale, key: TranslationKey, params?: Record<string, string | number>): string {
+  let text = translations[locale][key] || translations.fr[key] || key
+
+  if (params) {
+    Object.entries(params).forEach(([param, value]) => {
+      text = text.replace(`{${param}}`, String(value))
+    })
+  }
+
+  return text
+}

@@ -33,16 +33,17 @@ export function LeagueSection({ league, matches, onMatchPress, isFavorite, onTog
 
   return (
     <View style={styles.container}>
-      {/* Header de la section avec logo et nom */}
-      <View style={styles.header}>
-        {logo && (
-          <Image
-            source={logo}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        )}
-        <Text style={styles.leagueName}>{league}</Text>
+      {/* Pill avec logo */}
+      <View style={styles.pillContainer}>
+        <View style={styles.pill}>
+          {logo && (
+            <Image
+              source={logo}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          )}
+        </View>
       </View>
 
       {/* Liste des matchs */}
@@ -63,25 +64,29 @@ export function LeagueSection({ league, matches, onMatchPress, isFavorite, onTog
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
-  header: {
+  pillContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.muted,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.card,
+    padding: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   logo: {
-    width: 24,
-    height: 24,
-    marginRight: 12,
+    width: 50,
+    height: 50,
   },
   leagueName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.foreground,
   },
   matchesContainer: {

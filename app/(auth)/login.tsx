@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext'
+import { getTranslation, Locale } from '@/lib/translations'
 import { colors } from '@/theme/colors'
 import { Link, router } from 'expo-router'
 import { useState } from 'react'
@@ -18,11 +19,15 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [locale, setLocale] = useState<Locale>('fr')
   const { signIn } = useAuth()
+
+  const t = (key: Parameters<typeof getTranslation>[1], params?: Record<string, string | number>) =>
+    getTranslation(locale, key, params)
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setError('Veuillez remplir tous les champs')
+      setError(t('fillAllFields'))
       return
     }
 
@@ -45,17 +50,35 @@ export default function LoginScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Language Toggle */}
+        <View style={styles.localeContainer}>
+          <View style={styles.localeToggle}>
+            <Pressable
+              style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
+              onPress={() => setLocale('fr')}
+            >
+              <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
+              onPress={() => setLocale('en')}
+            >
+              <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>EN</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <View style={styles.header}>
-          <Text style={styles.title}>Mordu Sport</Text>
-          <Text style={styles.subtitle}>Connectez-vous pour continuer</Text>
+          <Text style={styles.title}>{t('appName')}</Text>
+          <Text style={styles.subtitle}>{t('loginSubtitle')}</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('email')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="votre@email.com"
+              placeholder={t('emailPlaceholder')}
               placeholderTextColor={colors.mutedForeground}
               value={email}
               onChangeText={setEmail}
@@ -65,10 +88,10 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mot de passe</Text>
+            <Text style={styles.label}>{t('password')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Votre mot de passe"
+              placeholder={t('passwordPlaceholder')}
               placeholderTextColor={colors.mutedForeground}
               value={password}
               onChangeText={setPassword}
@@ -90,18 +113,25 @@ export default function LoginScreen() {
             {loading ? (
               <ActivityIndicator color={colors.background} />
             ) : (
-              <Text style={styles.buttonText}>Se connecter</Text>
+              <Text style={styles.buttonText}>{t('signIn')}</Text>
             )}
           </Pressable>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Pas encore de compte ? </Text>
+            <Text style={styles.footerText}>{t('noAccount')}</Text>
             <Link href="/(auth)/register" asChild>
               <Pressable>
-                <Text style={styles.linkText}>S'inscrire</Text>
+                <Text style={styles.linkText}>{t('signUp')}</Text>
               </Pressable>
             </Link>
           </View>
+
+          <Pressable
+            style={styles.visitorButton}
+            onPress={() => router.replace('/(tabs)')}
+          >
+            <Text style={styles.visitorButtonText}>{t('continueAsVisitor')}</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -118,6 +148,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 32,
+  },
+  localeContainer: {
+    position: 'absolute',
+    top: 16,
+    right: 0,
+    left: 0,
+    alignItems: 'center',
+  },
+  localeToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    padding: 2,
+  },
+  localeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  localeButtonActive: {
+    backgroundColor: colors.neonGreen,
+  },
+  localeButtonText: {
+    color: colors.mutedForeground,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  localeButtonTextActive: {
+    color: colors.background,
   },
   header: {
     alignItems: 'center',
@@ -195,5 +254,19 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
+  },
+  visitorButton: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  visitorButtonText: {
+    color: colors.mutedForeground,
+    fontSize: 14,
+    fontWeight: '500',
   },
 })

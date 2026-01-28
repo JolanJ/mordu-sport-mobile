@@ -1,5 +1,6 @@
+import { useTranslation } from '@/contexts/TranslationContext'
 import { useMatchDetails } from '@/hooks/useMatchDetails'
-import { GoalEvent, MatchEvent, PenaltyEvent } from '@/lib/types'
+import { GoalEvent, PenaltyEvent } from '@/lib/types'
 import { colors } from '@/theme/colors'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
 
@@ -10,13 +11,14 @@ interface MatchEventsComponentProps {
 }
 
 export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: MatchEventsComponentProps) {
+  const { t } = useTranslation()
   const { data: details, isLoading, isError } = useMatchDetails({ matchId })
 
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.neonGreen} />
-        <Text style={styles.loadingText}>Chargement des événements...</Text>
+        <Text style={styles.loadingText}>{t('loadingEvents')}</Text>
       </View>
     )
   }
@@ -24,7 +26,7 @@ export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: Ma
   if (isError || !details) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.emptyText}>Événements non disponibles</Text>
+        <Text style={styles.emptyText}>{t('eventsNotAvailable')}</Text>
       </View>
     )
   }
@@ -39,10 +41,10 @@ export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: Ma
 
   const getGoalTypeLabel = (goalType: GoalEvent['goalType']) => {
     switch (goalType) {
-      case 'pp': return 'AN' // Avantage numérique
-      case 'sh': return 'DN' // Désavantage numérique
-      case 'en': return 'FV' // Filet vide
-      case 'ps': return 'TB' // Tir de barrage
+      case 'pp': return t('goalTypePP')
+      case 'sh': return t('goalTypeSH')
+      case 'en': return t('goalTypeEN')
+      case 'ps': return t('goalTypeSO')
       default: return null
     }
   }
@@ -51,7 +53,7 @@ export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: Ma
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Résumé par période */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Score par période</Text>
+        <Text style={styles.sectionTitle}>{t('scoreByPeriod')}</Text>
         <View style={styles.periodScoresContainer}>
           <View style={styles.periodScoreRow}>
             <Text style={styles.periodTeamName}>{awayTeamAbbr}</Text>
@@ -85,9 +87,9 @@ export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: Ma
 
       {/* Buts */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Buts ({goals.length})</Text>
+        <Text style={styles.sectionTitle}>{t('goalsCount', { count: goals.length })}</Text>
         {goals.length === 0 ? (
-          <Text style={styles.emptyText}>Aucun but marqué</Text>
+          <Text style={styles.emptyText}>{t('noGoals')}</Text>
         ) : (
           goals.map((goal, index) => (
             <View key={index} style={styles.eventCard}>
@@ -106,7 +108,7 @@ export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: Ma
                 <Text style={styles.goalScorer}>{goal.player}</Text>
                 {goal.assists.length > 0 && (
                   <Text style={styles.goalAssists}>
-                    Passes: {goal.assists.join(', ')}
+                    {t('assistsLabel', { assists: goal.assists.join(', ') })}
                   </Text>
                 )}
                 <Text style={styles.goalScore}>
@@ -120,9 +122,9 @@ export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: Ma
 
       {/* Pénalités */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Pénalités ({penalties.length})</Text>
+        <Text style={styles.sectionTitle}>{t('penaltiesCount', { count: penalties.length })}</Text>
         {penalties.length === 0 ? (
-          <Text style={styles.emptyText}>Aucune pénalité</Text>
+          <Text style={styles.emptyText}>{t('noPenalties')}</Text>
         ) : (
           penalties.map((penalty, index) => (
             <View key={index} style={styles.eventCard}>
@@ -143,15 +145,15 @@ export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: Ma
 
       {/* Stats d'équipe */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Statistiques</Text>
+        <Text style={styles.sectionTitle}>{t('statistics')}</Text>
         <View style={styles.statsTable}>
-          <StatRow label="Tirs" away={teamStats.away.shots} home={teamStats.home.shots} />
-          <StatRow label="Mises en échec" away={teamStats.away.hits} home={teamStats.home.hits} />
-          <StatRow label="Mises au jeu" away={teamStats.away.faceoffsWon} home={teamStats.home.faceoffsWon} />
-          <StatRow label="Revirements" away={teamStats.away.giveaways} home={teamStats.home.giveaways} inverse />
-          <StatRow label="Récupérations" away={teamStats.away.takeaways} home={teamStats.home.takeaways} />
+          <StatRow label={t('shots')} away={teamStats.away.shots} home={teamStats.home.shots} />
+          <StatRow label={t('hits')} away={teamStats.away.hits} home={teamStats.home.hits} />
+          <StatRow label={t('faceoffsWon')} away={teamStats.away.faceoffsWon} home={teamStats.home.faceoffsWon} />
+          <StatRow label={t('giveaways')} away={teamStats.away.giveaways} home={teamStats.home.giveaways} inverse />
+          <StatRow label={t('takeaways')} away={teamStats.away.takeaways} home={teamStats.home.takeaways} />
           <StatRow
-            label="Avantage num."
+            label={t('powerPlayShort')}
             away={`${powerplay.away.goals}/${powerplay.away.opportunities}`}
             home={`${powerplay.home.goals}/${powerplay.home.opportunities}`}
           />

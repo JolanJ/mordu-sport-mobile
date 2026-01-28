@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { Match } from '@/lib/types'
 import { colors } from '@/theme/colors'
 import { ChevronRight, Plus, Star } from 'lucide-react-native'
@@ -13,6 +14,7 @@ interface MatchCardProps {
 
 export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite }: MatchCardProps) {
   const { user } = useAuth()
+  const { t } = useTranslation()
 
   // Afficher le bouton favoris si: pas terminé OU a une période (match en cours mal détecté)
   const showFavoriteButton = match.status !== 'finished' || !!match.period
@@ -20,8 +22,8 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
   const handleFavoritePress = () => {
     if (!user) {
       Alert.alert(
-        'Connexion requise',
-        'Connectez-vous pour ajouter des matchs en favoris',
+        t('loginRequired'),
+        t('loginToAddFavorites'),
         [{ text: 'OK', style: 'default' }]
       )
       return
@@ -54,11 +56,11 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
 
     switch (match.status) {
       case 'live':
-        return 'En cours'
+        return t('live')
       case 'upcoming':
         return match.time
       case 'finished':
-        return 'TERMINÉ'
+        return t('finished')
       default:
         return match.time
     }
@@ -84,7 +86,7 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
       {/* Ligne en haut : Venue à gauche, Heure + Favori à droite */}
       <View style={styles.headerRow}>
         <Text style={styles.venueText} numberOfLines={1} ellipsizeMode="tail">
-          {match.venue || 'Stade non disponible'}
+          {match.venue || t('venueNotAvailable')}
         </Text>
         <View style={styles.headerRight}>
           <Text style={styles.timeText}>{getStatusText()}</Text>
@@ -119,10 +121,10 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
               <Text style={styles.logoPlaceholder}>{match.awayTeam.abbr.substring(0, 2)}</Text>
             )}
           </View>
-          
+
           {/* Colonne 2: Nom */}
           <Text style={styles.teamName}>{match.awayTeam.abbr}</Text>
-          
+
           {/* Colonne 3: Score */}
           <View style={styles.scoreContainer}>
             {match.status === 'upcoming' ? (

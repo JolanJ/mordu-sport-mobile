@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
-import { Bell, Search } from 'lucide-react-native'
 import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native'
 
 const avatars: Record<number, ImageSourcePropType> = {
@@ -13,9 +13,10 @@ const avatars: Record<number, ImageSourcePropType> = {
 
 export function HomeHeader() {
   const { profile } = useAuth()
+  const { locale, setLocale, t } = useTranslation()
 
   const avatarSource = avatars[profile?.avatar_id || 1] || avatars[1]
-  const username = profile?.username || 'Utilisateur'
+  const username = profile?.username || t('visitor')
 
   return (
     <View style={styles.container}>
@@ -33,24 +34,19 @@ export function HomeHeader() {
           <Text style={styles.username}>@{username}</Text>
         </Pressable>
 
-       
-
-        {/* Section droite : Icônes sans fond */}
-        <View style={styles.rightSection}>
-          {/* Icône recherche verte (contour seulement) */}
-          <Pressable 
-            onPress={() => console.log('Search')} 
-            style={styles.iconButton}
+        {/* Section droite : Toggle langue */}
+        <View style={styles.localeToggle}>
+          <Pressable
+            style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
+            onPress={() => setLocale('fr')}
           >
-            <Search size={24} color={colors.neonGreen} strokeWidth={2} />
+            <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
           </Pressable>
-          
-          {/* Icône cloche bleue (contour seulement) */}
-          <Pressable 
-            onPress={() => console.log('Notifications')} 
-            style={styles.iconButton}
+          <Pressable
+            style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
+            onPress={() => setLocale('en')}
           >
-            <Bell size={24} color={colors.neonBlue} strokeWidth={2} />
+            <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>EN</Text>
           </Pressable>
         </View>
       </View>
@@ -86,24 +82,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.foreground,
   },
-  centerSection: {
+  localeToggle: {
     flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    padding: 2,
   },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.foreground,
+  localeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
-  rightSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
+  localeButtonActive: {
+    backgroundColor: colors.neonGreen,
   },
-  iconButton: {
-    height: 36,
-    width: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+  localeButtonText: {
+    color: colors.mutedForeground,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  localeButtonTextActive: {
+    color: colors.background,
   },
 })

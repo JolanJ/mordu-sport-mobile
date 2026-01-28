@@ -1,6 +1,7 @@
 import { LeagueSection } from '@/components/LeagueSection'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 import { useFavorites } from '@/contexts/FavoritesContext'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { useMatches } from '@/hooks/useMatches'
 import { colors } from '@/theme/colors'
 import { useRouter } from 'expo-router'
@@ -15,6 +16,7 @@ export function MatchList({ selectedDate }: MatchListProps) {
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollY = useRef(new Animated.Value(0)).current
   const router = useRouter()
+  const { t, locale } = useTranslation()
 
   // Récupérer les matchs NHL depuis l'API
   const queryDate = selectedDate || new Date()
@@ -34,7 +36,7 @@ export function MatchList({ selectedDate }: MatchListProps) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.neonGreen} />
-        <Text style={styles.loadingText}>Chargement des matchs...</Text>
+        <Text style={styles.loadingText}>{t('loadingMatches')}</Text>
       </View>
     )
   }
@@ -43,20 +45,20 @@ export function MatchList({ selectedDate }: MatchListProps) {
   if (isError) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.errorTitle}>Erreur de chargement</Text>
-        <Text style={styles.errorText}>Impossible de charger les matchs. Vérifiez votre connexion.</Text>
+        <Text style={styles.errorTitle}>{t('loadingError')}</Text>
+        <Text style={styles.errorText}>{t('loadingErrorMessage')}</Text>
       </View>
     )
   }
 
   // Afficher les matchs NHL
   if (matches.length === 0) {
-    const dateStr = queryDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    const dateStr = queryDate.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>Aucun match prévu</Text>
+        <Text style={styles.emptyTitle}>{t('noMatchesScheduled')}</Text>
         <Text style={styles.emptySubtitle}>
-          Aucun match NHL prévu pour le {dateStr}
+          {t('noMatchesForDate', { date: dateStr })}
         </Text>
       </View>
     )

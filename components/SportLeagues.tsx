@@ -1,39 +1,41 @@
+import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
 import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-
-const leagues = [
-  { id: "ALL", name: "TOUS" },
-  { id: "NHL", name: "NHL" },
-  { id: "NFL", name: "NFL" },
-  { id: "NBA", name: "NBA" },
-]
 
 interface SportLeaguesProps {
   onLeagueChange?: (league: string) => void
 }
 
 export function SportLeagues({ onLeagueChange }: SportLeaguesProps) {
-  const [selectedLeague, setSelectedLeague] = useState("ALL") // TOUS par défaut
+  const { t } = useTranslation()
+  const [selectedLeague, setSelectedLeague] = useState("ALL")
+
+  const leagues = [
+    { id: "ALL", name: t('all') },
+    { id: "NHL", name: "NHL" },
+    { id: "NFL", name: "NFL" },
+    { id: "NBA", name: "NBA" },
+  ]
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {leagues.map((league) => {
           const isSelected = selectedLeague === league.id
           return (
-                    <Pressable
-                      key={league.id}
-                      onPress={() => {
-                        setSelectedLeague(league.id)
-                        onLeagueChange?.(league.id)
-                      }}
-                      style={styles.leagueButton}
-                    >
+            <Pressable
+              key={league.id}
+              onPress={() => {
+                setSelectedLeague(league.id)
+                onLeagueChange?.(league.id)
+              }}
+              style={styles.leagueButton}
+            >
               <Text style={[
                 styles.leagueText,
                 isSelected ? styles.leagueTextActive : styles.leagueTextInactive

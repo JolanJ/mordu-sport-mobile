@@ -1,8 +1,9 @@
 import { HomeHeader } from '@/components/HomeHeader'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
-import { ArrowLeft, Check, LogOut } from 'lucide-react-native'
+import { ArrowLeft, Check, LogIn, LogOut } from 'lucide-react-native'
 import { useState, useEffect } from 'react'
 import {
   ActivityIndicator,
@@ -17,39 +18,38 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-// Avatars disponibles (style cartoon sport)
-const availableAvatars = [
-  { id: 1, name: 'Hockey Player', source: require('@/assets/images/avatar-1.png') },
-  { id: 2, name: 'Basketball Player', source: require('@/assets/images/avatar-2.png') },
-  { id: 3, name: 'Football Player', source: require('@/assets/images/avatar-3.png') },
-  { id: 4, name: 'Soccer Player', source: require('@/assets/images/avatar-4.png') },
-]
-
 export default function Profile() {
-  const { profile, signOut, updateProfile } = useAuth()
+  const { user, profile, signOut, updateProfile } = useAuth()
+  const { t, locale } = useTranslation()
   const [username, setUsername] = useState('')
-  const [address, setAddress] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Avatars disponibles (style cartoon sport)
+  const availableAvatars = [
+    { id: 1, name: t('avatarHockey'), source: require('@/assets/images/avatar-1.png') },
+    { id: 2, name: t('avatarBasketball'), source: require('@/assets/images/avatar-2.png') },
+    { id: 3, name: t('avatarFootball'), source: require('@/assets/images/avatar-3.png') },
+    { id: 4, name: t('avatarSoccer'), source: require('@/assets/images/avatar-4.png') },
+  ]
 
   // Initialiser avec les données du profil
   useEffect(() => {
     if (profile) {
       setUsername(profile.username)
-      setAddress(profile.address || '')
       setSelectedAvatar(profile.avatar_id)
     }
   }, [profile])
 
   const handleSignOut = () => {
     Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      t('logout'),
+      t('logoutConfirm'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Déconnexion',
+          text: t('logout'),
           style: 'destructive',
           onPress: () => signOut()
         }
@@ -59,7 +59,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (username.trim().length < 3) {
-      Alert.alert('Erreur', 'Le nom d\'utilisateur doit contenir au moins 3 caractères')
+      Alert.alert(t('error'), t('usernameMinError'))
       return
     }
 
@@ -67,7 +67,6 @@ export default function Profile() {
 
     const { error } = await updateProfile({
       username: username.trim(),
-      address: address.trim() || null,
       avatar_id: selectedAvatar,
     })
 
@@ -75,39 +74,58 @@ export default function Profile() {
 
     if (error) {
       if (error.message.includes('duplicate') || error.message.includes('23505')) {
-        Alert.alert('Erreur', 'Ce nom d\'utilisateur est déjà pris')
+        Alert.alert(t('error'), t('usernameTaken'))
       } else {
-        Alert.alert('Erreur', error.message)
+        Alert.alert(t('error'), error.message)
       }
     } else {
       setIsEditing(false)
-      Alert.alert('Succès', 'Profil mis à jour avec succès!')
+      Alert.alert(t('success'), t('profileUpdated'))
     }
   }
 
   const handleCancel = () => {
     if (profile) {
       setUsername(profile.username)
-      setAddress(profile.address || '')
       setSelectedAvatar(profile.avatar_id)
     }
     setIsEditing(false)
   }
 
   const formatMemberSince = (dateString?: string) => {
-    if (!dateString) return 'Récemment'
+    if (!dateString) return t('recently')
     const date = new Date(dateString)
-    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    return date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { month: 'long', year: 'numeric' })
   }
 
-  // Affichage si pas de profil chargé
+  // Affichage pour visiteurs non connectés
+  if (!user) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <HomeHeader />
+        <View style={styles.loadingContainer}>
+          <LogIn size={48} color={colors.mutedForeground} />
+          <Text style={styles.visitorTitle}>{t('loginRequired')}</Text>
+          <Text style={styles.visitorText}>{t('loginToAccessProfile')}</Text>
+          <Pressable
+            style={styles.loginButton}
+            onPress={() => router.push('/(auth)/login')}
+          >
+            <Text style={styles.loginButtonText}>{t('signIn')}</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  // Affichage si profil en cours de chargement
   if (!profile) {
     return (
       <SafeAreaView edges={['top']} style={styles.container}>
         <HomeHeader />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.neonGreen} />
-          <Text style={styles.loadingText}>Chargement du profil...</Text>
+          <Text style={styles.loadingText}>{t('loadingProfile')}</Text>
         </View>
       </SafeAreaView>
     )
@@ -126,13 +144,13 @@ export default function Profile() {
           >
             <ArrowLeft size={24} color={colors.foreground} />
           </Pressable>
-          <Text style={styles.title}>Profil</Text>
+          <Text style={styles.title}>{t('profile')}</Text>
           <View style={styles.placeholder} />
         </View>
 
         {/* Section Avatar */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Avatar</Text>
+          <Text style={styles.sectionTitle}>{t('avatar')}</Text>
           <View style={styles.avatarGrid}>
             {availableAvatars.map((avatar) => (
               <Pressable
@@ -161,34 +179,18 @@ export default function Profile() {
 
         {/* Section Nom d'utilisateur */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Nom d'utilisateur</Text>
+          <Text style={styles.sectionTitle}>{t('username')}</Text>
           <View style={styles.inputContainer}>
             <TextInput
               style={[styles.textInput, !isEditing && styles.textInputDisabled]}
               value={username}
               onChangeText={setUsername}
-              placeholder="Votre pseudo"
+              placeholder={t('usernamePlaceholder')}
               placeholderTextColor={colors.mutedForeground}
               editable={isEditing}
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={20}
-            />
-          </View>
-        </View>
-
-        {/* Section Adresse */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Adresse</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[styles.textInput, !isEditing && styles.textInputDisabled]}
-              value={address}
-              onChangeText={setAddress}
-              placeholder="Votre adresse (optionnel)"
-              placeholderTextColor={colors.mutedForeground}
-              editable={isEditing}
-              autoCorrect={false}
             />
           </View>
         </View>
@@ -199,7 +201,7 @@ export default function Profile() {
             style={styles.editProfileButton}
             onPress={() => setIsEditing(true)}
           >
-            <Text style={styles.editProfileButtonText}>Modifier le profil</Text>
+            <Text style={styles.editProfileButtonText}>{t('editProfile')}</Text>
           </Pressable>
         ) : (
           <View style={styles.actionButtons}>
@@ -208,7 +210,7 @@ export default function Profile() {
               onPress={handleCancel}
               disabled={saving}
             >
-              <Text style={styles.cancelButtonText}>Annuler</Text>
+              <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
             </Pressable>
             <Pressable
               style={[styles.button, styles.saveButton, saving && styles.buttonDisabled]}
@@ -218,7 +220,7 @@ export default function Profile() {
               {saving ? (
                 <ActivityIndicator size="small" color={colors.background} />
               ) : (
-                <Text style={styles.saveButtonText}>Sauvegarder</Text>
+                <Text style={styles.saveButtonText}>{t('save')}</Text>
               )}
             </Pressable>
           </View>
@@ -226,18 +228,18 @@ export default function Profile() {
 
         {/* Informations du profil */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mes statistiques de fan</Text>
+          <Text style={styles.sectionTitle}>{t('fanStats')}</Text>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Membre depuis</Text>
+              <Text style={styles.infoLabel}>{t('memberSince')}</Text>
               <Text style={styles.infoValue}>{formatMemberSince(profile.created_at)}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Matchs favoris</Text>
+              <Text style={styles.infoLabel}>{t('favoriteMatches')}</Text>
               <Text style={styles.infoValue}>0</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Équipes suivies</Text>
+              <Text style={styles.infoLabel}>{t('followedTeams')}</Text>
               <Text style={styles.infoValue}>0</Text>
             </View>
           </View>
@@ -245,16 +247,16 @@ export default function Profile() {
 
         {/* Section compte */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Compte</Text>
+          <Text style={styles.sectionTitle}>{t('account')}</Text>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoLabel}>{t('email')}</Text>
               <Text style={styles.infoValue}>{profile.email}</Text>
             </View>
           </View>
           <Pressable style={styles.logoutButton} onPress={handleSignOut}>
             <LogOut size={20} color={colors.destructive} />
-            <Text style={styles.logoutButtonText}>Se déconnecter</Text>
+            <Text style={styles.logoutButtonText}>{t('disconnect')}</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -280,6 +282,33 @@ const styles = StyleSheet.create({
     marginTop: 16,
     color: colors.mutedForeground,
     fontSize: 14,
+  },
+  visitorTitle: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.foreground,
+  },
+  visitorText: {
+    marginTop: 8,
+    color: colors.mutedForeground,
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  loginButton: {
+    marginTop: 24,
+    height: 48,
+    paddingHorizontal: 32,
+    backgroundColor: colors.neonGreen,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginButtonText: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',

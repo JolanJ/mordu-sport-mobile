@@ -1,3 +1,4 @@
+import { useTranslation } from '@/contexts/TranslationContext'
 import { Injury } from '@/lib/teamTypes'
 import { colors } from '@/theme/colors'
 import { AlertCircle, Hospital } from 'lucide-react-native'
@@ -8,12 +9,14 @@ interface InjuryReportProps {
 }
 
 export function InjuryReport({ injuries }: InjuryReportProps) {
+  const { t, locale } = useTranslation()
+
   if (injuries.length === 0) {
     return (
       <View style={styles.emptyState}>
         <Hospital size={48} color={colors.mutedForeground} />
-        <Text style={styles.emptyTitle}>Aucune blessure</Text>
-        <Text style={styles.emptySubtext}>L'équipe est en pleine santé!</Text>
+        <Text style={styles.emptyTitle}>{t('noInjuries')}</Text>
+        <Text style={styles.emptySubtext}>{t('teamHealthy')}</Text>
       </View>
     )
   }
@@ -29,13 +32,21 @@ export function InjuryReport({ injuries }: InjuryReportProps) {
     }
   }
 
+  const getInjuredText = () => {
+    const count = injuries.length
+    if (locale === 'fr') {
+      return `${count} joueur${count > 1 ? 's' : ''} blessé${count > 1 ? 's' : ''}`
+    }
+    return `${count} injured player${count !== 1 ? 's' : ''}`
+  }
+
   return (
     <View style={styles.container}>
       {/* Alert banner */}
       <View style={styles.alertBanner}>
         <AlertCircle size={20} color={colors.destructive} />
         <Text style={styles.alertText}>
-          {injuries.length} joueur{injuries.length > 1 ? 's' : ''} blessé{injuries.length > 1 ? 's' : ''}
+          {getInjuredText()}
         </Text>
       </View>
 
@@ -67,7 +78,7 @@ export function InjuryReport({ injuries }: InjuryReportProps) {
 
               {/* Date */}
               {injury.date && (
-                <Text style={styles.injuryDate}>Depuis le {injury.date}</Text>
+                <Text style={styles.injuryDate}>{t('since', { date: injury.date })}</Text>
               )}
             </View>
           )
@@ -167,4 +178,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 })
-

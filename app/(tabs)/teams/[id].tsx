@@ -4,6 +4,7 @@ import { TabsNavigation } from '@/components/TabsNavigation'
 import { TeamBanner } from '@/components/TeamBanner'
 import { TeamRosterComponent } from '@/components/TeamRosterComponent'
 import { TeamStatsComponent } from '@/components/TeamStatsComponent'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { useTeamData } from '@/hooks/useTeamData'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams } from 'expo-router'
@@ -16,6 +17,7 @@ type TabType = 'players' | 'stats' | 'injuries'
 export default function TeamDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [activeTab, setActiveTab] = useState<TabType>('players')
+  const { t } = useTranslation()
 
   // Utiliser le hook pour fetcher les vraies données
   const {
@@ -41,7 +43,7 @@ export default function TeamDetail() {
         <HomeHeader />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.neonGreen} />
-          <Text style={styles.loadingText}>Chargement des données...</Text>
+          <Text style={styles.loadingText}>{t('loadingData')}</Text>
         </View>
       </SafeAreaView>
     )
@@ -53,7 +55,7 @@ export default function TeamDetail() {
       <SafeAreaView edges={['top']} style={styles.container}>
         <HomeHeader />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Équipe non trouvée</Text>
+          <Text style={styles.errorText}>{t('teamNotFound')}</Text>
         </View>
       </SafeAreaView>
     )

@@ -1,3 +1,4 @@
+import { useTranslation } from '@/contexts/TranslationContext'
 import { Team } from '@/lib/teamData'
 import { colors } from '@/theme/colors'
 import { StyleSheet, Text, View } from 'react-native'
@@ -10,10 +11,15 @@ interface ConferenceSectionProps {
 }
 
 export function ConferenceSection({ conference, teams, onTeamPress }: ConferenceSectionProps) {
+  const { t, locale } = useTranslation()
+
   const translateConference = (conference: string) => {
+    if (locale === 'en') {
+      return conference
+    }
     const translations: Record<string, string> = {
-      'Eastern': 'Est',
-      'Western': 'Ouest',
+      'Eastern': t('east'),
+      'Western': t('west'),
       'AFC': 'AFC',
       'NFC': 'NFC'
     }
@@ -24,15 +30,15 @@ export function ConferenceSection({ conference, teams, onTeamPress }: Conference
     // NHL
     if (conference === 'Eastern') return colors.primary // Bleu
     if (conference === 'Western') return colors.accent // Orange
-    
+
     // NBA
     if (conference === 'Eastern') return colors.accent // Orange
     if (conference === 'Western') return colors.destructive // Rouge
-    
+
     // NFL
     if (conference === 'AFC') return colors.primary // Bleu
     if (conference === 'NFC') return colors.destructive // Rouge
-    
+
     return colors.foreground
   }
 
@@ -47,11 +53,19 @@ export function ConferenceSection({ conference, teams, onTeamPress }: Conference
     return acc
   }, {} as Record<string, Team[]>)
 
+  const getConferenceTitle = () => {
+    const translatedConference = translateConference(conference).toUpperCase()
+    if (locale === 'en') {
+      return `${translatedConference} CONFERENCE`
+    }
+    return `CONFÉRENCE ${translatedConference}`
+  }
+
   return (
     <View style={styles.container}>
       <View style={[styles.conferenceHeader, { borderBottomColor: conferenceColor }]}>
         <Text style={[styles.conferenceTitle, { color: conferenceColor }]}>
-          CONFÉRENCE {translateConference(conference).toUpperCase()}
+          {getConferenceTitle()}
         </Text>
       </View>
 

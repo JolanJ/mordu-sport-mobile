@@ -1,6 +1,7 @@
+import SplashLogo from '@/assets/images/splashscreen.svg'
 import { colors } from '@/theme/colors'
 import { useEffect, useState } from 'react'
-import { Animated, Image, StyleSheet, View } from 'react-native'
+import { Animated, StyleSheet, View } from 'react-native'
 
 interface SplashScreenProps {
   onFinish: () => void
@@ -59,11 +60,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
           },
         ]}
       >
-        <Image
-          source={require('@/assets/images/Logo - Bouche Mordu (1).png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <SplashLogo width={250} height={250} />
       </Animated.View>
     </View>
   )
@@ -79,9 +76,5 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  logo: {
-    width: 180,
-    height: 180,
   },
 })

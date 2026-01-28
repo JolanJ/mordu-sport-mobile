@@ -1,10 +1,13 @@
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
+import { containsBlockedWord } from '@/lib/chatFilter'
 import { colors } from '@/theme/colors'
 import { Send } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   ImageSourcePropType,
@@ -36,6 +39,7 @@ const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
 
 export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRoomProps) {
   const { user, profile, updateProfile } = useAuth()
+  const { t, locale: appLocale } = useTranslation()
   const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'en')
   const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, isAuthenticated } = useChat({ matchId, locale })
   const [inputText, setInputText] = useState('')
@@ -89,6 +93,12 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
   const handleSend = async () => {
     if (!inputText.trim() || sending) return
 
+    // Vérifier si le message contient des mots interdits
+    if (containsBlockedWord(inputText)) {
+      Alert.alert(t('messageBlocked'), t('messageBlockedReason'))
+      return
+    }
+
     const text = inputText
     setInputText('')
     await sendMessage(text, username, avatarId)
@@ -96,7 +106,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleTimeString(appLocale === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })
   }
 
   const handleLongPress = (messageId: string) => {
@@ -179,7 +189,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
       <View style={styles.container}>
         <View style={styles.authPrompt}>
           <Text style={styles.authPromptText}>
-            Connectez-vous pour participer au chat
+            {t('loginToChat')}
           </Text>
         </View>
       </View>
@@ -196,7 +206,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
         <View style={styles.header}>
           <View style={styles.liveIndicator}>
             <View style={styles.liveDot} />
-            <Text style={styles.liveText}>{locale === 'fr' ? 'Chat en direct' : 'Live Chat'}</Text>
+            <Text style={styles.liveText}>{t('liveChat')}</Text>
           </View>
           <View style={styles.headerRight}>
             <View style={styles.localeToggle}>
@@ -232,7 +242,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>
-                {locale === 'fr' ? 'Soyez le premier à envoyer un message !' : 'Be the first to send a message!'}
+                {t('beFirstToMessage')}
               </Text>
             </View>
           }
@@ -257,12 +267,12 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder={locale === 'fr' ? 'Écrivez un message...' : 'Write a message...'}
+            placeholder={t('writeMessage')}
             placeholderTextColor={colors.mutedForeground}
             value={inputText}
             onChangeText={setInputText}
             multiline
-            maxLength={500}
+            maxLength={200}
             onSubmitEditing={handleSend}
           />
           <Pressable

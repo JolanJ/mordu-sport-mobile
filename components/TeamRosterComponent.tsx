@@ -1,3 +1,4 @@
+import { useTranslation } from '@/contexts/TranslationContext'
 import { Player, TeamRoster } from '@/lib/teamTypes'
 import { colors } from '@/theme/colors'
 import { StyleSheet, Text, View } from 'react-native'
@@ -8,6 +9,8 @@ interface TeamRosterComponentProps {
 }
 
 export function TeamRosterComponent({ roster }: TeamRosterComponentProps) {
+  const { t } = useTranslation()
+
   const renderPlayerCard = (player: Player, positionColor: string) => {
     const isGoalie = player.position === 'G'
 
@@ -39,7 +42,7 @@ export function TeamRosterComponent({ roster }: TeamRosterComponentProps) {
             {player.gamesPlayed !== undefined && (
               <>
                 <Text style={styles.playerDetail}>•</Text>
-                <Text style={styles.playerDetail}>{player.gamesPlayed} PJ</Text>
+                <Text style={styles.playerDetail}>{player.gamesPlayed} {t('gp')}</Text>
               </>
             )}
             {player.birthplace && (
@@ -68,7 +71,7 @@ export function TeamRosterComponent({ roster }: TeamRosterComponentProps) {
             <>
               <Text style={styles.statsPoints}>{player.points || 0}</Text>
               <Text style={styles.statsBreakdown}>
-                {player.goals || 0}B-{player.assists || 0}A
+                {player.goals || 0}{t('goals')}-{player.assists || 0}{t('assists')}
               </Text>
             </>
           )}
@@ -98,9 +101,9 @@ export function TeamRosterComponent({ roster }: TeamRosterComponentProps) {
 
   return (
     <View style={styles.container}>
-      {renderSection('ATTAQUANTS', roster.forwards, colors.primary)}
-      {renderSection('DÉFENSEURS', roster.defensemen, colors.accent)}
-      {renderSection('GARDIENS', roster.goalies, colors.destructive)}
+      {renderSection(t('forwards'), roster.forwards, colors.primary)}
+      {renderSection(t('defensemen'), roster.defensemen, colors.accent)}
+      {renderSection(t('goalies'), roster.goalies, colors.destructive)}
     </View>
   )
 }
@@ -179,4 +182,3 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
   },
 })
-

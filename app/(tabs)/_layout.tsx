@@ -1,8 +1,11 @@
+import { useTranslation } from '@/contexts/TranslationContext';
 import { colors } from '@/theme/colors';
 import { Tabs } from 'expo-router';
 import { Home, Star, Users } from 'lucide-react-native';
 
 export default function TabLayout() {
+  const { t } = useTranslation();
+
   return (
     <Tabs
       screenOptions={{
@@ -18,7 +21,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Matchs',
+          title: t('matches'),
           tabBarIcon: ({ color, focused }) => (
             <Home size={20} color={color} />
           ),
@@ -27,7 +30,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="teams"
         options={{
-          title: 'Équipes',
+          title: t('teams'),
           tabBarIcon: ({ color, focused }) => (
             <Users size={20} color={color} />
           ),
@@ -36,25 +39,25 @@ export default function TabLayout() {
       <Tabs.Screen
         name="teams/[id]"
         options={{
-          href: null, // Cache cette route du bottom nav
+          href: null,
         }}
       />
       <Tabs.Screen
         name="match/[id]"
         options={{
-          href: null, // Cache cette route du bottom nav
+          href: null,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          href: null, // Cache cette route du bottom nav
+          href: null,
         }}
       />
       <Tabs.Screen
         name="favorites"
         options={{
-          title: 'Favoris',
+          title: t('favorites'),
           tabBarIcon: ({ color, focused }) => (
             <Star size={20} color={color} />
           ),
@@ -63,7 +66,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="mordusport"
         options={{
-          href: null, // Caché pour le moment
+          href: null,
         }}
       />
     </Tabs>

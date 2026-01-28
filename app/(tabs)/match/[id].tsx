@@ -1,6 +1,7 @@
 import { ChatRoom } from '@/components/ChatRoom'
 import { MatchEventsComponent } from '@/components/MatchEventsComponent'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft, BarChart3, MessageCircle } from 'lucide-react-native'
@@ -17,6 +18,7 @@ export default function MatchRoom() {
   const { id, date: dateParam } = useLocalSearchParams<{ id: string; date?: string }>()
   const router = useRouter()
   const { profile } = useAuth()
+  const { t } = useTranslation()
   const [match, setMatch] = useState<Match | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('chat')
@@ -35,7 +37,7 @@ export default function MatchRoom() {
       keyboardDidHide.remove()
     }
   }, [])
-  
+
   // Normaliser l'ID en string pour éviter les problèmes de comparaison
   const normalizedId = id ? String(id).trim() : null
 
@@ -72,7 +74,7 @@ export default function MatchRoom() {
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.neonGreen} />
-          <Text style={styles.loadingText}>Chargement du match...</Text>
+          <Text style={styles.loadingText}>{t('loadingMatch')}</Text>
         </View>
       </SafeAreaView>
     )
@@ -89,9 +91,9 @@ export default function MatchRoom() {
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Match non trouvé</Text>
+          <Text style={styles.errorText}>{t('matchNotFound')}</Text>
           <Pressable onPress={() => router.back()} style={styles.backButtonPressable}>
-            <Text style={styles.backButtonText}>Retour</Text>
+            <Text style={styles.backButtonText}>{t('back')}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -131,8 +133,8 @@ export default function MatchRoom() {
                            colors.primary
           }]}>
             {match.status === 'live' ? 'LIVE' :
-             match.status === 'finished' ? 'FIN' :
-             match.time || 'À venir'}
+             match.status === 'finished' ? t('end') :
+             match.time || t('upcoming')}
           </Text>
           {match.venue && <Text style={styles.venueText}>{match.venue}</Text>}
         </View>
@@ -160,14 +162,14 @@ export default function MatchRoom() {
             onPress={() => setActiveTab('chat')}
           >
             <MessageCircle size={18} color={activeTab === 'chat' ? colors.neonGreen : colors.mutedForeground} />
-            <Text style={[styles.tabText, activeTab === 'chat' && styles.tabTextActive]}>Chat</Text>
+            <Text style={[styles.tabText, activeTab === 'chat' && styles.tabTextActive]}>{t('chat')}</Text>
           </Pressable>
           <Pressable
             style={[styles.tab, activeTab === 'events' && styles.tabActive]}
             onPress={() => setActiveTab('events')}
           >
             <BarChart3 size={18} color={activeTab === 'events' ? colors.neonGreen : colors.mutedForeground} />
-            <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>Événements</Text>
+            <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>{t('events')}</Text>
           </Pressable>
         </View>
       )}
@@ -341,4 +343,3 @@ const styles = StyleSheet.create({
     color: colors.neonGreen,
   },
 })
-

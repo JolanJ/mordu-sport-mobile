@@ -1,3 +1,4 @@
+import { useTranslation } from '@/contexts/TranslationContext'
 import { TeamStats } from '@/lib/teamTypes'
 import { colors } from '@/theme/colors'
 import { Target, Trophy } from 'lucide-react-native'
@@ -8,6 +9,7 @@ interface TeamStatsComponentProps {
 }
 
 export function TeamStatsComponent({ stats }: TeamStatsComponentProps) {
+  const { t } = useTranslation()
   const winPercentage = ((stats.wins / stats.gamesPlayed) * 100).toFixed(1)
 
   return (
@@ -18,51 +20,51 @@ export function TeamStatsComponent({ stats }: TeamStatsComponentProps) {
         <View style={styles.summaryCard}>
           <View style={styles.cardHeader}>
             <Trophy size={16} color={colors.primary} />
-            <Text style={styles.cardLabel}>Record</Text>
+            <Text style={styles.cardLabel}>{t('record')}</Text>
           </View>
           <Text style={styles.cardValue}>
             {stats.wins}-{stats.losses}-{stats.otLosses}
           </Text>
-          <Text style={styles.cardSecondary}>{winPercentage}% victoires</Text>
+          <Text style={styles.cardSecondary}>{winPercentage}% {t('winPercentage').replace('% ', '')}</Text>
         </View>
 
         {/* Carte Points */}
         <View style={styles.summaryCard}>
           <View style={styles.cardHeader}>
             <Target size={16} color={colors.accent} />
-            <Text style={styles.cardLabel}>Points</Text>
+            <Text style={styles.cardLabel}>{t('points')}</Text>
           </View>
           <Text style={styles.cardValue}>{stats.points}</Text>
-          <Text style={styles.cardSecondary}>{stats.gamesPlayed} matchs joués</Text>
+          <Text style={styles.cardSecondary}>{stats.gamesPlayed} {t('gamesPlayed')}</Text>
         </View>
       </View>
 
       {/* Statistiques Offensives */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-          OFFENSIVE
+          {t('offensive')}
         </Text>
 
         <View style={styles.statsContainer}>
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Buts pour</Text>
+            <Text style={styles.statLabel}>{t('goalsFor')}</Text>
             <View style={styles.statValues}>
               <Text style={styles.statValue}>{stats.goalsFor}</Text>
               <Text style={styles.statSecondary}>
-                {(stats.goalsFor / stats.gamesPlayed).toFixed(1)} / match
+                {(stats.goalsFor / stats.gamesPlayed).toFixed(1)} {t('perGame')}
               </Text>
             </View>
           </View>
 
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Tirs par match</Text>
+            <Text style={styles.statLabel}>{t('shotsPerGame')}</Text>
             <View style={styles.statValues}>
               <Text style={styles.statValue}>{stats.shotsPerGame}</Text>
             </View>
           </View>
 
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Avantage numérique</Text>
+            <Text style={styles.statLabel}>{t('powerPlay')}</Text>
             <View style={styles.statValues}>
               <Text style={styles.statValue}>{stats.powerPlayPercentage}</Text>
               <Text style={styles.statSecondary}>
@@ -72,7 +74,7 @@ export function TeamStatsComponent({ stats }: TeamStatsComponentProps) {
           </View>
 
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Mises au jeu</Text>
+            <Text style={styles.statLabel}>{t('faceoffs')}</Text>
             <View style={styles.statValues}>
               <Text style={styles.statValue}>{stats.faceoffWinPercentage}</Text>
             </View>
@@ -83,29 +85,29 @@ export function TeamStatsComponent({ stats }: TeamStatsComponentProps) {
       {/* Statistiques Défensives */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.destructive }]}>
-          DÉFENSIVE
+          {t('defensive')}
         </Text>
 
         <View style={styles.statsContainer}>
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Buts contre</Text>
+            <Text style={styles.statLabel}>{t('goalsAgainst')}</Text>
             <View style={styles.statValues}>
               <Text style={styles.statValue}>{stats.goalsAgainst}</Text>
               <Text style={styles.statSecondary}>
-                {(stats.goalsAgainst / stats.gamesPlayed).toFixed(1)} / match
+                {(stats.goalsAgainst / stats.gamesPlayed).toFixed(1)} {t('perGame')}
               </Text>
             </View>
           </View>
 
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Tirs alloués</Text>
+            <Text style={styles.statLabel}>{t('shotsAllowed')}</Text>
             <View style={styles.statValues}>
               <Text style={styles.statValue}>{stats.shotsAllowedPerGame}</Text>
             </View>
           </View>
 
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Infériorité numérique</Text>
+            <Text style={styles.statLabel}>{t('penaltyKill')}</Text>
             <View style={styles.statValues}>
               <Text style={styles.statValue}>{stats.penaltyKillPercentage}</Text>
             </View>
@@ -194,4 +196,3 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
   },
 })
-
