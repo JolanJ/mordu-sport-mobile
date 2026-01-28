@@ -28,8 +28,8 @@ export default function Favorites() {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
   }
 
-  const handleMatchPress = (matchId: string) => {
-    router.push(`/(tabs)/match/${matchId}` as any)
+  const handleMatchPress = (matchId: string, matchDate: string) => {
+    router.push(`/(tabs)/match/${matchId}?date=${matchDate}` as any)
   }
 
   // Non connecté

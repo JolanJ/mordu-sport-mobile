@@ -2,14 +2,16 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
-export type Locale = 'fr' | 'all'
+export type Locale = 'fr' | 'en'
 
 export type Profile = {
   id: string
   username: string
   email: string
-  address: string | null
+  state_province: string | null
   avatar_id: number
+  is_18_plus: boolean
+  newsletter_subscribed: boolean
   preferred_locale: Locale
   created_at: string
   updated_at: string
@@ -24,7 +26,7 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
-  updateProfile: (updates: Partial<Pick<Profile, 'username' | 'address' | 'avatar_id' | 'preferred_locale'>>) => Promise<{ error: Error | null }>
+  updateProfile: (updates: Partial<Pick<Profile, 'username' | 'state_province' | 'avatar_id' | 'preferred_locale' | 'newsletter_subscribed'>>) => Promise<{ error: Error | null }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -56,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // Mettre à jour le profil
-  const updateProfile = async (updates: Partial<Pick<Profile, 'username' | 'address' | 'avatar_id'>>) => {
+  const updateProfile = async (updates: Partial<Pick<Profile, 'username' | 'state_province' | 'avatar_id' | 'preferred_locale' | 'newsletter_subscribed'>>) => {
     if (!user) return { error: new Error('Non authentifié') }
 
     const { error } = await supabase

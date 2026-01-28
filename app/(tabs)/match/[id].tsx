@@ -4,54 +4,61 @@ import { useAuth } from '@/contexts/AuthContext'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft, BarChart3, MessageCircle } from 'lucide-react-native'
-import { Image, Pressable, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
+import { Image, Keyboard, Pressable, StyleSheet, View, ActivityIndicator, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useMatches } from '@/hooks/useMatches'
 import { useState, useEffect } from 'react'
 import { Match } from '@/lib/types'
+import UsfLogo from '@/assets/images/usf.svg'
 
 type TabType = 'events' | 'chat'
 
 export default function MatchRoom() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id, date: dateParam } = useLocalSearchParams<{ id: string; date?: string }>()
   const router = useRouter()
   const { profile } = useAuth()
   const [match, setMatch] = useState<Match | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('chat')
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
+
+  // Gérer l'ouverture/fermeture du keyboard
+  useEffect(() => {
+    const keyboardDidShow = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true)
+    })
+    const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false)
+    })
+    return () => {
+      keyboardDidShow.remove()
+      keyboardDidHide.remove()
+    }
+  }, [])
   
   // Normaliser l'ID en string pour éviter les problèmes de comparaison
   const normalizedId = id ? String(id).trim() : null
-  
-  // Essayer d'abord avec les matchs d'aujourd'hui
-  const { data: todayMatches = [] } = useMatches({ withLogos: true })
-  
+
+  // Utiliser la date passée en paramètre, sinon aujourd'hui
+  const matchDate = dateParam ? new Date(dateParam + 'T12:00:00') : new Date()
+
+  // Charger les matchs pour la date spécifique
+  const { data: matches = [] } = useMatches({ date: matchDate, withLogos: true })
+
   useEffect(() => {
     if (!normalizedId) {
       setIsLoading(false)
       return
     }
-    
-    // Chercher uniquement dans les matchs d'aujourd'hui
-    const foundMatch = todayMatches.find(m => String(m.id).trim() === normalizedId)
-    if (foundMatch) {
-      // Vérifier que le match est bien d'aujourd'hui (comparer les dates en heure locale)
-      const today = new Date()
-      const year = today.getFullYear()
-      const month = String(today.getMonth() + 1).padStart(2, '0')
-      const day = String(today.getDate()).padStart(2, '0')
-      const todayStr = `${year}-${month}-${day}` // Format: YYYY-MM-DD en heure locale
 
-      if (foundMatch.date === todayStr) {
-        setMatch(foundMatch)
-      }
-      setIsLoading(false)
-      return
+    // Chercher le match par ID
+    const foundMatch = matches.find(m => String(m.id).trim() === normalizedId)
+
+    if (foundMatch) {
+      setMatch(foundMatch)
     }
-    
-    // Si pas trouvé dans les matchs d'aujourd'hui, ne pas chercher ailleurs
     setIsLoading(false)
-  }, [normalizedId, todayMatches])
+  }, [normalizedId, matches])
 
   if (isLoading) {
     return (
@@ -60,7 +67,7 @@ export default function MatchRoom() {
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <ArrowLeft size={24} color={colors.foreground} />
           </Pressable>
-          <Text style={styles.headerTitle}>Room du Match</Text>
+          <UsfLogo width={160} height={22} />
           <View style={styles.placeholder} />
         </View>
         <View style={styles.loadingContainer}>
@@ -78,7 +85,7 @@ export default function MatchRoom() {
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <ArrowLeft size={24} color={colors.foreground} />
           </Pressable>
-          <Text style={styles.headerTitle}>Room du Match</Text>
+          <UsfLogo width={160} height={22} />
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
@@ -97,7 +104,7 @@ export default function MatchRoom() {
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color={colors.foreground} />
         </Pressable>
-        <Text style={styles.headerTitle}>Room du Match</Text>
+        <UsfLogo width={160} height={22} />
         <View style={styles.placeholder} />
       </View>
 
@@ -145,23 +152,25 @@ export default function MatchRoom() {
         </View>
       </View>
 
-      {/* Tab Bar */}
-      <View style={styles.tabBar}>
-        <Pressable
-          style={[styles.tab, activeTab === 'chat' && styles.tabActive]}
-          onPress={() => setActiveTab('chat')}
-        >
-          <MessageCircle size={18} color={activeTab === 'chat' ? colors.neonGreen : colors.mutedForeground} />
-          <Text style={[styles.tabText, activeTab === 'chat' && styles.tabTextActive]}>Chat</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === 'events' && styles.tabActive]}
-          onPress={() => setActiveTab('events')}
-        >
-          <BarChart3 size={18} color={activeTab === 'events' ? colors.neonGreen : colors.mutedForeground} />
-          <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>Événements</Text>
-        </Pressable>
-      </View>
+      {/* Tab Bar - caché quand keyboard ouvert */}
+      {!keyboardVisible && (
+        <View style={styles.tabBar}>
+          <Pressable
+            style={[styles.tab, activeTab === 'chat' && styles.tabActive]}
+            onPress={() => setActiveTab('chat')}
+          >
+            <MessageCircle size={18} color={activeTab === 'chat' ? colors.neonGreen : colors.mutedForeground} />
+            <Text style={[styles.tabText, activeTab === 'chat' && styles.tabTextActive]}>Chat</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === 'events' && styles.tabActive]}
+            onPress={() => setActiveTab('events')}
+          >
+            <BarChart3 size={18} color={activeTab === 'events' ? colors.neonGreen : colors.mutedForeground} />
+            <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>Événements</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Tab Content */}
       {activeTab === 'events' ? (

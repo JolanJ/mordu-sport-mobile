@@ -32,12 +32,15 @@ interface ChatRoomProps {
   avatarId?: number
 }
 
+const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
+
 export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRoomProps) {
   const { user, profile, updateProfile } = useAuth()
-  const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'all')
-  const { messages, loading, sending, sendMessage, isAuthenticated } = useChat({ matchId, locale })
+  const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'en')
+  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, isAuthenticated } = useChat({ matchId, locale })
   const [inputText, setInputText] = useState('')
   const [keyboardVisible, setKeyboardVisible] = useState(false)
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const flatListRef = useRef<FlatList>(null)
 
   // Mettre à jour la locale si le profil change
@@ -96,26 +99,76 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   }
 
+  const handleLongPress = (messageId: string) => {
+    setSelectedMessageId(messageId === selectedMessageId ? null : messageId)
+  }
+
+  const handleReaction = async (messageId: string, emoji: string) => {
+    await toggleReaction(messageId, emoji)
+    setSelectedMessageId(null)
+  }
+
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isOwnMessage = user?.id === item.user_id
     const avatarSource = avatars[item.avatar_id] || avatars[1]
+    const messageReactions = getReactionsForMessage(item.id)
+    const showReactionPicker = selectedMessageId === item.id
 
     return (
-      <View style={[styles.messageContainer, isOwnMessage && styles.ownMessageContainer]}>
-        {!isOwnMessage && (
-          <Image source={avatarSource} style={styles.avatar} />
+      <View style={styles.messageWrapper}>
+        <Pressable
+          onLongPress={() => handleLongPress(item.id)}
+          delayLongPress={300}
+          style={[styles.messageContainer, isOwnMessage && styles.ownMessageContainer]}
+        >
+          {!isOwnMessage && (
+            <Image source={avatarSource} style={styles.avatar} />
+          )}
+          <View style={[styles.messageBubble, isOwnMessage && styles.ownMessageBubble]}>
+            <Text style={[styles.username, isOwnMessage && styles.ownUsername]}>{item.username}</Text>
+            <Text style={[styles.messageText, isOwnMessage && styles.ownMessageText]}>
+              {item.content}
+            </Text>
+            <Text style={[styles.messageTime, isOwnMessage && styles.ownMessageTime]}>
+              {formatTime(item.created_at)}
+            </Text>
+          </View>
+          {isOwnMessage && (
+            <Image source={avatarSource} style={styles.avatar} />
+          )}
+        </Pressable>
+
+        {/* Reaction Picker - en bas du message */}
+        {showReactionPicker && (
+          <View style={[styles.reactionPicker, isOwnMessage && styles.reactionPickerOwn]}>
+            {REACTION_EMOJIS.map((emoji) => (
+              <Pressable
+                key={emoji}
+                style={styles.reactionPickerButton}
+                onPress={() => handleReaction(item.id, emoji)}
+              >
+                <Text style={styles.reactionPickerEmoji}>{emoji}</Text>
+              </Pressable>
+            ))}
+          </View>
         )}
-        <View style={[styles.messageBubble, isOwnMessage && styles.ownMessageBubble]}>
-          <Text style={[styles.username, isOwnMessage && styles.ownUsername]}>{item.username}</Text>
-          <Text style={[styles.messageText, isOwnMessage && styles.ownMessageText]}>
-            {item.content}
-          </Text>
-          <Text style={[styles.messageTime, isOwnMessage && styles.ownMessageTime]}>
-            {formatTime(item.created_at)}
-          </Text>
-        </View>
-        {isOwnMessage && (
-          <Image source={avatarSource} style={styles.avatar} />
+
+        {/* Reactions Display */}
+        {messageReactions.length > 0 && !showReactionPicker && (
+          <View style={[styles.reactionsContainer, isOwnMessage && styles.reactionsContainerOwn]}>
+            {messageReactions.map((reaction) => (
+              <Pressable
+                key={reaction.emoji}
+                style={[styles.reactionBadge, reaction.hasReacted && styles.reactionBadgeActive]}
+                onPress={() => handleReaction(item.id, reaction.emoji)}
+              >
+                <Text style={styles.reactionEmoji}>{reaction.emoji}</Text>
+                <Text style={[styles.reactionCount, reaction.hasReacted && styles.reactionCountActive]}>
+                  {reaction.count}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         )}
       </View>
     )
@@ -154,10 +207,10 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRo
                 <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
               </Pressable>
               <Pressable
-                style={[styles.localeButton, locale === 'all' && styles.localeButtonActive]}
-                onPress={() => handleLocaleChange('all')}
+                style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
+                onPress={() => handleLocaleChange('en')}
               >
-                <Text style={[styles.localeButtonText, locale === 'all' && styles.localeButtonTextActive]}>ALL</Text>
+                <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>ALL</Text>
               </Pressable>
             </View>
           </View>
@@ -379,9 +432,9 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   emojiButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
@@ -389,7 +442,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   emojiText: {
-    fontSize: 22,
+    fontSize: 18,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -432,5 +485,75 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
     fontSize: 16,
     textAlign: 'center',
+  },
+  // Reactions
+  messageWrapper: {
+    marginBottom: 4,
+  },
+  reactionPicker: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 6,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    marginLeft: 40,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  reactionPickerOwn: {
+    alignSelf: 'flex-end',
+    marginRight: 40,
+    marginLeft: 0,
+  },
+  reactionPickerButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reactionPickerEmoji: {
+    fontSize: 16,
+  },
+  reactionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginLeft: 40,
+    marginTop: 4,
+  },
+  reactionsContainerOwn: {
+    justifyContent: 'flex-end',
+    marginRight: 40,
+    marginLeft: 0,
+  },
+  reactionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  reactionBadgeActive: {
+    borderColor: colors.neonGreen,
+    backgroundColor: 'rgba(57, 255, 20, 0.1)',
+  },
+  reactionEmoji: {
+    fontSize: 14,
+  },
+  reactionCount: {
+    fontSize: 12,
+    color: colors.mutedForeground,
+    fontWeight: '600',
+  },
+  reactionCountActive: {
+    color: colors.neonGreen,
   },
 })

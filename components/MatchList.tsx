@@ -62,8 +62,9 @@ export function MatchList({ selectedDate }: MatchListProps) {
     )
   }
 
-  const handleMatchPress = (matchId: string) => {
-    router.push(`/(tabs)/match/${matchId}` as any)
+  const handleMatchPress = (matchId: string, matchDate: string) => {
+    // Passer la date du match pour trouver le bon match
+    router.push(`/(tabs)/match/${matchId}?date=${matchDate}` as any)
   }
 
   return (

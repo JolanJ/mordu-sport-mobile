@@ -6,7 +6,7 @@ import { MatchCard } from './MatchCard'
 interface LeagueSectionProps {
   league: string
   matches: Match[]
-  onMatchPress?: (matchId: string) => void
+  onMatchPress?: (matchId: string, matchDate: string) => void
   isFavorite?: (matchId: string) => boolean
   onToggleFavorite?: (match: Match) => void
 }

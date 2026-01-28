@@ -6,7 +6,7 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
 interface MatchCardProps {
   match: Match
-  onPress?: (matchId: string) => void
+  onPress?: (matchId: string, matchDate: string) => void
   isFavorite?: boolean
   onToggleFavorite?: (match: Match) => void
 }
@@ -28,46 +28,9 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
     }
     onToggleFavorite?.(match)
   }
-  // Vérifier si le match est d'aujourd'hui (comparer les dates en format string YYYY-MM-DD)
-  const isToday = () => {
-    const today = new Date()
-    // Utiliser l'heure locale au lieu de UTC
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    const todayStr = `${year}-${month}-${day}` // Format: YYYY-MM-DD en heure locale
-    return match.date === todayStr
-  }
-
   const handlePress = () => {
-    // Vérifier si le match est d'aujourd'hui
-    if (isToday()) {
-      // Permettre la navigation seulement si le match est d'aujourd'hui
-      onPress?.(match.id)
-    } else {
-      // Afficher un message stylé si le match n'est pas d'aujourd'hui
-      // Parser la date du match (format YYYY-MM-DD)
-      const [year, month, day] = match.date.split('-').map(Number)
-      const matchDate = new Date(year, month - 1, day) // month - 1 car les mois sont 0-indexés
-      
-      const dateStr = matchDate.toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
-      
-      Alert.alert(
-        '🚫 Room verrouillée',
-        `La room de ce match sera disponible le ${dateStr}.\n\nRevenez ce jour-là pour suivre le match en direct ! 🔥`,
-        [
-          {
-            text: 'Compris',
-            style: 'default'
-          }
-        ]
-      )
-    }
+    // Permettre la navigation vers la room peu importe la date
+    onPress?.(match.id, match.date)
   }
 
   const getStatusColor = () => {
@@ -231,9 +194,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: 0,
     },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
   headerRow: {
     flexDirection: 'row',
