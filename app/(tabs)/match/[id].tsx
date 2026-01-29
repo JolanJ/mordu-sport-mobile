@@ -1,10 +1,11 @@
 import { ChatRoom } from '@/components/ChatRoom'
 import { MatchEventsComponent } from '@/components/MatchEventsComponent'
+import { TeamSeasonStatsComponent } from '@/components/TeamSeasonStatsComponent'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeft, BarChart3, MessageCircle } from 'lucide-react-native'
+import { ArrowLeft, BarChart3, MessageCircle, TrendingUp } from 'lucide-react-native'
 import { Image, Keyboard, Pressable, StyleSheet, View, ActivityIndicator, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useMatches } from '@/hooks/useMatches'
@@ -12,7 +13,7 @@ import { useState, useEffect } from 'react'
 import { Match } from '@/lib/types'
 import UsfLogo from '@/assets/images/usf.svg'
 
-type TabType = 'events' | 'chat'
+type TabType = 'chat' | 'events' | 'teamStats'
 
 export default function MatchRoom() {
   const { id, date: dateParam } = useLocalSearchParams<{ id: string; date?: string }>()
@@ -171,21 +172,38 @@ export default function MatchRoom() {
             <BarChart3 size={18} color={activeTab === 'events' ? colors.neonGreen : colors.mutedForeground} />
             <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>{t('events')}</Text>
           </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === 'teamStats' && styles.tabActive]}
+            onPress={() => setActiveTab('teamStats')}
+          >
+            <TrendingUp size={18} color={activeTab === 'teamStats' ? colors.neonGreen : colors.mutedForeground} />
+            <Text style={[styles.tabText, activeTab === 'teamStats' && styles.tabTextActive]}>{t('teamStats')}</Text>
+          </Pressable>
         </View>
       )}
 
       {/* Tab Content */}
-      {activeTab === 'events' ? (
-        <MatchEventsComponent
-          matchId={match.id}
-          homeTeamAbbr={match.homeTeam.abbr}
-          awayTeamAbbr={match.awayTeam.abbr}
-        />
-      ) : (
+      {activeTab === 'chat' && (
         <ChatRoom
           matchId={match.id}
           username={profile?.username || 'Fan'}
           avatarId={profile?.avatar_id || 1}
+        />
+      )}
+      {activeTab === 'events' && (
+        <MatchEventsComponent
+          matchId={match.id}
+          homeTeamAbbr={match.homeTeam.abbr}
+          awayTeamAbbr={match.awayTeam.abbr}
+          matchDate={match.date}
+        />
+      )}
+      {activeTab === 'teamStats' && (
+        <TeamSeasonStatsComponent
+          homeTeamId={match.homeTeam.teamId}
+          awayTeamId={match.awayTeam.teamId}
+          homeTeamAbbr={match.homeTeam.abbr}
+          awayTeamAbbr={match.awayTeam.abbr}
         />
       )}
     </SafeAreaView>
@@ -320,6 +338,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    paddingHorizontal: 8,
   },
   tab: {
     flex: 1,

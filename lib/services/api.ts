@@ -16,10 +16,11 @@ import {
   MatchDetails,
 } from '@/lib/types'
 import { XMLParser } from 'fast-xml-parser'
+import { supabase } from '@/lib/supabase'
 
-// Cache simple pour les logos d'équipes (évite les appels API répétés)
-// Note: on ne met pas undefined dans le cache pour permettre de réessayer
-const teamLogoCache = new Map<string, string>()
+// Cache pour les logos (par goalserve_id)
+let logoCache: Record<string, string> = {}
+let logoCacheLoaded = false
 
 export type League = 'NHL'
 
@@ -104,62 +105,46 @@ export async function fetchMatches(league: League, date?: Date, withLogos: boole
 }
 
 /**
- * Enrichit les matchs avec les logos des équipes
+ * Charge les logos depuis Supabase (une seule requête)
+ */
+async function loadLogosFromDB(): Promise<void> {
+  if (logoCacheLoaded) return
+
+  try {
+    const { data, error } = await supabase
+      .from('teams')
+      .select('goalserve_id, logo_url')
+
+    if (!error && data) {
+      for (const row of data) {
+        if (row.goalserve_id && row.logo_url) {
+          logoCache[row.goalserve_id] = row.logo_url
+        }
+      }
+      logoCacheLoaded = true
+    }
+  } catch (error) {
+    // Ignorer les erreurs
+  }
+}
+
+/**
+ * Enrichit les matchs avec les logos des équipes depuis Supabase
  */
 async function enrichMatchesWithLogos(matches: Match[]): Promise<Match[]> {
-  // Collecter toutes les équipes avec leurs IDs depuis les matchs (plus fiable que le mapping)
-  const teams = new Map<string, { name: string; teamId: string | undefined }>()
-  matches.forEach(match => {
-    teams.set(match.awayTeam.name, { name: match.awayTeam.name, teamId: match.awayTeam.teamId })
-    teams.set(match.homeTeam.name, { name: match.homeTeam.name, teamId: match.homeTeam.teamId })
-  })
-  
-  // Récupérer les logos pour toutes les équipes (en parallèle)
-  const logoPromises = Array.from(teams.values()).map(async ({ name, teamId }) => {
-    // Vérifier le cache d'abord (seulement si on a un logo, pas undefined)
-    const cachedLogo = teamLogoCache.get(name)
-    if (cachedLogo) {
-      return { name, logo: cachedLogo }
-    }
-    
-    // Utiliser l'ID depuis les matchs (plus fiable que le mapping)
-    if (!teamId) {
-      return { name, logo: undefined }
-    }
-    
-    // Récupérer le roster avec le logo
-    try {
-      const rosterData = await fetchTeamRoster(teamId)
-      const logo = rosterData?.teamInfo.logo
-      
-      // Mettre en cache seulement si on a un logo
-      if (logo) {
-        teamLogoCache.set(name, logo)
-      }
-      
-      return { name, logo }
-    } catch (error) {
-      // Erreur silencieuse : certains endpoints peuvent être indisponibles
-      return { name, logo: undefined }
-    }
-  })
-  
-  const logoResults = await Promise.all(logoPromises)
-  const logoMap = new Map<string, string | undefined>()
-  logoResults.forEach(({ name, logo }) => {
-    logoMap.set(name, logo)
-  })
-  
-  // Enrichir les matchs avec les logos
+  // Charger les logos depuis la DB (une seule fois)
+  await loadLogosFromDB()
+
+  // Enrichir les matchs avec les logos du cache
   return matches.map(match => ({
     ...match,
     awayTeam: {
       ...match.awayTeam,
-      logo: logoMap.get(match.awayTeam.name),
+      logo: match.awayTeam.teamId ? logoCache[match.awayTeam.teamId] : undefined,
     },
     homeTeam: {
       ...match.homeTeam,
-      logo: logoMap.get(match.homeTeam.name),
+      logo: match.homeTeam.teamId ? logoCache[match.homeTeam.teamId] : undefined,
     },
   }))
 }
@@ -851,11 +836,19 @@ function parsePlayerImageXML(xml: string): string | null {
 // ============================================
 
 /**
- * Récupère les détails d'un match en direct (événements, stats, etc.)
+ * Récupère les détails d'un match (événements, stats, etc.)
  * Utilise l'endpoint nhl-scores qui contient les données détaillées
+ * @param matchId ID du match
+ * @param date Date du match (optionnel, pour les matchs passés)
  */
-export async function fetchMatchDetails(matchId: string): Promise<MatchDetails | null> {
-  const url = `${API_BASE_URL}${API_ENDPOINTS.nhlScores}`
+export async function fetchMatchDetails(matchId: string, date?: Date): Promise<MatchDetails | null> {
+  let url = `${API_BASE_URL}${API_ENDPOINTS.nhlScores}`
+
+  // Ajouter la date pour récupérer les matchs passés
+  if (date) {
+    const dateStr = formatDate(date)
+    url += `?date=${dateStr}`
+  }
 
   try {
     const response = await fetch(url, {

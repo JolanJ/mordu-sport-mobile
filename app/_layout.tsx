@@ -1,14 +1,23 @@
 import { SplashScreen } from '@/components/SplashScreen'
 import { colors } from '@/theme/colors'
 import { Stack, useRouter, useSegments } from 'expo-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { View, ActivityIndicator } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import { TranslationProvider } from '@/contexts/TranslationContext'
+import { prefetchTeamLogos } from '@/hooks/useTeamsWithLogos'
+import { prefetchTodayMatches } from '@/hooks/useMatches'
 
-const queryClient = new QueryClient()
+// QueryClient en dehors pour être accessible pendant le prefetch
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60000, // 1 minute
+    },
+  },
+})
 
 function RootLayoutNav() {
   const { user, loading } = useAuth()
@@ -45,6 +54,32 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true)
+  const [isDataReady, setIsDataReady] = useState(false)
+  const prefetchStarted = useRef(false)
+
+  // Prefetch des données pendant le splash
+  useEffect(() => {
+    if (prefetchStarted.current) return
+    prefetchStarted.current = true
+
+    const prefetchData = async () => {
+      try {
+        // Lancer les deux en parallèle
+        await Promise.all([
+          // Matchs: charge le cache instantanément, puis fetch en arrière-plan
+          prefetchTodayMatches(queryClient),
+          // Équipes depuis Supabase DB
+          prefetchTeamLogos(),
+        ])
+      } catch (error) {
+        // Erreur silencieuse - on continue quand même
+      } finally {
+        setIsDataReady(true)
+      }
+    }
+
+    prefetchData()
+  }, [])
 
   const handleSplashFinish = () => {
     setShowSplash(false)
@@ -53,7 +88,7 @@ export default function RootLayout() {
   if (showSplash) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <SplashScreen onFinish={handleSplashFinish} />
+        <SplashScreen onFinish={handleSplashFinish} isDataReady={isDataReady} />
       </View>
     )
   }

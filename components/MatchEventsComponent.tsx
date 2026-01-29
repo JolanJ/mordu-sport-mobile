@@ -8,11 +8,12 @@ interface MatchEventsComponentProps {
   matchId: string
   homeTeamAbbr: string
   awayTeamAbbr: string
+  matchDate?: string // Format YYYY-MM-DD
 }
 
-export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr }: MatchEventsComponentProps) {
+export function MatchEventsComponent({ matchId, homeTeamAbbr, awayTeamAbbr, matchDate }: MatchEventsComponentProps) {
   const { t } = useTranslation()
-  const { data: details, isLoading, isError } = useMatchDetails({ matchId })
+  const { data: details, isLoading, isError } = useMatchDetails({ matchId, date: matchDate })
 
   if (isLoading) {
     return (

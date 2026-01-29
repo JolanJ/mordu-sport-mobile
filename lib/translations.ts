@@ -169,6 +169,23 @@ export const translations = {
     goalTypeSH: 'DN',
     goalTypeEN: 'FV',
     goalTypeSO: 'TB',
+
+    // Team Season Stats
+    teamStats: 'Statistiques',
+    seasonStats: 'Stats de saison',
+    loadingStats: 'Chargement des stats...',
+    statsNotAvailable: 'Stats non disponibles',
+    wins: 'Victoires',
+    losses: 'Défaites',
+    otLosses: 'Déf. prol.',
+    goalsPerGame: 'Buts/match',
+    goalsAgainstPerGame: 'BC/match',
+    shotsAgainstPerGame: 'Tirs contre/match',
+    powerPlayPct: 'Avantage num. %',
+    penaltyKillPct: 'Infériorité %',
+    savePct: '% arrêts',
+    offense: 'Offensive',
+    defense: 'Défensive',
   },
 
   en: {
@@ -339,13 +356,30 @@ export const translations = {
     goalTypeSH: 'SH',
     goalTypeEN: 'EN',
     goalTypeSO: 'SO',
+
+    // Team Season Stats
+    teamStats: 'Statistics',
+    seasonStats: 'Season Stats',
+    loadingStats: 'Loading stats...',
+    statsNotAvailable: 'Stats not available',
+    wins: 'Wins',
+    losses: 'Losses',
+    otLosses: 'OT Losses',
+    goalsPerGame: 'Goals/game',
+    goalsAgainstPerGame: 'GA/game',
+    shotsAgainstPerGame: 'Shots against/game',
+    powerPlayPct: 'Power play %',
+    penaltyKillPct: 'Penalty kill %',
+    savePct: 'Save %',
+    offense: 'Offense',
+    defense: 'Defense',
   },
 } as const
 
 export type TranslationKey = keyof typeof translations.fr
 
 export function getTranslation(locale: Locale, key: TranslationKey, params?: Record<string, string | number>): string {
-  let text = translations[locale][key] || translations.fr[key] || key
+  let text: string = translations[locale][key] || translations.fr[key] || key
 
   if (params) {
     Object.entries(params).forEach(([param, value]) => {

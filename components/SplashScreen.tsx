@@ -1,15 +1,42 @@
 import SplashLogo from '@/assets/images/splashscreen.svg'
 import { colors } from '@/theme/colors'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { Animated, StyleSheet, View } from 'react-native'
 
 interface SplashScreenProps {
   onFinish: () => void
+  isDataReady?: boolean
 }
 
-export function SplashScreen({ onFinish }: SplashScreenProps) {
+const MIN_SPLASH_DURATION = 1500 // Minimum 1.5 secondes pour l'animation
+const MAX_SPLASH_DURATION = 5000 // Maximum 5 secondes d'attente
+
+export function SplashScreen({ onFinish, isDataReady = false }: SplashScreenProps) {
   const [fadeAnim] = useState(new Animated.Value(0))
   const [scaleAnim] = useState(new Animated.Value(0.8))
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false)
+  const hasStartedExit = useRef(false)
+
+  const startExitAnimation = useCallback(() => {
+    if (hasStartedExit.current) return
+    hasStartedExit.current = true
+
+    // Animation de sortie
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.8,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onFinish()
+    })
+  }, [fadeAnim, scaleAnim, onFinish])
 
   useEffect(() => {
     // Animation d'entrée
@@ -27,27 +54,28 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
       }),
     ]).start()
 
-    // Timer pour fermer après 3 secondes
-    const timer = setTimeout(() => {
-      // Animation de sortie
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0.8,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        onFinish()
-      })
-    }, 2000)
+    // Timer minimum pour l'animation
+    const minTimer = setTimeout(() => {
+      setMinTimeElapsed(true)
+    }, MIN_SPLASH_DURATION)
 
-    return () => clearTimeout(timer)
-  }, [fadeAnim, scaleAnim, onFinish])
+    // Timer maximum de sécurité
+    const maxTimer = setTimeout(() => {
+      startExitAnimation()
+    }, MAX_SPLASH_DURATION)
+
+    return () => {
+      clearTimeout(minTimer)
+      clearTimeout(maxTimer)
+    }
+  }, [fadeAnim, scaleAnim, startExitAnimation])
+
+  // Fermer quand les données sont prêtes ET le temps minimum est écoulé
+  useEffect(() => {
+    if (isDataReady && minTimeElapsed) {
+      startExitAnimation()
+    }
+  }, [isDataReady, minTimeElapsed, startExitAnimation])
 
   return (
     <View style={styles.container}>
