@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "mordu-sport-mobile",
+    "name": "Ultra Sports Fans",
     "slug": "mordu-sport-mobile",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
-    "icon": "./assets/images/Logo - Bouche Mordu (1).png",
+    "icon": "./assets/images/usflogo.png",
     "scheme": "mordusportmobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -17,8 +17,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Logo - Bouche Mordu (1).png"
+        "backgroundColor": "#0d0d0d",
+        "foregroundImage": "./assets/images/usflogo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -26,19 +26,19 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Logo - Bouche Mordu (1).png"
+      "favicon": "./assets/images/usflogo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Logo - Bouche Mordu (1).png",
+          "image": "./assets/images/usflogo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#0d0d0d",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0d0d0d"
           }
         }
       ]
