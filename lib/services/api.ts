@@ -264,15 +264,47 @@ function transformMatch(matchData: any, league: League): Match | null {
     
     // Déterminer le statut
     let status: 'upcoming' | 'live' | 'finished' = 'upcoming'
+    let statusText: string | undefined = undefined
     const statusValue = (matchData['@_status'] || '').toLowerCase()
-    if (statusValue.includes('live') || statusValue.includes('in progress')) {
-      status = 'live'
-    } else if (statusValue.includes('finished') || statusValue.includes('final')) {
-      status = 'finished'
-    } else if (statusValue.includes('not started') || statusValue.includes('scheduled')) {
+    const periodValue = (matchData['@_period'] || '').toLowerCase()
+    const hasActiveTimer = !!matchData['@_timer']
+    const hasScores = (awayScoreNum !== undefined) || (homeScoreNum !== undefined)
+
+    // Match vraiment terminé = contient "final"
+    const isReallyFinished = statusValue.includes('final')
+
+    // Match pas commencé
+    const isUpcoming = statusValue.includes('not started') ||
+                       statusValue.includes('scheduled') ||
+                       statusValue === ''
+
+    // Match en cours (période active)
+    const isPlaying = statusValue.includes('live') ||
+                      statusValue.includes('in progress') ||
+                      statusValue.includes('1st') ||
+                      statusValue.includes('2nd') ||
+                      statusValue.includes('3rd') ||
+                      statusValue.includes('ot') ||
+                      statusValue.includes('overtime') ||
+                      hasActiveTimer
+
+    if (isUpcoming) {
       status = 'upcoming'
-    } else if (awayScoreNum !== undefined && homeScoreNum !== undefined) {
-      status = matchData['@_period'] ? 'live' : 'finished'
+    }
+    else if (isReallyFinished) {
+      status = 'finished'
+    }
+    else if (isPlaying) {
+      status = 'live'
+    }
+    // Si on a des scores mais pas "final" et pas en train de jouer = Entracte
+    else if (hasScores && !isReallyFinished) {
+      status = 'live'
+      statusText = 'intermission' // Clé de traduction
+    }
+    // Fallback: si scores existent, probablement terminé
+    else if (hasScores) {
+      status = 'finished'
     }
     
     // Formater la date depuis formatted_date
@@ -320,6 +352,7 @@ function transformMatch(matchData: any, league: League): Match | null {
       id: String(id).trim(), // S'assurer que l'ID est toujours une string propre
       league,
       status,
+      statusText,
       date: dateStr,
       time: timeStr,
       period,

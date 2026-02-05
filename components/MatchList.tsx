@@ -5,7 +5,7 @@ import { useTranslation } from '@/contexts/TranslationContext'
 import { useMatches } from '@/hooks/useMatches'
 import { colors } from '@/theme/colors'
 import { useRouter } from 'expo-router'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { ActivityIndicator, Animated, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 interface MatchListProps {
@@ -26,6 +26,15 @@ export function MatchList({ selectedDate }: MatchListProps) {
 
   // Gestion des favoris
   const { isFavorite, toggleFavorite } = useFavorites()
+
+  // Trier les matchs: favoris en premier
+  const sortedMatches = useMemo(() => {
+    return [...matches].sort((a, b) => {
+      const aIsFav = isFavorite(a.id) ? 1 : 0
+      const bIsFav = isFavorite(b.id) ? 1 : 0
+      return bIsFav - aIsFav // Favoris en premier
+    })
+  }, [matches, isFavorite])
 
   const scrollToTop = () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
@@ -83,7 +92,7 @@ export function MatchList({ selectedDate }: MatchListProps) {
       >
         <LeagueSection
           league="NHL"
-          matches={matches}
+          matches={sortedMatches}
           onMatchPress={handleMatchPress}
           isFavorite={isFavorite}
           onToggleFavorite={toggleFavorite}

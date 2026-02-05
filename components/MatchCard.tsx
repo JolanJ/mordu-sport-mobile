@@ -49,6 +49,11 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
   }
 
   const getStatusText = () => {
+    // Si on a un statusText (clé de traduction comme "intermission")
+    if (match.statusText) {
+      return t(match.statusText as any)
+    }
+
     // Si on a une période, le match est en cours
     if (match.period) {
       return match.period
@@ -83,27 +88,24 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
       style={styles.container}
       onPress={handlePress}
     >
-      {/* Ligne en haut : Venue à gauche, Heure + Favori à droite */}
+      {/* Ligne en haut : Venue à gauche, Favori à droite */}
       <View style={styles.headerRow}>
         <Text style={styles.venueText} numberOfLines={1} ellipsizeMode="tail">
           {match.venue || t('venueNotAvailable')}
         </Text>
-        <View style={styles.headerRight}>
-          <Text style={styles.timeText}>{getStatusText()}</Text>
-          {showFavoriteButton && (
-            <Pressable
-              style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
-              onPress={handleFavoritePress}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              {isFavorite ? (
-                <Star size={16} color={colors.accent} fill={colors.accent} />
-              ) : (
-                <Plus size={16} color={colors.mutedForeground} />
-              )}
-            </Pressable>
-          )}
-        </View>
+        {showFavoriteButton && (
+          <Pressable
+            style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
+            onPress={handleFavoritePress}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            {isFavorite ? (
+              <Star size={16} color={colors.accent} fill={colors.accent} />
+            ) : (
+              <Plus size={16} color={colors.mutedForeground} />
+            )}
+          </Pressable>
+        )}
       </View>
 
       <View style={styles.teamsSection}>
@@ -136,9 +138,9 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
             )}
           </View>
 
-          {/* Colonne 4: Cotes */}
-          <View style={styles.oddsColumn}>
-            <Text style={styles.oddsTextOrange}>1.85</Text>
+          {/* Colonne 4: Statut (période/heure/entracte) */}
+          <View style={styles.statusColumn}>
+            <Text style={styles.statusColumnText}>{getStatusText()}</Text>
           </View>
         </View>
 
@@ -206,12 +208,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 8,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flexShrink: 0,
-  },
   favoriteButton: {
     width: 28,
     height: 28,
@@ -226,15 +222,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 215, 0, 0.15)',
     borderColor: colors.accent,
   },
-  oddsTextOrange: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#F27020',
-  },
   arrowColumn: {
     width: 75,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  statusColumn: {
+    width: 75,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusColumnText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.foreground,
+    textAlign: 'center',
   },
   teamsSection: {
     gap: 8,
@@ -286,22 +288,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 3,
   },
-  oddsColumn: {
-    width: 75,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  oddsText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.neonGreen,
-  },
-  oddsLabel: {
-    fontSize: 8,
-    fontWeight: '500',
-    color: colors.mutedForeground,
-    marginTop: 1,
-  },
   venueColumn: {
     width: 75,
     alignItems: 'center',
@@ -323,11 +309,6 @@ const styles = StyleSheet.create({
     width: 75,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  timeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: colors.foreground,
   },
   emptyColumn: {
     width: 75,

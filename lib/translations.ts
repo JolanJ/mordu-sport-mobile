@@ -69,6 +69,7 @@ export const translations = {
     finished: 'TERMINÉ',
     upcoming: 'À venir',
     end: 'FIN',
+    intermission: 'Entracte',
 
     // Favorites
     loginRequired: 'Connexion requise',
@@ -256,6 +257,7 @@ export const translations = {
     finished: 'FINISHED',
     upcoming: 'Upcoming',
     end: 'END',
+    intermission: 'Intermission',
 
     // Favorites
     loginRequired: 'Login required',

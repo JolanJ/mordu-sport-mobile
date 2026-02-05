@@ -3,10 +3,12 @@ import { MatchCard } from '@/components/MatchCard'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useTranslation } from '@/contexts/TranslationContext'
+import { useMatches } from '@/hooks/useMatches'
+import { Match } from '@/lib/types'
 import { colors } from '@/theme/colors'
 import { useRouter } from 'expo-router'
 import { Star } from 'lucide-react-native'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import {
   ActivityIndicator,
   Animated,
@@ -25,6 +27,27 @@ export default function Favorites() {
   const { t, locale } = useTranslation()
 
   const { favorites, loading, isFavorite, toggleFavorite, isAuthenticated } = useFavorites()
+
+  // Charger les matchs d'aujourd'hui pour avoir les données à jour
+  const { data: todayMatches = [] } = useMatches({ date: new Date(), withLogos: true })
+
+  // Créer une map des matchs d'aujourd'hui pour accès rapide
+  const todayMatchesMap = useMemo(() => {
+    const map = new Map<string, Match>()
+    todayMatches.forEach(match => map.set(match.id, match))
+    return map
+  }, [todayMatches])
+
+  // Fusionner les données favorites avec les données live
+  const favoritesWithLiveData = useMemo(() => {
+    return favorites.map(favorite => {
+      const liveMatch = todayMatchesMap.get(favorite.match_id)
+      return {
+        ...favorite,
+        match_data: liveMatch || favorite.match_data
+      }
+    })
+  }, [favorites, todayMatchesMap])
 
   const scrollToTop = () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
@@ -110,7 +133,7 @@ export default function Favorites() {
         </View>
       </View>
 
-      {favorites.length === 0 ? (
+      {favoritesWithLiveData.length === 0 ? (
         <View style={styles.emptyState}>
           <Star size={64} color={colors.mutedForeground} />
           <Text style={styles.emptyTitle}>{t('noFavorites')}</Text>
@@ -131,7 +154,7 @@ export default function Favorites() {
             scrollEventThrottle={16}
             contentContainerStyle={styles.matchesContainer}
           >
-            {favorites.map((favorite) => (
+            {favoritesWithLiveData.map((favorite) => (
               <MatchCard
                 key={favorite.id}
                 match={favorite.match_data}

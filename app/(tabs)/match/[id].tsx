@@ -128,12 +128,17 @@ export default function MatchRoom() {
         </View>
 
         <View style={styles.matchStatus}>
+          {match.status === 'live' && (match.period || match.timeRemaining) && (
+            <Text style={styles.periodTimeText}>
+              {match.period}{match.timeRemaining ? ` - ${match.timeRemaining}` : ''}
+            </Text>
+          )}
           <Text style={[styles.statusBadge, {
-            backgroundColor: match.status === 'live' ? colors.live :
+            backgroundColor: match.status === 'live' ? colors.neonBlue :
                            match.status === 'finished' ? colors.muted :
                            colors.primary
           }]}>
-            {match.status === 'live' ? 'LIVE' :
+            {match.status === 'live' ? (match.statusText ? t(match.statusText as any) : 'LIVE') :
              match.status === 'finished' ? t('end') :
              match.time || t('upcoming')}
           </Text>
@@ -188,6 +193,9 @@ export default function MatchRoom() {
           matchId={match.id}
           username={profile?.username || 'Fan'}
           avatarId={profile?.avatar_id || 1}
+          period={match.period}
+          timeRemaining={match.timeRemaining}
+          isLive={match.status === 'live'}
         />
       )}
       {activeTab === 'events' && (
@@ -293,6 +301,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.background,
     overflow: 'hidden',
+  },
+  periodTimeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.foreground,
+    textAlign: 'center',
+    marginBottom: 4,
   },
   venueText: {
     fontSize: 10,

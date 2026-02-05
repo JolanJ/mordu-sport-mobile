@@ -2,6 +2,7 @@ export interface Match {
   id: string
   league: "NHL" | "NBA" | "NFL"
   status: "upcoming" | "live" | "finished"
+  statusText?: string // Texte descriptif (ex: "Fin 1ère période", "Entracte")
   date: string
   time?: string
   period?: string

@@ -33,11 +33,14 @@ interface ChatRoomProps {
   matchId: string
   username?: string
   avatarId?: number
+  period?: string
+  timeRemaining?: string
+  isLive?: boolean
 }
 
 const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
 
-export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1 }: ChatRoomProps) {
+export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, timeRemaining, isLive }: ChatRoomProps) {
   const { user, profile, updateProfile } = useAuth()
   const { t, locale: appLocale } = useTranslation()
   const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'en')
