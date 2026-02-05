@@ -1,4 +1,5 @@
 import { SplashScreen } from '@/components/SplashScreen'
+import { UpdateRequiredModal } from '@/components/UpdateRequiredModal'
 import { colors } from '@/theme/colors'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { useState, useEffect, useRef } from 'react'
@@ -9,6 +10,7 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import { TranslationProvider } from '@/contexts/TranslationContext'
 import { prefetchTeamLogos } from '@/hooks/useTeamsWithLogos'
 import { prefetchTodayMatches } from '@/hooks/useMatches'
+import { useVersionCheck } from '@/hooks/useVersionCheck'
 
 // QueryClient en dehors pour être accessible pendant le prefetch
 const queryClient = new QueryClient({
@@ -57,6 +59,9 @@ export default function RootLayout() {
   const [isDataReady, setIsDataReady] = useState(false)
   const prefetchStarted = useRef(false)
 
+  // Vérification de version
+  const { needsUpdate, requiredVersion, currentVersion, loading: versionLoading } = useVersionCheck()
+
   // Prefetch des données pendant le splash
   useEffect(() => {
     if (prefetchStarted.current) return
@@ -99,6 +104,12 @@ export default function RootLayout() {
         <TranslationProvider>
           <FavoritesProvider>
             <RootLayoutNav />
+            {/* Modal bloquant si mise à jour requise */}
+            <UpdateRequiredModal
+              visible={needsUpdate && !versionLoading}
+              currentVersion={currentVersion}
+              requiredVersion={requiredVersion || ''}
+            />
           </FavoritesProvider>
         </TranslationProvider>
       </AuthProvider>
