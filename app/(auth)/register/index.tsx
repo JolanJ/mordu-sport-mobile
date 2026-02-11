@@ -1,4 +1,5 @@
 import { useRegister } from '@/contexts/RegisterContext'
+import { legalTexts } from '@/lib/legalTexts'
 import { registerTranslations } from '@/lib/registerTranslations'
 import { statesProvinces } from '@/lib/statesProvinces'
 import { colors } from '@/theme/colors'
@@ -24,11 +25,15 @@ export default function RegisterStep1() {
   const [email, setEmail] = useState(data.email)
   const [password, setPassword] = useState(data.password)
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [selectedCountry, setSelectedCountry] = useState<'CA' | 'US' | ''>('')
   const [stateProvince, setStateProvince] = useState(data.stateProvince)
   const [is18Plus, setIs18Plus] = useState(data.is18Plus)
   const [locale, setLocale] = useState<'fr' | 'en'>(data.preferredLocale)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
   const [showPicker, setShowPicker] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   const handleLocaleChange = (newLocale: 'fr' | 'en') => {
     setLocale(newLocale)
@@ -36,7 +41,13 @@ export default function RegisterStep1() {
   }
 
   const t = registerTranslations[locale]
+  const filteredList = statesProvinces.filter(sp => sp.country === selectedCountry)
   const selectedStateLabel = statesProvinces.find(sp => sp.value === stateProvince)?.label || ''
+
+  const handleCountrySelect = (country: 'CA' | 'US') => {
+    setSelectedCountry(country)
+    setStateProvince('')
+  }
 
   const handleContinue = () => {
     setError('')
@@ -62,6 +73,11 @@ export default function RegisterStep1() {
       return
     }
 
+    if (!selectedCountry) {
+      setError(t.errorSelectCountry)
+      return
+    }
+
     if (!stateProvince) {
       setError(t.errorSelectState)
       return
@@ -69,6 +85,11 @@ export default function RegisterStep1() {
 
     if (!is18Plus) {
       setError(t.errorAge)
+      return
+    }
+
+    if (!acceptedTerms) {
+      setError(t.errorAcceptTerms)
       return
     }
 
@@ -163,16 +184,41 @@ export default function RegisterStep1() {
             />
           </View>
 
-          {/* State/Province Picker */}
+          {/* Country Selection */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t.stateProvince} *</Text>
-            <Pressable style={styles.pickerButton} onPress={() => setShowPicker(true)}>
-              <Text style={[styles.pickerButtonText, !stateProvince && styles.pickerButtonPlaceholder]}>
-                {selectedStateLabel || t.stateProvincePlaceholder}
-              </Text>
-              <ChevronDown size={20} color={colors.mutedForeground} />
-            </Pressable>
+            <Text style={styles.label}>{t.country} *</Text>
+            <View style={styles.countryRow}>
+              <Pressable
+                style={[styles.countryButton, selectedCountry === 'CA' && styles.countryButtonSelected]}
+                onPress={() => handleCountrySelect('CA')}
+              >
+                <Text style={[styles.countryButtonText, selectedCountry === 'CA' && styles.countryButtonTextSelected]}>
+                  {t.canada}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.countryButton, selectedCountry === 'US' && styles.countryButtonSelected]}
+                onPress={() => handleCountrySelect('US')}
+              >
+                <Text style={[styles.countryButtonText, selectedCountry === 'US' && styles.countryButtonTextSelected]}>
+                  {t.unitedStates}
+                </Text>
+              </Pressable>
+            </View>
           </View>
+
+          {/* State/Province Picker */}
+          {selectedCountry !== '' && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{selectedCountry === 'CA' ? t.province : t.state} *</Text>
+              <Pressable style={styles.pickerButton} onPress={() => setShowPicker(true)}>
+                <Text style={[styles.pickerButtonText, !stateProvince && styles.pickerButtonPlaceholder]}>
+                  {selectedStateLabel || (selectedCountry === 'CA' ? t.provincePlaceholder : t.statePlaceholder)}
+                </Text>
+                <ChevronDown size={20} color={colors.mutedForeground} />
+              </Pressable>
+            </View>
+          )}
 
           {/* 18+ Checkbox */}
           <Pressable style={styles.checkboxRow} onPress={() => setIs18Plus(!is18Plus)}>
@@ -180,6 +226,20 @@ export default function RegisterStep1() {
               {is18Plus && <Check size={16} color={colors.background} />}
             </View>
             <Text style={styles.checkboxLabel}>{t.ageConfirmation} *</Text>
+          </Pressable>
+
+          {/* Terms & Privacy Checkbox */}
+          <Pressable style={styles.checkboxRow} onPress={() => setAcceptedTerms(!acceptedTerms)}>
+            <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}>
+              {acceptedTerms && <Check size={16} color={colors.background} />}
+            </View>
+            <Text style={styles.checkboxLabel}>
+              {t.acceptTerms}
+              <Text style={styles.legalLink} onPress={() => setShowTerms(true)}>{t.termsOfUse}</Text>
+              {t.andThe}
+              <Text style={styles.legalLink} onPress={() => setShowPrivacy(true)}>{t.privacyPolicy}</Text>
+              {' *'}
+            </Text>
           </Pressable>
 
           {error ? (
@@ -191,11 +251,6 @@ export default function RegisterStep1() {
           <Pressable style={styles.button} onPress={handleContinue}>
             <Text style={styles.buttonText}>{t.continue}</Text>
           </Pressable>
-
-          {/* Legal mention */}
-          <Text style={styles.legalText}>
-            {t.legalMention}
-          </Text>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>{t.alreadyAccount}</Text>
@@ -213,13 +268,13 @@ export default function RegisterStep1() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t.stateProvince}</Text>
+              <Text style={styles.modalTitle}>{selectedCountry === 'CA' ? t.province : t.state}</Text>
               <Pressable onPress={() => setShowPicker(false)}>
                 <Text style={styles.modalClose}>{t.close}</Text>
               </Pressable>
             </View>
             <FlatList
-              data={statesProvinces}
+              data={filteredList}
               keyExtractor={(item) => item.value}
               renderItem={renderStateItem}
               showsVerticalScrollIndicator={false}
@@ -227,6 +282,36 @@ export default function RegisterStep1() {
             />
           </View>
         </View>
+      </Modal>
+
+      {/* Terms of Use Modal */}
+      <Modal visible={showTerms} animationType="slide">
+        <SafeAreaView style={styles.legalModalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t.termsOfUse}</Text>
+            <Pressable onPress={() => setShowTerms(false)}>
+              <Text style={styles.modalClose}>{t.close}</Text>
+            </Pressable>
+          </View>
+          <ScrollView style={styles.legalScrollView} contentContainerStyle={styles.legalScrollContent}>
+            <Text style={styles.legalText}>{legalTexts[locale].termsOfUse}</Text>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Privacy Policy Modal */}
+      <Modal visible={showPrivacy} animationType="slide">
+        <SafeAreaView style={styles.legalModalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t.privacyPolicy}</Text>
+            <Pressable onPress={() => setShowPrivacy(false)}>
+              <Text style={styles.modalClose}>{t.close}</Text>
+            </Pressable>
+          </View>
+          <ScrollView style={styles.legalScrollView} contentContainerStyle={styles.legalScrollContent}>
+            <Text style={styles.legalText}>{legalTexts[locale].privacyPolicy}</Text>
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   )
@@ -303,6 +388,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.foreground,
   },
+  countryRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  countryButton: {
+    flex: 1,
+    height: 52,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countryButtonSelected: {
+    borderColor: colors.neonGreen,
+    backgroundColor: colors.muted,
+  },
+  countryButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.foreground,
+  },
+  countryButtonTextSelected: {
+    color: colors.neonGreen,
+    fontWeight: '600',
+  },
   pickerButton: {
     height: 52,
     backgroundColor: colors.card,
@@ -370,11 +482,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  legalLink: {
+    color: colors.neonGreen,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
   legalText: {
-    fontSize: 12,
-    color: colors.mutedForeground,
-    textAlign: 'center',
-    lineHeight: 18,
+    fontSize: 13,
+    color: colors.foreground,
+    lineHeight: 20,
   },
   footer: {
     flexDirection: 'row',
@@ -443,5 +559,18 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginHorizontal: 16,
+  },
+  // Legal modals
+  legalModalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  legalScrollView: {
+    flex: 1,
+  },
+  legalScrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 40,
   },
 })

@@ -1,21 +1,16 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
+import { useAvatars } from '@/hooks/useAvatars'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
-import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native'
-
-const avatars: Record<number, ImageSourcePropType> = {
-  1: require('@/assets/images/avatar-1.png'),
-  2: require('@/assets/images/avatar-2.png'),
-  3: require('@/assets/images/avatar-3.png'),
-  4: require('@/assets/images/avatar-4.png'),
-}
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
 export function HomeHeader() {
   const { profile } = useAuth()
   const { locale, setLocale, t } = useTranslation()
+  const { getAvatarUrl } = useAvatars()
 
-  const avatarSource = avatars[profile?.avatar_id || 1] || avatars[1]
+  const avatarUrl = getAvatarUrl(profile?.avatar_id || 1)
   const username = profile?.username || t('visitor')
 
   return (
@@ -26,11 +21,11 @@ export function HomeHeader() {
           style={styles.leftSection}
           onPress={() => router.push('/profile')}
         >
-          <Image
-            source={avatarSource}
+          {avatarUrl && <Image
+            source={{ uri: avatarUrl }}
             style={styles.avatar}
             resizeMode="cover"
-          />
+          />}
           <Text style={styles.username}>@{username}</Text>
         </Pressable>
 

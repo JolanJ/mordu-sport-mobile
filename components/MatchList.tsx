@@ -60,8 +60,23 @@ export function MatchList({ selectedDate }: MatchListProps) {
     )
   }
 
+  // TODO: REMOVE MOCK - Mock match pour tester le chat
+  const MOCK_MATCH = {
+    id: 'mock-chat-test',
+    league: 'NHL' as const,
+    status: 'live' as const,
+    date: new Date().toISOString().split('T')[0],
+    time: '19:00',
+    period: '2nd',
+    timeRemaining: '12:34',
+    venue: 'Centre Bell',
+    awayTeam: { name: 'Toronto Maple Leafs', abbr: 'TOR', logo: '', score: 2 },
+    homeTeam: { name: 'Montreal Canadiens', abbr: 'MTL', logo: '', score: 3 },
+  }
+  const allMatches = [MOCK_MATCH, ...sortedMatches]
+
   // Afficher les matchs NHL
-  if (matches.length === 0) {
+  if (matches.length === 0 && false) {
     const dateStr = queryDate.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
     return (
       <View style={styles.emptyContainer}>
@@ -92,7 +107,7 @@ export function MatchList({ selectedDate }: MatchListProps) {
       >
         <LeagueSection
           league="NHL"
-          matches={sortedMatches}
+          matches={allMatches}
           onMatchPress={handleMatchPress}
           isFavorite={isFavorite}
           onToggleFavorite={toggleFavorite}

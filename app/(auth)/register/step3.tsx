@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,6 +24,7 @@ export default function RegisterStep3() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [showRules, setShowRules] = useState(false)
 
   const t = registerTranslations[data.preferredLocale]
 
@@ -183,8 +185,39 @@ export default function RegisterStep3() {
               <Text style={styles.buttonText}>{t.createMyAccount}</Text>
             )}
           </Pressable>
+
+          {/* Community Rules Link */}
+          <Pressable onPress={() => setShowRules(true)}>
+            <Text style={styles.rulesLink}>{t.communityRules}</Text>
+          </Pressable>
+
+          {/* Disclaimer */}
+          <Text style={styles.disclaimerText}>{t.disclaimer}</Text>
         </View>
       </ScrollView>
+
+      {/* Community Rules Modal */}
+      <Modal visible={showRules} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>{t.communityRules}</Text>
+              <Text style={styles.modalIntro}>{t.communityRulesIntro}</Text>
+              <View style={styles.rulesList}>
+                <Text style={styles.ruleItem}>{'  \u2022  '}{t.communityRule1}</Text>
+                <Text style={styles.ruleItem}>{'  \u2022  '}{t.communityRule2}</Text>
+                <Text style={styles.ruleItem}>{'  \u2022  '}{t.communityRule3}</Text>
+                <Text style={styles.ruleItem}>{'  \u2022  '}{t.communityRule4}</Text>
+                <Text style={styles.ruleItem}>{'  \u2022  '}{t.communityRule5}</Text>
+              </View>
+              <Text style={styles.modalFooter}>{t.communityRulesFooter}</Text>
+            </ScrollView>
+            <Pressable style={styles.modalButton} onPress={() => setShowRules(false)}>
+              <Text style={styles.modalButtonText}>{t.ok}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -316,5 +349,75 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 24,
+  },
+  // Rules link & Disclaimer
+  rulesLink: {
+    fontSize: 13,
+    color: colors.neonGreen,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  disclaimerText: {
+    fontSize: 11,
+    color: colors.mutedForeground,
+    textAlign: 'center',
+    lineHeight: 16,
+    marginTop: 4,
+  },
+  // Rules Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.foreground,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalIntro: {
+    fontSize: 14,
+    color: colors.foreground,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  rulesList: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  ruleItem: {
+    fontSize: 14,
+    color: colors.foreground,
+    lineHeight: 20,
+  },
+  modalFooter: {
+    fontSize: 13,
+    color: colors.mutedForeground,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  modalButton: {
+    height: 44,
+    backgroundColor: colors.neonGreen,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: '600',
   },
 })

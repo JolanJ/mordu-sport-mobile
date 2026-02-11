@@ -54,6 +54,24 @@ export default function MatchRoom() {
       return
     }
 
+    // TODO: REMOVE MOCK - Mock match pour tester le chat
+    if (normalizedId === 'mock-chat-test') {
+      setMatch({
+        id: 'mock-chat-test',
+        league: 'NHL',
+        status: 'live',
+        date: new Date().toISOString().split('T')[0],
+        time: '19:00',
+        period: '2nd',
+        timeRemaining: '12:34',
+        venue: 'Centre Bell',
+        awayTeam: { name: 'Toronto Maple Leafs', abbr: 'TOR', logo: '', score: 2 },
+        homeTeam: { name: 'Montreal Canadiens', abbr: 'MTL', logo: '', score: 3 },
+      })
+      setIsLoading(false)
+      return
+    }
+
     // Chercher le match par ID
     const foundMatch = matches.find(m => String(m.id).trim() === normalizedId)
 
@@ -111,8 +129,8 @@ export default function MatchRoom() {
         <View style={styles.placeholder} />
       </View>
 
-      {/* Match Info - Compact */}
-      <View style={styles.matchInfoCompact}>
+      {/* Match Info - Compact (caché quand keyboard ouvert) */}
+      {!keyboardVisible && <View style={styles.matchInfoCompact}>
         <View style={styles.teamCompact}>
           <View style={styles.logoContainerSmall}>
             {match.awayTeam.logo ? (
@@ -158,7 +176,7 @@ export default function MatchRoom() {
             <Text style={styles.teamScoreCompact}>{match.homeTeam.score}</Text>
           )}
         </View>
-      </View>
+      </View>}
 
       {/* Tab Bar - caché quand keyboard ouvert */}
       {!keyboardVisible && (

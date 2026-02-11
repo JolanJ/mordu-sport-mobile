@@ -1,6 +1,7 @@
 import { HomeHeader } from '@/components/HomeHeader'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
+import { useAvatars } from '@/hooks/useAvatars'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
 import { ArrowLeft, Check, LogIn, LogOut } from 'lucide-react-native'
@@ -21,18 +22,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 export default function Profile() {
   const { user, profile, signOut, updateProfile } = useAuth()
   const { t, locale } = useTranslation()
+  const { avatars } = useAvatars()
   const [username, setUsername] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
-
-  // Avatars disponibles (style cartoon sport)
-  const availableAvatars = [
-    { id: 1, name: t('avatarHockey'), source: require('@/assets/images/avatar-1.png') },
-    { id: 2, name: t('avatarBasketball'), source: require('@/assets/images/avatar-2.png') },
-    { id: 3, name: t('avatarFootball'), source: require('@/assets/images/avatar-3.png') },
-    { id: 4, name: t('avatarSoccer'), source: require('@/assets/images/avatar-4.png') },
-  ]
 
   // Initialiser avec les données du profil
   useEffect(() => {
@@ -152,7 +146,7 @@ export default function Profile() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('avatar')}</Text>
           <View style={styles.avatarGrid}>
-            {availableAvatars.map((avatar) => (
+            {avatars.map((avatar) => (
               <Pressable
                 key={avatar.id}
                 style={[
@@ -163,7 +157,7 @@ export default function Profile() {
                 disabled={!isEditing}
               >
                 <Image
-                  source={avatar.source}
+                  source={{ uri: avatar.img_link }}
                   style={styles.avatarImage}
                   resizeMode="cover"
                 />

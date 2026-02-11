@@ -1,16 +1,17 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
+import { useAvatars } from '@/hooks/useAvatars'
 import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
 import { containsBlockedWord } from '@/lib/chatFilter'
 import { colors } from '@/theme/colors'
-import { Send } from 'lucide-react-native'
+import { router } from 'expo-router'
+import { LogIn, Send } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   Image,
-  ImageSourcePropType,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -20,14 +21,6 @@ import {
   TextInput,
   View,
 } from 'react-native'
-
-// Avatars disponibles
-const avatars: Record<number, ImageSourcePropType> = {
-  1: require('@/assets/images/avatar-1.png'),
-  2: require('@/assets/images/avatar-2.png'),
-  3: require('@/assets/images/avatar-3.png'),
-  4: require('@/assets/images/avatar-4.png'),
-}
 
 interface ChatRoomProps {
   matchId: string
@@ -42,6 +35,7 @@ const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
 
 export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, timeRemaining, isLive }: ChatRoomProps) {
   const { user, profile, updateProfile } = useAuth()
+  const { getAvatarUrl } = useAvatars()
   const { t, locale: appLocale } = useTranslation()
   const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'en')
   const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, isAuthenticated } = useChat({ matchId, locale })
@@ -123,7 +117,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isOwnMessage = user?.id === item.user_id
-    const avatarSource = avatars[item.avatar_id] || avatars[1]
+    const avatarUrl = getAvatarUrl(item.avatar_id)
     const messageReactions = getReactionsForMessage(item.id)
     const showReactionPicker = selectedMessageId === item.id
 
@@ -134,8 +128,8 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
           delayLongPress={300}
           style={[styles.messageContainer, isOwnMessage && styles.ownMessageContainer]}
         >
-          {!isOwnMessage && (
-            <Image source={avatarSource} style={styles.avatar} />
+          {!isOwnMessage && avatarUrl && (
+            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
           )}
           <View style={[styles.messageBubble, isOwnMessage && styles.ownMessageBubble]}>
             <Text style={[styles.username, isOwnMessage && styles.ownUsername]}>{item.username}</Text>
@@ -146,8 +140,8 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
               {formatTime(item.created_at)}
             </Text>
           </View>
-          {isOwnMessage && (
-            <Image source={avatarSource} style={styles.avatar} />
+          {isOwnMessage && avatarUrl && (
+            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
           )}
         </Pressable>
 
@@ -191,9 +185,15 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     return (
       <View style={styles.container}>
         <View style={styles.authPrompt}>
-          <Text style={styles.authPromptText}>
-            {t('loginToChat')}
-          </Text>
+          <LogIn size={48} color={colors.mutedForeground} />
+          <Text style={styles.authPromptTitle}>{t('loginRequired')}</Text>
+          <Text style={styles.authPromptText}>{t('loginToChat')}</Text>
+          <Pressable
+            style={styles.authLoginButton}
+            onPress={() => router.push('/(auth)/login')}
+          >
+            <Text style={styles.authLoginButtonText}>{t('signIn')}</Text>
+          </Pressable>
         </View>
       </View>
     )
@@ -253,8 +253,8 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
       )}
 
       <View style={styles.inputWrapper}>
-        {/* Quick emoji reactions */}
-        <View style={styles.quickEmojis}>
+        {/* Quick emoji reactions - caché quand keyboard ouvert */}
+        {!keyboardVisible && <View style={styles.quickEmojis}>
           {['👍', '👎', '🔥', '💀'].map((emoji) => (
             <Pressable
               key={emoji}
@@ -265,7 +265,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
               <Text style={styles.emojiText}>{emoji}</Text>
             </Pressable>
           ))}
-        </View>
+        </View>}
 
         <View style={styles.inputContainer}>
           <TextInput
@@ -304,25 +304,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   liveIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: colors.live,
   },
   liveText: {
     color: colors.foreground,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
   participantsText: {
@@ -362,51 +362,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   messagesList: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 4,
   },
   messageContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
-    marginBottom: 8,
+    gap: 6,
+    marginBottom: 4,
   },
   ownMessageContainer: {
     justifyContent: 'flex-end',
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.card,
   },
   messageBubble: {
     maxWidth: '75%',
     backgroundColor: colors.card,
-    borderRadius: 16,
+    borderRadius: 12,
     borderBottomLeftRadius: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   ownMessageBubble: {
     backgroundColor: colors.primary,
-    borderBottomLeftRadius: 16,
+    borderBottomLeftRadius: 12,
     borderBottomRightRadius: 4,
   },
   username: {
     color: colors.neonGreen,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   ownUsername: {
     color: 'rgba(13, 13, 13, 0.8)',
   },
   messageText: {
     color: colors.foreground,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
   },
   ownMessageText: {
     color: colors.background,
@@ -494,10 +494,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
+  authPromptTitle: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.foreground,
+  },
   authPromptText: {
+    marginTop: 8,
     color: colors.mutedForeground,
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  authLoginButton: {
+    marginTop: 24,
+    height: 48,
+    paddingHorizontal: 32,
+    backgroundColor: colors.neonGreen,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  authLoginButtonText: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: '600',
   },
   // Reactions
   messageWrapper: {

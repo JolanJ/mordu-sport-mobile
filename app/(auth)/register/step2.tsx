@@ -1,4 +1,5 @@
 import { useRegister } from '@/contexts/RegisterContext'
+import { useAvatars } from '@/hooks/useAvatars'
 import { registerTranslations } from '@/lib/registerTranslations'
 import { colors } from '@/theme/colors'
 import { useRouter } from 'expo-router'
@@ -6,7 +7,6 @@ import { ArrowLeft, Check } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   Image,
-  ImageSourcePropType,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,16 +16,10 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const availableAvatars: { id: number; name: string; source: ImageSourcePropType }[] = [
-  { id: 1, name: 'Hockey', source: require('@/assets/images/avatar-1.png') },
-  { id: 2, name: 'Basketball', source: require('@/assets/images/avatar-2.png') },
-  { id: 3, name: 'Football', source: require('@/assets/images/avatar-3.png') },
-  { id: 4, name: 'Soccer', source: require('@/assets/images/avatar-4.png') },
-]
-
 export default function RegisterStep2() {
   const router = useRouter()
   const { data, updateData } = useRegister()
+  const { avatars } = useAvatars()
 
   const [username, setUsername] = useState(data.username)
   const [selectedAvatar, setSelectedAvatar] = useState(data.avatarId)
@@ -77,7 +71,7 @@ export default function RegisterStep2() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{t.chooseAvatar}</Text>
             <View style={styles.avatarGrid}>
-              {availableAvatars.map((avatar) => (
+              {avatars.map((avatar) => (
                 <Pressable
                   key={avatar.id}
                   style={[
@@ -86,7 +80,7 @@ export default function RegisterStep2() {
                   ]}
                   onPress={() => setSelectedAvatar(avatar.id)}
                 >
-                  <Image source={avatar.source} style={styles.avatarImage} />
+                  <Image source={{ uri: avatar.img_link }} style={styles.avatarImage} />
                   {selectedAvatar === avatar.id && (
                     <View style={styles.avatarCheck}>
                       <Check size={16} color={colors.background} />
@@ -185,11 +179,12 @@ const styles = StyleSheet.create({
   },
   avatarGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 12,
   },
   avatarOption: {
-    flex: 1,
+    width: '28%',
     aspectRatio: 1,
     backgroundColor: colors.card,
     borderRadius: 16,
