@@ -26,7 +26,6 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Eastern",
     division: "Atlantic",
-    logo: require('@/assets/images/ch.png'),
     goalserveId: "1115",
     stats: { wins: 15, losses: 8, otLosses: 2, points: 32 }
   },
@@ -38,7 +37,6 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Eastern",
     division: "Atlantic",
-    logo: require('@/assets/images/toor.png'),
     goalserveId: "1136",
     stats: { wins: 18, losses: 5, otLosses: 1, points: 37 }
   },
@@ -50,7 +48,6 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Eastern",
     division: "Atlantic",
-    logo: require('@/assets/images/bos.png'),
     goalserveId: "1160",
     stats: { wins: 12, losses: 10, otLosses: 3, points: 27 }
   },
@@ -119,7 +116,6 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Eastern",
     division: "Metropolitan",
-    logo: require('@/assets/images/ran.png'),
     goalserveId: "1172",
     stats: { wins: 16, losses: 7, otLosses: 2, points: 34 }
   },
@@ -300,7 +296,6 @@ export const mockTeams: Team[] = [
     league: "NHL",
     conference: "Western",
     division: "Pacific",
-    logo: require('@/assets/images/vgk.png'),
     goalserveId: "6264",
     stats: { wins: 18, losses: 6, otLosses: 1, points: 37 }
   },

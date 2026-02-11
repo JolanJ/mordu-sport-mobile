@@ -15,10 +15,6 @@ const getLeagueLogo = (league: string) => {
   switch (league) {
     case 'NHL':
       return require('@/assets/images/NHL-Logo.png')
-    case 'NBA':
-      return require('@/assets/images/nba-logo-transparent.png')
-    case 'NFL':
-      return require('@/assets/images/National_Football_League_logo.svg.png')
     default:
       return null
   }

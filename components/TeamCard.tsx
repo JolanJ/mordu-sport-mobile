@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   teamLogo: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
   },
   teamInfo: {
     flex: 1,
