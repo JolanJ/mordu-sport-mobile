@@ -1,5 +1,7 @@
+import UsfLogo from '@/assets/images/usf.svg'
+import { LanguagePickerModal } from '@/components/LanguagePickerModal'
 import { useAuth } from '@/contexts/AuthContext'
-import { getTranslation, Locale } from '@/lib/translations'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
 import { Link, router } from 'expo-router'
 import { useState } from 'react'
@@ -19,11 +21,9 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [locale, setLocale] = useState<Locale>('fr')
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false)
   const { signIn } = useAuth()
-
-  const t = (key: Parameters<typeof getTranslation>[1], params?: Record<string, string | number>) =>
-    getTranslation(locale, key, params)
+  const { t, setLocale } = useTranslation()
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -50,26 +50,8 @@ export default function LoginScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Language Toggle */}
-        <View style={styles.localeContainer}>
-          <View style={styles.localeToggle}>
-            <Pressable
-              style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
-              onPress={() => setLocale('fr')}
-            >
-              <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
-              onPress={() => setLocale('en')}
-            >
-              <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>EN</Text>
-            </Pressable>
-          </View>
-        </View>
-
         <View style={styles.header}>
-          <Text style={styles.title}>{t('appName')}</Text>
+          <UsfLogo width={260} height={260} />
           <Text style={styles.subtitle}>{t('loginSubtitle')}</Text>
         </View>
 
@@ -128,12 +110,21 @@ export default function LoginScreen() {
 
           <Pressable
             style={styles.visitorButton}
-            onPress={() => router.replace('/(tabs)')}
+            onPress={() => setShowLanguagePicker(true)}
           >
             <Text style={styles.visitorButtonText}>{t('continueAsVisitor')}</Text>
           </Pressable>
         </View>
       </ScrollView>
+
+      <LanguagePickerModal
+        visible={showLanguagePicker}
+        onSelectLocale={async (locale) => {
+          await setLocale(locale)
+          setShowLanguagePicker(false)
+          router.replace('/(tabs)')
+        }}
+      />
     </SafeAreaView>
   )
 }
@@ -149,44 +140,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 32,
   },
-  localeContainer: {
-    position: 'absolute',
-    top: 16,
-    right: 0,
-    left: 0,
-    alignItems: 'center',
-  },
-  localeToggle: {
-    flexDirection: 'row',
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    padding: 2,
-  },
-  localeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  localeButtonActive: {
-    backgroundColor: colors.neonGreen,
-  },
-  localeButtonText: {
-    color: colors.mutedForeground,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  localeButtonTextActive: {
-    color: colors.background,
-  },
   header: {
     alignItems: 'center',
     marginBottom: 48,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.foreground,
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,

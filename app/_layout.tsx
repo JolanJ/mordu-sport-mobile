@@ -7,7 +7,7 @@ import { View, ActivityIndicator } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
-import { TranslationProvider } from '@/contexts/TranslationContext'
+import { TranslationProvider, useTranslation } from '@/contexts/TranslationContext'
 import { prefetchTeamLogos } from '@/hooks/useTeamsWithLogos'
 import { prefetchTodayMatches } from '@/hooks/useMatches'
 import { useVersionCheck } from '@/hooks/useVersionCheck'
@@ -23,6 +23,7 @@ const queryClient = new QueryClient({
 
 function RootLayoutNav() {
   const { user, loading } = useAuth()
+  const { isLocaleLoaded } = useTranslation()
   const segments = useSegments()
   const router = useRouter()
 
@@ -38,7 +39,7 @@ function RootLayoutNav() {
     // Mode visiteur: on ne force plus la connexion
   }, [user, loading, segments])
 
-  if (loading) {
+  if (loading || !isLocaleLoaded) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#3b82f6" />

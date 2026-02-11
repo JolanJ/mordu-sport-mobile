@@ -48,6 +48,7 @@ export const translations = {
     followedTeams: 'Équipes suivies',
     account: 'Compte',
     disconnect: 'Se déconnecter',
+    language: 'Langue',
     recently: 'Récemment',
 
     // Avatar names
@@ -236,6 +237,7 @@ export const translations = {
     followedTeams: 'Followed teams',
     account: 'Account',
     disconnect: 'Disconnect',
+    language: 'Language',
     recently: 'Recently',
 
     // Avatar names

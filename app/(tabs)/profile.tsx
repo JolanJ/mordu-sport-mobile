@@ -21,10 +21,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Profile() {
   const { user, profile, signOut, updateProfile } = useAuth()
-  const { t, locale } = useTranslation()
+  const { t, locale, setLocale } = useTranslation()
   const { avatars } = useAvatars()
   const [username, setUsername] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState(1)
+  const [selectedLocale, setSelectedLocale] = useState<'fr' | 'en'>(locale)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -35,6 +36,11 @@ export default function Profile() {
       setSelectedAvatar(profile.avatar_id)
     }
   }, [profile])
+
+  // Sync locale locale quand le contexte global change
+  useEffect(() => {
+    setSelectedLocale(locale)
+  }, [locale])
 
   const handleSignOut = () => {
     Alert.alert(
@@ -73,6 +79,7 @@ export default function Profile() {
         Alert.alert(t('error'), error.message)
       }
     } else {
+      await setLocale(selectedLocale)
       setIsEditing(false)
       Alert.alert(t('success'), t('profileUpdated'))
     }
@@ -83,6 +90,7 @@ export default function Profile() {
       setUsername(profile.username)
       setSelectedAvatar(profile.avatar_id)
     }
+    setSelectedLocale(locale)
     setIsEditing(false)
   }
 
@@ -186,6 +194,31 @@ export default function Profile() {
               autoCorrect={false}
               maxLength={20}
             />
+          </View>
+        </View>
+
+        {/* Section langue */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('language')}</Text>
+          <View style={[styles.localeToggle, !isEditing && styles.localeToggleDisabled]}>
+            <Pressable
+              style={[styles.localeButton, selectedLocale === 'fr' && styles.localeButtonActive]}
+              onPress={() => setSelectedLocale('fr')}
+              disabled={!isEditing}
+            >
+              <Text style={[styles.localeButtonText, selectedLocale === 'fr' && styles.localeButtonTextActive]}>
+                Français
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.localeButton, selectedLocale === 'en' && styles.localeButtonActive]}
+              onPress={() => setSelectedLocale('en')}
+              disabled={!isEditing}
+            >
+              <Text style={[styles.localeButtonText, selectedLocale === 'en' && styles.localeButtonTextActive]}>
+                English
+              </Text>
+            </Pressable>
           </View>
         </View>
 
@@ -451,6 +484,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.foreground,
     fontWeight: '500',
+  },
+  localeToggle: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  localeToggleDisabled: {
+    opacity: 0.5,
+  },
+  localeButton: {
+    flex: 1,
+    height: 48,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  localeButtonActive: {
+    borderColor: colors.neonGreen,
+    backgroundColor: colors.muted,
+  },
+  localeButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.foreground,
+  },
+  localeButtonTextActive: {
+    color: colors.neonGreen,
+    fontWeight: '600',
   },
   logoutButton: {
     flexDirection: 'row',

@@ -9,6 +9,8 @@ interface TranslationContextType {
   locale: Locale
   setLocale: (locale: Locale) => Promise<void>
   t: (key: TranslationKey, params?: Record<string, string | number>) => string
+  isLocaleLoaded: boolean
+  isLocaleChosen: boolean
 }
 
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined)
@@ -16,13 +18,17 @@ const TranslationContext = createContext<TranslationContextType | undefined>(und
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const { user, profile, updateProfile } = useAuth()
   const [localLocale, setLocalLocale] = useState<Locale>('fr')
+  const [isLocaleLoaded, setIsLocaleLoaded] = useState(false)
+  const [isLocaleChosen, setIsLocaleChosen] = useState(false)
 
   // Charger la langue depuis AsyncStorage au démarrage
   useEffect(() => {
     AsyncStorage.getItem(LOCALE_STORAGE_KEY).then((stored) => {
       if (stored === 'fr' || stored === 'en') {
         setLocalLocale(stored)
+        setIsLocaleChosen(true)
       }
+      setIsLocaleLoaded(true)
     })
   }, [])
 
@@ -33,6 +39,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     // Toujours sauvegarder localement
     await AsyncStorage.setItem(LOCALE_STORAGE_KEY, newLocale)
     setLocalLocale(newLocale)
+    setIsLocaleChosen(true)
 
     // Si connecté, sauvegarder aussi dans le profil
     if (user) {
@@ -45,7 +52,9 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     setLocale,
     t: (key: TranslationKey, params?: Record<string, string | number>) =>
       getTranslation(locale, key, params),
-  }), [locale, user])
+    isLocaleLoaded,
+    isLocaleChosen,
+  }), [locale, user, isLocaleLoaded, isLocaleChosen])
 
   return (
     <TranslationContext.Provider value={value}>
@@ -57,12 +66,13 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 export function useTranslation() {
   const context = useContext(TranslationContext)
   if (!context) {
-    // Fallback si pas de provider (pour les composants hors contexte)
     return {
       locale: 'fr' as Locale,
       setLocale: async () => {},
       t: (key: TranslationKey, params?: Record<string, string | number>) =>
         getTranslation('fr', key, params),
+      isLocaleLoaded: true,
+      isLocaleChosen: true,
     }
   }
   return context

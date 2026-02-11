@@ -34,7 +34,7 @@ interface ChatRoomProps {
 const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
 
 export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, timeRemaining, isLive }: ChatRoomProps) {
-  const { user, profile, updateProfile } = useAuth()
+  const { user, profile } = useAuth()
   const { getAvatarUrl } = useAvatars()
   const { t, locale: appLocale } = useTranslation()
   const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'en')
@@ -51,12 +51,9 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     }
   }, [profile?.preferred_locale])
 
-  // Changer de langue et sauvegarder la préférence
-  const handleLocaleChange = async (newLocale: Locale) => {
+  // Changer de langue (local seulement, pas d'écriture en BD)
+  const handleLocaleChange = (newLocale: Locale) => {
     setLocale(newLocale)
-    if (user) {
-      await updateProfile({ preferred_locale: newLocale })
-    }
   }
 
   // Scroll vers le bas quand nouveaux messages

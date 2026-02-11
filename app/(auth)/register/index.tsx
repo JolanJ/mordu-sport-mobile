@@ -1,4 +1,5 @@
 import { useRegister } from '@/contexts/RegisterContext'
+import { useTranslation } from '@/contexts/TranslationContext'
 import { legalTexts } from '@/lib/legalTexts'
 import { registerTranslations } from '@/lib/registerTranslations'
 import { statesProvinces } from '@/lib/statesProvinces'
@@ -21,14 +22,15 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 export default function RegisterStep1() {
   const router = useRouter()
   const { data, updateData } = useRegister()
+  const { locale: globalLocale, setLocale: setGlobalLocale } = useTranslation()
 
   const [email, setEmail] = useState(data.email)
   const [password, setPassword] = useState(data.password)
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [selectedCountry, setSelectedCountry] = useState<'CA' | 'US' | ''>('')
+  const [selectedCountry, setSelectedCountry] = useState<'CA' | 'US' | 'EU' | ''>('')
   const [stateProvince, setStateProvince] = useState(data.stateProvince)
   const [is18Plus, setIs18Plus] = useState(data.is18Plus)
-  const [locale, setLocale] = useState<'fr' | 'en'>(data.preferredLocale)
+  const [locale, setLocale] = useState<'fr' | 'en'>(data.preferredLocale || globalLocale)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
   const [showPicker, setShowPicker] = useState(false)
@@ -38,15 +40,20 @@ export default function RegisterStep1() {
   const handleLocaleChange = (newLocale: 'fr' | 'en') => {
     setLocale(newLocale)
     updateData({ preferredLocale: newLocale })
+    setGlobalLocale(newLocale)
   }
 
   const t = registerTranslations[locale]
   const filteredList = statesProvinces.filter(sp => sp.country === selectedCountry)
   const selectedStateLabel = statesProvinces.find(sp => sp.value === stateProvince)?.label || ''
 
-  const handleCountrySelect = (country: 'CA' | 'US') => {
+  const handleCountrySelect = (country: 'CA' | 'US' | 'EU') => {
     setSelectedCountry(country)
-    setStateProvince('')
+    if (country === 'EU') {
+      setStateProvince('EU')
+    } else {
+      setStateProvince('')
+    }
   }
 
   const handleContinue = () => {
@@ -204,11 +211,19 @@ export default function RegisterStep1() {
                   {t.unitedStates}
                 </Text>
               </Pressable>
+              <Pressable
+                style={[styles.countryButton, selectedCountry === 'EU' && styles.countryButtonSelected]}
+                onPress={() => handleCountrySelect('EU')}
+              >
+                <Text style={[styles.countryButtonText, selectedCountry === 'EU' && styles.countryButtonTextSelected]}>
+                  {t.europe}
+                </Text>
+              </Pressable>
             </View>
           </View>
 
-          {/* State/Province Picker */}
-          {selectedCountry !== '' && (
+          {/* State/Province Picker - seulement pour CA/US */}
+          {(selectedCountry === 'CA' || selectedCountry === 'US') && (
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{selectedCountry === 'CA' ? t.province : t.state} *</Text>
               <Pressable style={styles.pickerButton} onPress={() => setShowPicker(true)}>

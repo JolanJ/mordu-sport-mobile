@@ -65,6 +65,8 @@ export const statesProvinces = [
   { label: 'West Virginia', value: 'WV', country: 'US' },
   { label: 'Wisconsin', value: 'WI', country: 'US' },
   { label: 'Wyoming', value: 'WY', country: 'US' },
+  // Europe
+  { label: 'Europe', value: 'EU', country: 'EU' },
 ]
 
 export const getStateProvinceLabel = (value: string): string => {
