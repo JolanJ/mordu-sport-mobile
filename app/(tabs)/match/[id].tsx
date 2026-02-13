@@ -65,8 +65,8 @@ export default function MatchRoom() {
         period: '2nd',
         timeRemaining: '12:34',
         venue: 'Centre Bell',
-        awayTeam: { name: 'Toronto Maple Leafs', abbr: 'TOR', logo: '', score: 2 },
-        homeTeam: { name: 'Montreal Canadiens', abbr: 'MTL', logo: '', score: 3 },
+        awayTeam: { name: 'Toronto Maple Leafs', abbr: 'TOR', logo: 'https://wrajekuuhbuneoualiix.supabase.co/storage/v1/object/sign/usfJersey/tor.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNDk3ZGYxNS04MDcxLTQxZjQtOGZmNi00MWI3NzQyZTU2MzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ1c2ZKZXJzZXkvdG9yLnBuZyIsImlhdCI6MTc3MDc2MDM4MiwiZXhwIjozMzI3NTIyNDM4Mn0.Rr6RIdWSLEVmlxpI7edfDxgQK2DyJEUuMt-eEc4gP7U', score: 2 },
+        homeTeam: { name: 'Montreal Canadiens', abbr: 'MTL', logo: 'https://wrajekuuhbuneoualiix.supabase.co/storage/v1/object/sign/usfJersey/mtl.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNDk3ZGYxNS04MDcxLTQxZjQtOGZmNi00MWI3NzQyZTU2MzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ1c2ZKZXJzZXkvbXRsLnBuZyIsImlhdCI6MTc3MDc2MDMyMiwiZXhwIjozMzI3NTIyNDMyMn0.pgDP6ymgmk-iNH6Ovk2n9bYA7vQ3-Ka9eqb9I5CtxFc', score: 3 },
       })
       setIsLoading(false)
       return
@@ -129,54 +129,72 @@ export default function MatchRoom() {
         <View style={styles.placeholder} />
       </View>
 
-      {/* Match Info - Compact (caché quand keyboard ouvert) */}
-      {!keyboardVisible && <View style={styles.matchInfoCompact}>
-        <View style={styles.teamCompact}>
-          <View style={styles.logoContainerSmall}>
-            {match.awayTeam.logo ? (
-              <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
-            ) : (
-              <Text style={styles.logoPlaceholderTextSmall}>{match.awayTeam.abbr}</Text>
-            )}
+      {/* Match Info - Full when keyboard closed, mini when open */}
+      {keyboardVisible ? (
+        <View style={styles.matchInfoMini}>
+          <View style={styles.teamMini}>
+            <View style={styles.logoContainerMini}>
+              {match.awayTeam.logo ? (
+                <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoMini} resizeMode="contain" />
+              ) : (
+                <Text style={styles.logoPlaceholderTextSmall}>{match.awayTeam.abbr}</Text>
+              )}
+            </View>
+            <Text style={styles.teamNameMini}>{match.awayTeam.abbr}</Text>
           </View>
-          <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
-          {match.awayTeam.score !== undefined && (
-            <Text style={styles.teamScoreCompact}>{match.awayTeam.score}</Text>
-          )}
-        </View>
-
-        <View style={styles.matchStatus}>
-          {match.status === 'live' && (match.period || match.timeRemaining) && (
-            <Text style={styles.periodTimeText}>
-              {match.period}{match.timeRemaining ? ` - ${match.timeRemaining}` : ''}
-            </Text>
-          )}
-          <Text style={[styles.statusBadge, {
-            backgroundColor: match.status === 'live' ? colors.neonBlue :
-                           match.status === 'finished' ? colors.muted :
-                           colors.primary
-          }]}>
-            {match.status === 'live' ? (match.statusText ? t(match.statusText as any) : 'LIVE') :
-             match.status === 'finished' ? t('end') :
-             match.time || t('upcoming')}
+          <Text style={styles.scoreMini}>{match.awayTeam.score ?? 0}</Text>
+          <Text style={styles.timeMini}>
+            {match.period ? `${match.period}` : match.time || '-'}
+            {match.timeRemaining ? `\n${match.timeRemaining}` : ''}
           </Text>
-          {match.venue && <Text style={styles.venueText}>{match.venue}</Text>}
+          <Text style={styles.scoreMini}>{match.homeTeam.score ?? 0}</Text>
+          <View style={styles.teamMini}>
+            <View style={styles.logoContainerMini}>
+              {match.homeTeam.logo ? (
+                <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoMini} resizeMode="contain" />
+              ) : (
+                <Text style={styles.logoPlaceholderTextSmall}>{match.homeTeam.abbr}</Text>
+              )}
+            </View>
+            <Text style={styles.teamNameMini}>{match.homeTeam.abbr}</Text>
+          </View>
         </View>
+      ) : (
+        <View style={styles.matchInfoCompact}>
+          <View style={styles.teamCompact}>
+            <View style={styles.logoContainerSmall}>
+              {match.awayTeam.logo ? (
+                <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
+              ) : (
+                <Text style={styles.logoPlaceholderTextSmall}>{match.awayTeam.abbr}</Text>
+              )}
+            </View>
+            <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
+          </View>
+          <Text style={styles.teamScoreCompact}>{match.awayTeam.score ?? 0}</Text>
 
-        <View style={styles.teamCompact}>
-          <View style={styles.logoContainerSmall}>
-            {match.homeTeam.logo ? (
-              <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
-            ) : (
-              <Text style={styles.logoPlaceholderTextSmall}>{match.homeTeam.abbr}</Text>
+          <View style={styles.matchStatus}>
+            <Text style={styles.periodTimeText}>
+              {match.period || match.time || '-'}
+            </Text>
+            {match.timeRemaining && (
+              <Text style={styles.timeRemainingText}>{match.timeRemaining}</Text>
             )}
           </View>
-          <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
-          {match.homeTeam.score !== undefined && (
-            <Text style={styles.teamScoreCompact}>{match.homeTeam.score}</Text>
-          )}
+
+          <Text style={styles.teamScoreCompact}>{match.homeTeam.score ?? 0}</Text>
+          <View style={styles.teamCompact}>
+            <View style={styles.logoContainerSmall}>
+              {match.homeTeam.logo ? (
+                <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
+              ) : (
+                <Text style={styles.logoPlaceholderTextSmall}>{match.homeTeam.abbr}</Text>
+              )}
+            </View>
+            <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
+          </View>
         </View>
-      </View>}
+      )}
 
       {/* Tab Bar - caché quand keyboard ouvert */}
       {!keyboardVisible && (
@@ -261,13 +279,61 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
+  // Match Info Mini (keyboard open)
+  matchInfoMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  teamMini: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  logoContainerMini: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.neonBlue,
+  },
+  teamNameMini: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.foreground,
+  },
+  teamLogoMini: {
+    width: 34,
+    height: 34,
+  },
+  scoreMini: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.neonGreen,
+  },
+  timeMini: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.mutedForeground,
+    textAlign: 'center',
+  },
   // Match Info Compact
   matchInfoCompact: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 16,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -278,18 +344,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logoContainerSmall: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.neonBlue,
   },
   teamLogoSmall: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
   },
   logoPlaceholderTextSmall: {
     fontSize: 14,
@@ -321,11 +388,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   periodTimeText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: colors.foreground,
     textAlign: 'center',
-    marginBottom: 4,
+  },
+  timeRemainingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.mutedForeground,
+    textAlign: 'center',
   },
   venueText: {
     fontSize: 10,

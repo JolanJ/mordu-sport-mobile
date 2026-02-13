@@ -129,12 +129,14 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
             <Image source={{ uri: avatarUrl }} style={styles.avatar} />
           )}
           <View style={[styles.messageBubble, isOwnMessage && styles.ownMessageBubble]}>
-            <Text style={[styles.username, isOwnMessage && styles.ownUsername]}>{item.username}</Text>
+            <View style={styles.usernameRow}>
+              <Text style={[styles.username, isOwnMessage && styles.ownUsername]}>{item.username}</Text>
+              <Text style={[styles.messageTime, isOwnMessage && styles.ownMessageTime]}>
+                {formatTime(item.created_at)}
+              </Text>
+            </View>
             <Text style={[styles.messageText, isOwnMessage && styles.ownMessageText]}>
               {item.content}
-            </Text>
-            <Text style={[styles.messageTime, isOwnMessage && styles.ownMessageTime]}>
-              {formatTime(item.created_at)}
             </Text>
           </View>
           {isOwnMessage && avatarUrl && (
@@ -200,7 +202,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
       {!keyboardVisible && (
         <View style={styles.header}>
@@ -391,11 +393,17 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 4,
   },
+  usernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 2,
+  },
   username: {
     color: colors.neonGreen,
     fontSize: 11,
     fontWeight: '600',
-    marginBottom: 2,
   },
   ownUsername: {
     color: 'rgba(13, 13, 13, 0.8)',
@@ -411,8 +419,6 @@ const styles = StyleSheet.create({
   messageTime: {
     color: colors.mutedForeground,
     fontSize: 10,
-    marginTop: 4,
-    textAlign: 'right',
   },
   ownMessageTime: {
     color: 'rgba(13, 13, 13, 0.6)',
@@ -432,7 +438,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.background,
-    paddingTop: 8,
+    paddingTop: 4,
   },
   quickEmojis: {
     flexDirection: 'row',
@@ -459,7 +465,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 12,
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 4,
   },
   input: {
     flex: 1,
