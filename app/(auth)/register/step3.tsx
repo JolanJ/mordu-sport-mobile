@@ -1,9 +1,10 @@
 import { useRegister } from '@/contexts/RegisterContext'
+import { legalTexts } from '@/lib/legalTexts'
 import { registerTranslations } from '@/lib/registerTranslations'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
 import { Link, useRouter } from 'expo-router'
-import { ArrowLeft } from 'lucide-react-native'
+import { ArrowLeft, Check } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   ActivityIndicator,
@@ -20,19 +21,21 @@ export default function RegisterStep3() {
   const router = useRouter()
   const { data, updateData, resetData } = useRegister()
 
-  const [newsletterChoice, setNewsletterChoice] = useState<boolean | null>(data.newsletterSubscribed)
+  const [newsletterChoice, setNewsletterChoice] = useState<boolean>(data.newsletterSubscribed ?? true)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [showRules, setShowRules] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
 
   const t = registerTranslations[data.preferredLocale]
 
   const handleCreateAccount = async () => {
     setError('')
 
-    if (newsletterChoice === null) {
-      setError(t.errorNewsletterChoice)
+    if (!acceptedTerms) {
+      setError(t.fillAllRequired)
       return
     }
 
@@ -132,41 +135,20 @@ export default function RegisterStep3() {
             </Text>
           </View>
 
-          <View style={styles.choiceContainer}>
-            <Pressable
-              style={[
-                styles.choiceButton,
-                newsletterChoice === true && styles.choiceButtonSelected,
-              ]}
-              onPress={() => setNewsletterChoice(true)}
-            >
-              <Text
-                style={[
-                  styles.choiceText,
-                  newsletterChoice === true && styles.choiceTextSelected,
-                ]}
-              >
-                {t.yesSubscribe}
-              </Text>
-            </Pressable>
+          <Pressable style={styles.checkboxRow} onPress={() => setNewsletterChoice(!newsletterChoice)}>
+            <View style={[styles.checkbox, newsletterChoice && styles.checkboxChecked]}>
+              {newsletterChoice && <Check size={16} color={colors.background} />}
+            </View>
+            <Text style={styles.checkboxLabel}>{t.yesSubscribe}</Text>
+          </Pressable>
 
-            <Pressable
-              style={[
-                styles.choiceButton,
-                newsletterChoice === false && styles.choiceButtonSelected,
-              ]}
-              onPress={() => setNewsletterChoice(false)}
-            >
-              <Text
-                style={[
-                  styles.choiceText,
-                  newsletterChoice === false && styles.choiceTextSelected,
-                ]}
-              >
-                {t.noThanks}
-              </Text>
-            </Pressable>
-          </View>
+          {/* Terms & Community Rules Checkbox */}
+          <Pressable style={styles.checkboxRow} onPress={() => setAcceptedTerms(!acceptedTerms)}>
+            <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}>
+              {acceptedTerms && <Check size={16} color={colors.background} />}
+            </View>
+            <Text style={styles.checkboxLabel}>{t.acceptConditionsAndRules} *</Text>
+          </Pressable>
 
           {error ? (
             <View style={styles.errorContainer}>
@@ -195,6 +177,21 @@ export default function RegisterStep3() {
           <Text style={styles.disclaimerText}>{t.disclaimer}</Text>
         </View>
       </ScrollView>
+
+      {/* Terms Modal */}
+      <Modal visible={showTerms} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>{t.termsOfUse}</Text>
+              <Text style={styles.modalIntro}>{legalTexts[data.preferredLocale].termsOfUse}</Text>
+            </ScrollView>
+            <Pressable style={styles.modalButton} onPress={() => setShowTerms(false)}>
+              <Text style={styles.modalButtonText}>{t.ok}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* Community Rules Modal */}
       <Modal visible={showRules} animationType="slide" transparent>
@@ -270,29 +267,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  choiceContainer: {
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  choiceButton: {
-    height: 56,
-    backgroundColor: colors.card,
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
     borderWidth: 2,
     borderColor: colors.border,
-    borderRadius: 12,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  choiceButtonSelected: {
+  checkboxChecked: {
+    backgroundColor: colors.neonGreen,
     borderColor: colors.neonGreen,
-    backgroundColor: colors.muted,
   },
-  choiceText: {
-    fontSize: 16,
-    fontWeight: '500',
+  checkboxLabel: {
+    fontSize: 14,
     color: colors.foreground,
+    flex: 1,
   },
-  choiceTextSelected: {
+  legalLink: {
     color: colors.neonGreen,
+    textDecorationLine: 'underline',
     fontWeight: '600',
   },
   errorContainer: {

@@ -136,13 +136,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingVertical: 0,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 0,
   },
   subtitle: {
     fontSize: 16,

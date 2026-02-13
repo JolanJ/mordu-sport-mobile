@@ -19,7 +19,7 @@ export const registerTranslations = {
     provincePlaceholder: 'Sélectionne ta province',
     statePlaceholder: 'Sélectionne ton état',
     regionPlaceholder: 'Sélectionne ta région',
-    ageConfirmation: 'Je confirme avoir 18 ans ou plus',
+    ageConfirmation: 'Je confirme avoir l\'âge légal\ndans ma région',
     acceptTerms: 'J\'accepte les ',
     termsOfUse: 'conditions d\'utilisation',
     andThe: ' et la ',
@@ -70,8 +70,11 @@ export const registerTranslations = {
     communityRulesFooter: 'En utilisant l\'application, tu acceptes de suivre ces règles afin que l\'expérience reste positive pour tous.',
     disclaimer: 'Disclaimer : Ultra Sports Fans est une plateforme indépendante et n\'est pas affiliée, associée, sponsorisée ou approuvée par la LNH (NHL), la NBA, la NFL ou toute autre ligue sportive officielle. Toutes les marques, logos, noms d\'équipes et contenus mentionnés appartiennent à leurs propriétaires respectifs. Les statistiques, horaires et informations affichées dans l\'application sont fournies à titre informatif seulement et peuvent provenir de sources publiques ou de fournisseurs de données tiers. Ultra Sports Fans ne garantit pas l\'exactitude ou la mise à jour en temps réel de toutes les informations.',
     ok: 'OK',
+    // Step 3
+    acceptConditionsAndRules: 'J\'accepte les conditions et le règlement de la communauté',
     // Step 3 errors
     errorNewsletterChoice: 'Indique si tu veux recevoir notre infolettre',
+    fillAllRequired: 'Tu dois accepter les conditions pour continuer',
 
     // Success
     successTitle: 'Inscription réussie !',
@@ -90,7 +93,7 @@ export const registerTranslations = {
     confirmPasswordPlaceholder: 'Confirm your password',
     country: 'Country',
     canada: 'Canada',
-    unitedStates: 'United States',
+    unitedStates: 'USA',
     europe: 'Europe',
     province: 'Province / Territory',
     state: 'State',
@@ -98,7 +101,7 @@ export const registerTranslations = {
     provincePlaceholder: 'Select your province',
     statePlaceholder: 'Select your state',
     regionPlaceholder: 'Select your region',
-    ageConfirmation: 'I confirm that I am 18 years or older',
+    ageConfirmation: 'I confirm that I am of legal age in\nmy region',
     acceptTerms: 'I accept the ',
     termsOfUse: 'Terms of Use',
     andThe: ' and the ',
@@ -149,8 +152,11 @@ export const registerTranslations = {
     communityRulesFooter: 'By using the app, you agree to follow these rules so the experience stays positive for everyone.',
     disclaimer: 'Disclaimer: Ultra Sports Fans is an independent platform and is not affiliated with, associated with, sponsored by, or endorsed by the NHL, NBA, NFL, or any other official sports league. All trademarks, logos, team names, and content mentioned belong to their respective owners. Statistics, schedules, and information displayed in the app are provided for informational purposes only and may come from public sources or third-party data providers. Ultra Sports Fans does not guarantee the accuracy or real-time updating of all information.',
     ok: 'OK',
+    // Step 3
+    acceptConditionsAndRules: 'I accept the terms and community guidelines',
     // Step 3 errors
     errorNewsletterChoice: 'Please indicate if you want to receive our newsletter',
+    fillAllRequired: 'You must accept the terms to continue',
 
     // Success
     successTitle: 'Registration successful!',

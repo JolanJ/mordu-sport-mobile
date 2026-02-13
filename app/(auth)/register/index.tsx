@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
   },
   checkboxRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
   },
   checkbox: {
