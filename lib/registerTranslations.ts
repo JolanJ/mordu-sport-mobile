@@ -50,6 +50,8 @@ export const registerTranslations = {
     errorEnterUsername: 'Entre un nom d\'utilisateur',
     errorUsernameMin: 'Le nom d\'utilisateur doit contenir au moins 3 caractères',
     errorUsernameMax: 'Le nom d\'utilisateur ne peut pas dépasser 20 caractères',
+    errorUsernameTaken: 'Ce nom d\'utilisateur est déjà pris',
+    usernameAvailable: 'Nom d\'utilisateur disponible ✓',
 
     // Step 3
     newsletter: 'Infolettre',
@@ -132,6 +134,8 @@ export const registerTranslations = {
     errorEnterUsername: 'Please enter a username',
     errorUsernameMin: 'Username must be at least 3 characters',
     errorUsernameMax: 'Username cannot exceed 20 characters',
+    errorUsernameTaken: 'This username is already taken',
+    usernameAvailable: 'Username available ✓',
 
     // Step 3
     newsletter: 'Newsletter',
