@@ -70,7 +70,12 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t('password')}</Text>
+            <View style={styles.passwordLabelRow}>
+              <Text style={styles.label}>{t('password')}</Text>
+              <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
+                <Text style={styles.forgotLink}>{t('forgotPassword')}</Text>
+              </Pressable>
+            </View>
             <TextInput
               style={styles.input}
               placeholder={t('passwordPlaceholder')}
@@ -152,6 +157,16 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     gap: 8,
+  },
+  passwordLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  forgotLink: {
+    fontSize: 13,
+    color: colors.neonGreen,
+    fontWeight: '500',
   },
   label: {
     fontSize: 14,

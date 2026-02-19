@@ -33,7 +33,8 @@ function RootLayoutNav() {
     const inAuthGroup = segments[0] === '(auth)'
 
     // Si l'utilisateur est connecté et sur les pages auth, rediriger vers l'app
-    if (user && inAuthGroup) {
+    // Exception: reset-password doit rester accessible même avec une session active
+    if (user && inAuthGroup && !(segments as string[]).includes('reset-password')) {
       router.replace('/(tabs)')
     }
     // Mode visiteur: on ne force plus la connexion
