@@ -22,7 +22,6 @@ export default function ResetPasswordScreen() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
-  const [sessionReady, setSessionReady] = useState(false)
 
   useEffect(() => {
     const handleUrl = async (url: string) => {
@@ -34,8 +33,7 @@ export default function ResetPasswordScreen() {
       const type = params.get('type')
       if (type === 'recovery' && accessToken && refreshToken) {
         const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-        if (!error) setSessionReady(true)
-        else setError(error.message)
+        if (error) setError(error.message)
       }
     }
 
@@ -114,9 +112,9 @@ export default function ResetPasswordScreen() {
             ) : null}
 
             <Pressable
-              style={[styles.button, (loading || !sessionReady) && styles.buttonDisabled]}
+              style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleReset}
-              disabled={loading || !sessionReady}
+              disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color={colors.background} />

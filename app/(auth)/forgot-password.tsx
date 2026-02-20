@@ -30,7 +30,7 @@ export default function ForgotPasswordScreen() {
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: 'mordusportmobile://reset-password',
+      redirectTo: 'https://ultrasportsfans.com/reset-password',
     })
     setLoading(false)
     if (error) {
