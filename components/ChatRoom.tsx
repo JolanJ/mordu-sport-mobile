@@ -202,7 +202,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      keyboardVerticalOffset={0}
     >
       {!keyboardVisible && (
         <View style={styles.header}>
