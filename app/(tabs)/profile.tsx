@@ -2,9 +2,10 @@ import { HomeHeader } from '@/components/HomeHeader'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useAvatars } from '@/hooks/useAvatars'
+import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
-import { ArrowLeft, Check, LogIn, LogOut } from 'lucide-react-native'
+import { ArrowLeft, Check, LogIn, LogOut, Trash2 } from 'lucide-react-native'
 import { useState, useEffect } from 'react'
 import {
   ActivityIndicator,
@@ -41,6 +42,31 @@ export default function Profile() {
   useEffect(() => {
     setSelectedLocale(locale)
   }, [locale])
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t('deleteAccount'),
+      t('deleteAccountConfirm'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('deleteAccount'),
+          style: 'destructive',
+          onPress: async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            const { error } = await supabase.functions.invoke('delete-user', {
+              headers: { Authorization: `Bearer ${session?.access_token}` }
+            })
+            if (error) {
+              Alert.alert(t('error'), error.message)
+            } else {
+              await signOut()
+            }
+          }
+        }
+      ]
+    )
+  }
 
   const handleSignOut = () => {
     Alert.alert(
@@ -284,6 +310,10 @@ export default function Profile() {
           <Pressable style={styles.logoutButton} onPress={handleSignOut}>
             <LogOut size={20} color={colors.destructive} />
             <Text style={styles.logoutButtonText}>{t('disconnect')}</Text>
+          </Pressable>
+          <Pressable style={styles.deleteButton} onPress={handleDeleteAccount}>
+            <Trash2 size={20} color={colors.destructive} />
+            <Text style={styles.deleteButtonText}>{t('deleteAccount')}</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -531,5 +561,20 @@ const styles = StyleSheet.create({
     color: colors.destructive,
     fontSize: 16,
     fontWeight: '600',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+    height: 48,
+    borderRadius: 12,
+  },
+  deleteButtonText: {
+    color: colors.destructive,
+    fontSize: 14,
+    fontWeight: '500',
+    opacity: 0.7,
   },
 })

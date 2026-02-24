@@ -60,6 +60,8 @@ export const translations = {
     followedTeams: 'Équipes suivies',
     account: 'Compte',
     disconnect: 'Se déconnecter',
+    deleteAccount: 'Supprimer mon compte',
+    deleteAccountConfirm: 'Es-tu sûr ? Cette action est irréversible et supprimera toutes tes données.',
     language: 'Langue',
     recently: 'Récemment',
 
@@ -261,6 +263,8 @@ export const translations = {
     followedTeams: 'Followed teams',
     account: 'Account',
     disconnect: 'Disconnect',
+    deleteAccount: 'Delete my account',
+    deleteAccountConfirm: 'Are you sure? This action is irreversible and will delete all your data.',
     language: 'Language',
     recently: 'Recently',
 

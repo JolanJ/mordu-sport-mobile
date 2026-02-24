@@ -60,20 +60,7 @@ export function MatchList({ selectedDate }: MatchListProps) {
     )
   }
 
-  // TODO: REMOVE MOCK - Mock match pour tester le chat
-  const MOCK_MATCH = {
-    id: 'mock-chat-test',
-    league: 'NHL' as const,
-    status: 'live' as const,
-    date: new Date().toISOString().split('T')[0],
-    time: '19:00',
-    period: '2nd',
-    timeRemaining: '12:34',
-    venue: 'Centre Bell',
-    awayTeam: { name: 'Toronto Maple Leafs', abbr: 'TOR', logo: 'https://wrajekuuhbuneoualiix.supabase.co/storage/v1/object/sign/usfJersey/tor.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNDk3ZGYxNS04MDcxLTQxZjQtOGZmNi00MWI3NzQyZTU2MzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ1c2ZKZXJzZXkvdG9yLnBuZyIsImlhdCI6MTc3MDc2MDM4MiwiZXhwIjozMzI3NTIyNDM4Mn0.Rr6RIdWSLEVmlxpI7edfDxgQK2DyJEUuMt-eEc4gP7U', score: 2 },
-    homeTeam: { name: 'Montreal Canadiens', abbr: 'MTL', logo: 'https://wrajekuuhbuneoualiix.supabase.co/storage/v1/object/sign/usfJersey/mtl.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNDk3ZGYxNS04MDcxLTQxZjQtOGZmNi00MWI3NzQyZTU2MzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ1c2ZKZXJzZXkvbXRsLnBuZyIsImlhdCI6MTc3MDc2MDMyMiwiZXhwIjozMzI3NTIyNDMyMn0.pgDP6ymgmk-iNH6Ovk2n9bYA7vQ3-Ka9eqb9I5CtxFc', score: 3 },
-  }
-  const allMatches = [MOCK_MATCH, ...sortedMatches]
+  const allMatches = sortedMatches
 
   // Afficher les matchs NHL
   if (matches.length === 0 && false) {
