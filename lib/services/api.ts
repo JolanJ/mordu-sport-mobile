@@ -18,8 +18,9 @@ import {
 import { XMLParser } from 'fast-xml-parser'
 import { supabase } from '@/lib/supabase'
 
-// Cache pour les logos (par goalserve_id)
+// Cache pour les logos et abréviations (par goalserve_id)
 let logoCache: Record<string, string> = {}
+let abbrCache: Record<string, string> = {}
 let logoCacheLoaded = false
 
 export type League = 'NHL'
@@ -105,7 +106,7 @@ export async function fetchMatches(league: League, date?: Date, withLogos: boole
 }
 
 /**
- * Charge les logos depuis Supabase (une seule requête)
+ * Charge les logos et abréviations depuis Supabase (une seule requête)
  */
 async function loadLogosFromDB(): Promise<void> {
   if (logoCacheLoaded) return
@@ -113,12 +114,13 @@ async function loadLogosFromDB(): Promise<void> {
   try {
     const { data, error } = await supabase
       .from('teams')
-      .select('goalserve_id, logo_url')
+      .select('goalserve_id, logo_url, abbr')
 
     if (!error && data) {
       for (const row of data) {
-        if (row.goalserve_id && row.logo_url) {
-          logoCache[row.goalserve_id] = row.logo_url
+        if (row.goalserve_id) {
+          if (row.logo_url) logoCache[row.goalserve_id] = row.logo_url
+          if (row.abbr) abbrCache[row.goalserve_id] = row.abbr
         }
       }
       logoCacheLoaded = true
@@ -135,16 +137,18 @@ async function enrichMatchesWithLogos(matches: Match[]): Promise<Match[]> {
   // Charger les logos depuis la DB (une seule fois)
   await loadLogosFromDB()
 
-  // Enrichir les matchs avec les logos du cache
+  // Enrichir les matchs avec les logos et abréviations du cache
   return matches.map(match => ({
     ...match,
     awayTeam: {
       ...match.awayTeam,
       logo: match.awayTeam.teamId ? logoCache[match.awayTeam.teamId] : undefined,
+      abbr: (match.awayTeam.teamId && abbrCache[match.awayTeam.teamId]) || match.awayTeam.abbr,
     },
     homeTeam: {
       ...match.homeTeam,
       logo: match.homeTeam.teamId ? logoCache[match.homeTeam.teamId] : undefined,
+      abbr: (match.homeTeam.teamId && abbrCache[match.homeTeam.teamId]) || match.homeTeam.abbr,
     },
   }))
 }
