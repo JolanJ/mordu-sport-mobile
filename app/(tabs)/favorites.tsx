@@ -12,7 +12,6 @@ import { useMemo, useRef } from 'react'
 import {
   ActivityIndicator,
   Animated,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -71,15 +70,7 @@ export default function Favorites() {
       <SafeAreaView edges={['top']} style={styles.container}>
         <HomeHeader />
 
-        <View style={styles.adSpace}>
-          <Image
-            source={require('@/assets/images/ROC-Display-320x50-FR (1).jpg')}
-            style={styles.adImage}
-            resizeMode="cover"
-          />
-        </View>
-
-        <View style={styles.emptyState}>
+          <View style={styles.emptyState}>
           <Star size={64} color={colors.mutedForeground} />
           <Text style={styles.emptyTitle}>{t('loginRequired')}</Text>
           <Text style={styles.emptySubtext}>
@@ -96,14 +87,6 @@ export default function Favorites() {
       <SafeAreaView edges={['top']} style={styles.container}>
         <HomeHeader />
 
-        <View style={styles.adSpace}>
-          <Image
-            source={require('@/assets/images/ROC-Display-320x50-FR (1).jpg')}
-            style={styles.adImage}
-            resizeMode="cover"
-          />
-        </View>
-
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.neonGreen} />
           <Text style={styles.loadingText}>{t('loadingFavorites')}</Text>
@@ -115,15 +98,6 @@ export default function Favorites() {
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
       <HomeHeader />
-
-      {/* Espace publicitaire */}
-      <View style={styles.adSpace}>
-        <Image
-          source={require('@/assets/images/ROC-Display-320x50-FR (1).jpg')}
-          style={styles.adImage}
-          resizeMode="cover"
-        />
-      </View>
 
       {/* Titre de la page */}
       <View style={styles.header}>
@@ -175,18 +149,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  adSpace: {
-    width: 325,
-    height: 50,
-    borderRadius: 8,
-    alignSelf: 'center',
-    marginVertical: 16,
-    overflow: 'hidden',
-  },
-  adImage: {
-    width: '100%',
-    height: '100%',
   },
   header: {
     paddingHorizontal: 16,

@@ -4,7 +4,7 @@ import { MatchList } from '@/components/MatchList'
 import { SportLeagues } from '@/components/SportLeagues'
 import { colors } from '@/theme/colors'
 import { useState } from 'react'
-import { Image, StyleSheet, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function HomeScreen() {
@@ -17,15 +17,6 @@ export default function HomeScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
       <HomeHeader />
-      
-      {/* Espace publicitaire */}
-      <View style={styles.adSpace}>
-        <Image 
-          source={require('@/assets/images/ROC-Display-320x50-FR (1).jpg')}
-          style={styles.adImage}
-          resizeMode="cover"
-        />
-      </View>
       
       <SportLeagues />
       <Calendar selectedDate={selectedDate} onDateChange={handleDateChange} />
@@ -41,19 +32,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  adSpace: {
-    width: 325,
-    height: 50,
-    borderRadius: 8,
-    alignSelf: 'center',
-    marginVertical: 16,
-    overflow: 'hidden',
-  },
-  adImage: {
-    width: '100%',
-    height: '100%',
-  },
-  content: {
+content: {
     flex: 1,
   },
 })
