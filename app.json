@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "Ultra Sports Fans",
-    "slug": "mordu-sport-mobile",
-    "version": "1.1.0",
+    "slug": "ultrasportsfans",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/usflogo.png",
-    "scheme": "mordusportmobile",
+    "scheme": "ultrasportsfans",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -22,7 +22,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.jostinjarry1.mordusportmobile"
+      "package": "com.ultrasportsfans.app"
     },
     "web": {
       "output": "static",
