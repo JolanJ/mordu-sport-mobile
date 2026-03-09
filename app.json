@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Ultra Sports Fans",
-    "slug": "mordu-sport-mobile",
+    "slug": "ultrasportsfans",
     "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/usflogo.png",
