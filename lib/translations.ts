@@ -121,6 +121,14 @@ export const translations = {
     beFirstToMessage: 'Sois le premier à envoyer un message !',
     messageBlocked: 'Message bloqué',
     messageBlockedReason: 'Ton message contient du contenu inapproprié (violence, haine, spam ou liens). Merci de reformuler.',
+    report: 'Signaler',
+    block: 'Bloquer',
+    reportMessage: 'Signaler le message',
+    reportConfirm: 'Signaler ce message comme inapproprié ?',
+    reportSuccess: "Message signalé. Nous allons l'examiner sous 24h.",
+    blockUser: "Bloquer l'utilisateur",
+    blockConfirm: 'Bloquer cet utilisateur ? Ses messages ne seront plus visibles.',
+    blockSuccess: 'Utilisateur bloqué.',
 
     // Calendar days
     sun: 'Dim',
@@ -324,6 +332,14 @@ export const translations = {
     beFirstToMessage: 'Be the first to send a message!',
     messageBlocked: 'Message blocked',
     messageBlockedReason: 'Your message contains inappropriate content (violence, hate, spam or links). Please rephrase.',
+    report: 'Report',
+    block: 'Block',
+    reportMessage: 'Report message',
+    reportConfirm: 'Report this message as inappropriate?',
+    reportSuccess: 'Message reported. We will review it within 24 hours.',
+    blockUser: 'Block user',
+    blockConfirm: 'Block this user? Their messages will no longer be visible.',
+    blockSuccess: 'User blocked.',
 
     // Calendar days
     sun: 'Sun',

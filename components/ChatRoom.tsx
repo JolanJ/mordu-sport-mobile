@@ -1,8 +1,8 @@
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useAvatars } from '@/hooks/useAvatars'
 import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
-import { containsBlockedWord } from '@/lib/chatFilter'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
 import { LogIn, Send } from 'lucide-react-native'
@@ -42,6 +42,8 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
   const [inputText, setInputText] = useState('')
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
+  const [showModerationMenu, setShowModerationMenu] = useState<string | null>(null)
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set())
   const flatListRef = useRef<FlatList>(null)
 
   // Mettre à jour la locale si le profil change
@@ -50,6 +52,19 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
       setLocale(profile.preferred_locale)
     }
   }, [profile?.preferred_locale])
+
+  // Charger les users bloqués
+  useEffect(() => {
+    if (!user) return
+    const fetchBlocked = async () => {
+      const { data } = await supabase
+        .from('blocked_users')
+        .select('blocked_id')
+        .eq('blocker_id', user.id)
+      if (data) setBlockedUserIds(new Set(data.map(r => r.blocked_id)))
+    }
+    fetchBlocked()
+  }, [user])
 
   // Changer de langue (local seulement, pas d'écriture en BD)
   const handleLocaleChange = (newLocale: Locale) => {
@@ -87,15 +102,13 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
   const handleSend = async () => {
     if (!inputText.trim() || sending) return
 
-    // Vérifier si le message contient des mots interdits
-    if (containsBlockedWord(inputText)) {
-      Alert.alert(t('messageBlocked'), t('messageBlockedReason'))
-      return
-    }
-
     const text = inputText
     setInputText('')
-    await sendMessage(text, username, avatarId)
+    const { error } = await sendMessage(text, username, avatarId)
+    if (error) {
+      setInputText(text)
+      Alert.alert(t('messageBlocked'), t('messageBlockedReason'))
+    }
   }
 
   const formatTime = (dateString: string) => {
@@ -107,10 +120,50 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     setSelectedMessageId(messageId === selectedMessageId ? null : messageId)
   }
 
+  const handleReport = (item: ChatMessage) => {
+    setSelectedMessageId(null)
+    Alert.alert(t('reportMessage'), t('reportConfirm'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('report'),
+        style: 'destructive',
+        onPress: async () => {
+          await supabase.from('reported_messages').insert({
+            reporter_id: user!.id,
+            reported_user_id: item.user_id,
+            message_id: item.id,
+          })
+          Alert.alert(t('success'), t('reportSuccess'))
+        },
+      },
+    ])
+  }
+
+  const handleBlock = (item: ChatMessage) => {
+    setSelectedMessageId(null)
+    Alert.alert(t('blockUser'), t('blockConfirm'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('block'),
+        style: 'destructive',
+        onPress: async () => {
+          await supabase.from('blocked_users').insert({
+            blocker_id: user!.id,
+            blocked_id: item.user_id,
+          })
+          setBlockedUserIds(prev => new Set([...prev, item.user_id]))
+          Alert.alert(t('success'), t('blockSuccess'))
+        },
+      },
+    ])
+  }
+
   const handleReaction = async (messageId: string, emoji: string) => {
     await toggleReaction(messageId, emoji)
     setSelectedMessageId(null)
   }
+
+  const visibleMessages = messages.filter(m => !blockedUserIds.has(m.user_id))
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isOwnMessage = user?.id === item.user_id
@@ -156,6 +209,27 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
                 <Text style={styles.reactionPickerEmoji}>{emoji}</Text>
               </Pressable>
             ))}
+            {!isOwnMessage && (
+              <View>
+                <Pressable
+                  style={styles.moderationButton}
+                  onPress={() => setShowModerationMenu(showModerationMenu === item.id ? null : item.id)}
+                >
+                  <Text style={styles.moderationButtonText}>•••</Text>
+                </Pressable>
+                {showModerationMenu === item.id && (
+                  <View style={styles.moderationMenu}>
+                    <Pressable style={styles.moderationMenuItem} onPress={() => { setShowModerationMenu(null); handleReport(item) }}>
+                      <Text style={styles.moderationMenuText}>⚠️ {t('report')}</Text>
+                    </Pressable>
+                    <View style={styles.moderationMenuDivider} />
+                    <Pressable style={styles.moderationMenuItem} onPress={() => { setShowModerationMenu(null); handleBlock(item) }}>
+                      <Text style={[styles.moderationMenuText, { color: colors.destructive }]}>🚫 {t('block')}</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
         )}
 
@@ -234,21 +308,24 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.messagesList}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                {t('beFirstToMessage')}
-              </Text>
-            </View>
-          }
-        />
+        <Pressable style={{ flex: 1 }} onPress={() => { setSelectedMessageId(null); setShowModerationMenu(null) }}>
+          <FlatList
+            ref={flatListRef}
+            data={visibleMessages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messagesList}
+            showsVerticalScrollIndicator={false}
+            onScrollBeginDrag={() => { setSelectedMessageId(null); setShowModerationMenu(null) }}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  {t('beFirstToMessage')}
+                </Text>
+              </View>
+            }
+          />
+        </Pressable>
       )}
 
       <View style={styles.inputWrapper}>
@@ -555,6 +632,49 @@ const styles = StyleSheet.create({
   },
   reactionPickerEmoji: {
     fontSize: 16,
+  },
+  moderationButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moderationButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.mutedForeground,
+    letterSpacing: 1,
+  },
+  moderationMenu: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 100,
+  },
+  moderationMenuItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  moderationMenuDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  moderationMenuText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.foreground,
   },
   reactionsContainer: {
     flexDirection: 'row',

@@ -13,6 +13,7 @@ export type Profile = {
   is_18_plus: boolean
   newsletter_subscribed: boolean
   preferred_locale: Locale
+  is_banned: boolean
   created_at: string
   updated_at: string
 }
@@ -22,6 +23,8 @@ type AuthContextType = {
   profile: Profile | null
   session: Session | null
   loading: boolean
+  isBanned: boolean
+  clearBanned: () => void
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
@@ -36,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isBanned, setIsBanned] = useState(false)
 
   // Récupérer le profil utilisateur
   const fetchProfile = async (userId: string) => {
@@ -46,9 +50,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single()
 
     if (!error && data) {
+      if (data.is_banned) {
+        await supabase.auth.signOut()
+        setUser(null)
+        setSession(null)
+        setProfile(null)
+        setIsBanned(true)
+        return
+      }
       setProfile(data)
     }
   }
+
+  const clearBanned = () => setIsBanned(false)
 
   // Rafraîchir le profil
   const refreshProfile = async () => {
@@ -117,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       session,
       loading,
+      isBanned,
+      clearBanned,
       signIn,
       signUp,
       signOut,

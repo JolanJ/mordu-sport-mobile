@@ -1,3 +1,4 @@
+import { BannedModal } from '@/components/BannedModal'
 import { SplashScreen } from '@/components/SplashScreen'
 import { UpdateRequiredModal } from '@/components/UpdateRequiredModal'
 import { colors } from '@/theme/colors'
@@ -22,7 +23,7 @@ const queryClient = new QueryClient({
 })
 
 function RootLayoutNav() {
-  const { user, loading } = useAuth()
+  const { user, loading, isBanned, clearBanned } = useAuth()
   const { isLocaleLoaded } = useTranslation()
   const segments = useSegments()
   const router = useRouter()
@@ -49,10 +50,13 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+      <BannedModal visible={isBanned} onDismiss={clearBanned} />
+    </>
   )
 }
 

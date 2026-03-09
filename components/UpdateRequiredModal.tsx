@@ -15,7 +15,7 @@ const STORE_URLS = {
 }
 
 export function UpdateRequiredModal({ visible, currentVersion, requiredVersion }: UpdateRequiredModalProps) {
-  const { t, locale } = useTranslation()
+  const { locale } = useTranslation()
 
   const handleUpdate = () => {
     const url = Platform.OS === 'ios' ? STORE_URLS.ios : STORE_URLS.android
