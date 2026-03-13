@@ -7,6 +7,8 @@ import { Link, router } from 'expo-router'
 import { useState } from 'react'
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -46,6 +48,10 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -121,6 +127,7 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <LanguagePickerModal
         visible={showLanguagePicker}

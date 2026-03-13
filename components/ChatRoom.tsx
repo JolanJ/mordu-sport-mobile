@@ -151,7 +151,12 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
             blocker_id: user!.id,
             blocked_id: item.user_id,
           })
-          setBlockedUserIds(prev => new Set([...prev, item.user_id]))
+          await supabase.from('reported_messages').insert({
+            reporter_id: user!.id,
+            reported_user_id: item.user_id,
+            message_id: item.id,
+          })
+          setBlockedUserIds(prev => { const next = new Set(prev); next.add(item.user_id); return next })
           Alert.alert(t('success'), t('blockSuccess'))
         },
       },
