@@ -3,8 +3,9 @@ import { SplashScreen } from '@/components/SplashScreen'
 import { UpdateRequiredModal } from '@/components/UpdateRequiredModal'
 import { colors } from '@/theme/colors'
 import { Stack, useRouter, useSegments } from 'expo-router'
+import * as Updates from 'expo-updates'
 import { useState, useEffect, useRef } from 'react'
-import { View, ActivityIndicator } from 'react-native'
+import { AppState, View, ActivityIndicator } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
@@ -67,6 +68,33 @@ export default function RootLayout() {
 
   // Vérification de version
   const { needsUpdate, requiredVersion, currentVersion, loading: versionLoading } = useVersionCheck()
+
+  // Check for OTA updates on launch and when app comes to foreground
+  useEffect(() => {
+    if (__DEV__) return
+
+    const checkForOTAUpdate = async () => {
+      try {
+        const update = await Updates.checkForUpdateAsync()
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync()
+          await Updates.reloadAsync()
+        }
+      } catch (e) {
+        console.log('OTA update check failed:', e)
+      }
+    }
+
+    checkForOTAUpdate()
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        checkForOTAUpdate()
+      }
+    })
+
+    return () => subscription.remove()
+  }, [])
 
   // Prefetch des données pendant le splash
   useEffect(() => {
