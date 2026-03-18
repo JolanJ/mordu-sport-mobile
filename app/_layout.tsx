@@ -1,18 +1,24 @@
 import { BannedModal } from '@/components/BannedModal'
 import { SplashScreen } from '@/components/SplashScreen'
 import { UpdateRequiredModal } from '@/components/UpdateRequiredModal'
-import { colors } from '@/theme/colors'
-import { Stack, useRouter, useSegments } from 'expo-router'
-import * as Updates from 'expo-updates'
-import { useState, useEffect, useRef } from 'react'
-import { AppState, View, ActivityIndicator } from 'react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import { TranslationProvider, useTranslation } from '@/contexts/TranslationContext'
-import { prefetchTeamLogos } from '@/hooks/useTeamsWithLogos'
 import { prefetchTodayMatches } from '@/hooks/useMatches'
+import { prefetchTeamLogos } from '@/hooks/useTeamsWithLogos'
 import { useVersionCheck } from '@/hooks/useVersionCheck'
+import { supabase } from '@/lib/supabase'
+import { colors } from '@/theme/colors'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import * as Linking from 'expo-linking'
+import { Stack, useRouter, useSegments } from 'expo-router'
+import * as ExpoSplashScreen from 'expo-splash-screen'
+import * as Updates from 'expo-updates'
+import { useEffect, useRef, useState } from 'react'
+import { ActivityIndicator, AppState, View } from 'react-native'
+
+// Keep native splash visible until we're ready
+ExpoSplashScreen.preventAutoHideAsync()
 
 // QueryClient en dehors pour être accessible pendant le prefetch
 const queryClient = new QueryClient({
@@ -28,9 +34,58 @@ function RootLayoutNav() {
   const { isLocaleLoaded } = useTranslation()
   const segments = useSegments()
   const router = useRouter()
+  const isResetFlow = useRef(false)
+
+  // Handle deep links (auth callback, reset password)
+  useEffect(() => {
+    const handleDeepLink = async (url: string) => {
+      // Extract tokens from URL hash (Supabase sends them as fragments)
+      const hash = url.split('#')[1]
+      if (hash) {
+        const params = new URLSearchParams(hash)
+        const accessToken = params.get('access_token')
+        const refreshToken = params.get('refresh_token')
+        const type = params.get('type')
+
+        if (accessToken && refreshToken) {
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+
+          if (type === 'recovery') {
+            isResetFlow.current = true
+            router.replace('/(auth)/reset-password')
+            return
+          }
+
+          // Signup confirmation or magic link — go to main app
+          router.replace('/(tabs)')
+          return
+        }
+      }
+
+      // Fallback: URL-based reset password redirect
+      if (url.includes('reset-password') || url.includes('type=recovery')) {
+        isResetFlow.current = true
+        router.replace('/(auth)/reset-password')
+      }
+    }
+
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink(url)
+    })
+
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLink(url)
+    })
+
+    return () => subscription.remove()
+  }, [])
 
   useEffect(() => {
     if (loading) return
+    if (isResetFlow.current) return
 
     const inAuthGroup = segments[0] === '(auth)'
 
@@ -126,7 +181,10 @@ export default function RootLayout() {
 
   if (showSplash) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View
+        style={{ flex: 1, backgroundColor: colors.background }}
+        onLayout={() => ExpoSplashScreen.hideAsync()}
+      >
         <SplashScreen onFinish={handleSplashFinish} isDataReady={isDataReady} />
       </View>
     )

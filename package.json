@@ -9,8 +9,14 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "ota:ios": "npx eas update --channel production --platform ios",
-    "ota:android": "npx eas update --channel production --platform android"
+    "ota:prod:ios": "npx eas update --channel production --platform ios",
+    "ota:prod:android": "npx eas update --channel production --platform android",
+    "ota:dev:ios": "npx eas update --channel development --platform ios",
+    "ota:dev:android": "npx eas update --channel development --platform android",
+    "build:dev:ios": "npx eas build --profile development --platform ios",
+    "build:dev:android": "npx eas build --profile development --platform android",
+    "build:prod:ios": "npx eas build --profile production --platform ios",
+    "build:prod:android": "npx eas build --profile production --platform android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

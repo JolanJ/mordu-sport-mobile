@@ -8,7 +8,9 @@ import { Link, useRouter } from 'expo-router'
 import { Check, ChevronDown } from 'lucide-react-native'
 import { useState } from 'react'
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -121,6 +123,10 @@ export default function RegisterStep1() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -277,6 +283,7 @@ export default function RegisterStep1() {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* State/Province Modal Picker */}
       <Modal visible={showPicker} animationType="slide" transparent>
