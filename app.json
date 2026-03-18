@@ -5,7 +5,7 @@
     "version": "1.1.3",
     "runtimeVersion": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/usflogo.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "ultrasportsfans",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0d0d0d",
-        "foregroundImage": "./assets/images/usflogo.png"
+        "foregroundImage": "./assets/images/app-icon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
