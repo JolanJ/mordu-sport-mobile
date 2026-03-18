@@ -57,7 +57,7 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <UsfLogo width={260} height={260} />
+          <UsfLogo width={280} height={250} />
           <Text style={styles.subtitle}>{t('loginSubtitle')}</Text>
         </View>
 
@@ -220,17 +220,19 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
     marginTop: 24,
   },
   footerText: {
     color: colors.mutedForeground,
-    fontSize: 14,
+    fontSize: 16,
   },
   linkText: {
     color: colors.primary,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
   },
   visitorButton: {
     height: 48,

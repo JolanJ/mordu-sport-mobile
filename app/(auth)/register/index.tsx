@@ -5,7 +5,7 @@ import { registerTranslations } from '@/lib/registerTranslations'
 import { statesProvinces } from '@/lib/statesProvinces'
 import { colors } from '@/theme/colors'
 import { Link, useRouter } from 'expo-router'
-import { Check, ChevronDown } from 'lucide-react-native'
+import { ArrowLeft, Check, ChevronDown } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   KeyboardAvoidingView,
@@ -132,7 +132,11 @@ export default function RegisterStep1() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Language Toggle */}
+        {/* Back button + Language Toggle */}
+        <View style={styles.topRow}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <ArrowLeft size={24} color={colors.foreground} />
+          </Pressable>
         <View style={styles.localeToggleContainer}>
           <Pressable
             style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
@@ -146,6 +150,7 @@ export default function RegisterStep1() {
           >
             <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>EN</Text>
           </Pressable>
+        </View>
         </View>
 
         <View style={styles.header}>
@@ -347,12 +352,19 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingVertical: 16,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  backButton: {
+    padding: 8,
   },
   localeToggleContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 16,
     gap: 8,
   },
   localeButton: {
@@ -377,20 +389,20 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: 'bold',
     color: colors.foreground,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
     color: colors.mutedForeground,
   },
   form: {
-    gap: 20,
+    gap: 14,
   },
   inputGroup: {
     gap: 8,
