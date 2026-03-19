@@ -23,6 +23,10 @@ let logoCache: Record<string, string> = {}
 let abbrCache: Record<string, string> = {}
 let logoCacheLoaded = false
 
+// Cache XML responses to avoid re-downloading entire scoreboard for each match
+let scoresXmlCache: { url: string; xml: string; timestamp: number } | null = null
+const SCORES_CACHE_TTL = 60000 // 60 seconds
+
 export type League = 'NHL'
 
 const xmlParser = new XMLParser({
@@ -88,6 +92,11 @@ export async function fetchMatches(league: League, date?: Date, withLogos: boole
     }
 
     const xml = await response.text()
+
+    // Cache the scores XML so fetchMatchDetails can reuse it
+    if (useScoresEndpoint) {
+      scoresXmlCache = { url, xml, timestamp: Date.now() }
+    }
 
     // Parser selon le type d'endpoint
     const matches = useScoresEndpoint
@@ -881,22 +890,31 @@ function parsePlayerImageXML(xml: string): string | null {
 export async function fetchMatchDetails(matchId: string, date?: Date): Promise<MatchDetails | null> {
   let url = `${API_BASE_URL}${API_ENDPOINTS.nhlScores}`
 
-  // Ajouter la date pour récupérer les matchs passés
-  if (date) {
+  // Ajouter la date seulement pour les matchs passés (pas aujourd'hui)
+  if (date && !isToday(date)) {
     const dateStr = formatDate(date)
     url += `?date=${dateStr}`
   }
 
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Accept': 'application/xml' },
-    })
+    let xml: string
 
-    if (!response.ok) return null
+    // Use cached XML if same URL and still fresh (avoids re-downloading entire scoreboard)
+    if (scoresXmlCache && scoresXmlCache.url === url && Date.now() - scoresXmlCache.timestamp < SCORES_CACHE_TTL) {
+      xml = scoresXmlCache.xml
+    } else {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Accept': 'application/xml' },
+      })
 
-    const xml = await response.text()
-    if (!xml || xml.includes('Server Error')) return null
+      if (!response.ok) return null
+
+      xml = await response.text()
+      if (!xml || xml.includes('Server Error')) return null
+
+      scoresXmlCache = { url, xml, timestamp: Date.now() }
+    }
 
     return parseMatchDetailsXML(xml, matchId)
   } catch (error) {

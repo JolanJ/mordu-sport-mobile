@@ -3,6 +3,8 @@ import { MatchEventsComponent } from '@/components/MatchEventsComponent'
 import { TeamSeasonStatsComponent } from '@/components/TeamSeasonStatsComponent'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
+import { useMatchDetails } from '@/hooks/useMatchDetails'
+import { useTeamSeasonStats } from '@/hooks/useTeamSeasonStats'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft, BarChart3, MessageCircle, TrendingUp } from 'lucide-react-native'
@@ -47,6 +49,14 @@ export default function MatchRoom() {
 
   // Charger les matchs pour la date spécifique
   const { data: matches = [] } = useMatches({ date: matchDate, withLogos: true })
+
+  // Start fetching match details and season stats immediately (don't wait for tab click)
+  useMatchDetails({ matchId: normalizedId || '', date: dateParam, enabled: !!normalizedId })
+  useTeamSeasonStats({
+    homeTeamId: match?.homeTeam.teamId,
+    awayTeamId: match?.awayTeam.teamId,
+    enabled: !!match,
+  })
 
   useEffect(() => {
     if (!normalizedId) {

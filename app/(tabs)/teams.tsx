@@ -4,8 +4,10 @@ import { LeagueFilter } from '@/components/LeagueFilter'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useTeamsWithLogos } from '@/hooks/useTeamsWithLogos'
-import { Team } from '@/lib/teamData'
+import { fetchTeamRoster, fetchTeamStats, fetchPlayerStats, fetchTeamInjuries } from '@/lib/services/api'
+import { getTeamById, Team } from '@/lib/teamData'
 import { colors } from '@/theme/colors'
+import { useQueryClient } from '@tanstack/react-query'
 import { router } from 'expo-router'
 import { useRef, useState } from 'react'
 import { ActivityIndicator, Animated, ScrollView, StyleSheet, Text, View } from 'react-native'
@@ -26,7 +28,18 @@ export default function Teams() {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
   }
 
+  const queryClient = useQueryClient()
+
   const handleTeamPress = (teamId: string) => {
+    // Prefetch team data before navigating
+    const team = getTeamById(teamId)
+    const gId = team?.goalserveId
+    if (gId) {
+      queryClient.prefetchQuery({ queryKey: ['teamRoster', gId], queryFn: () => fetchTeamRoster(gId) })
+      queryClient.prefetchQuery({ queryKey: ['teamStats', gId], queryFn: () => fetchTeamStats(gId) })
+      queryClient.prefetchQuery({ queryKey: ['playerStats', gId], queryFn: () => fetchPlayerStats(gId) })
+      queryClient.prefetchQuery({ queryKey: ['teamInjuries', gId], queryFn: () => fetchTeamInjuries(gId) })
+    }
     router.push(`/teams/${teamId}`)
   }
 

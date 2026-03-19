@@ -3,10 +3,13 @@ import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useMatches } from '@/hooks/useMatches'
+import { fetchMatchDetails, fetchTeamStats } from '@/lib/services/api'
 import { colors } from '@/theme/colors'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { useMemo, useRef } from 'react'
-import { ActivityIndicator, Animated, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Match } from '@/lib/types'
+import { useMemo, useRef, useState, useCallback } from 'react'
+import { ActivityIndicator, Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 interface MatchListProps {
   selectedDate?: Date
@@ -75,9 +78,38 @@ export function MatchList({ selectedDate }: MatchListProps) {
     )
   }
 
-  const handleMatchPress = (matchId: string, matchDate: string) => {
-    // Passer la date du match pour trouver le bon match
-    router.push(`/(tabs)/match/${matchId}?date=${matchDate}` as any)
+  const queryClient = useQueryClient()
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+
+  const handleMatchPress = useCallback((matchId: string, matchDate: string) => {
+    const match = allMatches.find(m => m.id === matchId)
+
+    // Start prefetching everything immediately
+    const date = new Date(matchDate + 'T12:00:00')
+    queryClient.prefetchQuery({
+      queryKey: ['matchDetails', matchId, matchDate],
+      queryFn: () => fetchMatchDetails(matchId, date),
+    })
+
+    // Prefetch season stats for both teams
+    if (match?.homeTeam.teamId) {
+      queryClient.prefetchQuery({
+        queryKey: ['teamSeasonStats', match.homeTeam.teamId, match.awayTeam.teamId],
+        queryFn: () => Promise.all([
+          fetchTeamStats(match.homeTeam.teamId!),
+          fetchTeamStats(match.awayTeam.teamId!),
+        ]).then(([home, away]) => ({ home, away })),
+      })
+    }
+
+    // Show confirmation dialog
+    if (match) setSelectedMatch(match)
+  }, [allMatches, queryClient])
+
+  const handleConfirmEnter = () => {
+    if (!selectedMatch) return
+    router.push(`/(tabs)/match/${selectedMatch.id}?date=${selectedMatch.date}` as any)
+    setSelectedMatch(null)
   }
 
   return (
@@ -101,6 +133,32 @@ export function MatchList({ selectedDate }: MatchListProps) {
         />
       </Animated.ScrollView>
       <ScrollToTopButton scrollY={scrollY} onPress={scrollToTop} />
+
+      {/* Match confirmation modal */}
+      <Modal visible={!!selectedMatch} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedMatch && (
+              <>
+                <Text style={styles.modalTitle}>{t('enterMatchRoom')}</Text>
+                <Text style={styles.modalMatchup}>
+                  {selectedMatch.awayTeam.name}
+                </Text>
+                <Text style={styles.modalVs}>VS</Text>
+                <Text style={styles.modalMatchup}>
+                  {selectedMatch.homeTeam.name}
+                </Text>
+                <Pressable style={styles.modalButton} onPress={handleConfirmEnter}>
+                  <Text style={styles.modalButtonText}>{t('enter')}</Text>
+                </Pressable>
+                <Pressable style={styles.modalCancelButton} onPress={() => setSelectedMatch(null)}>
+                  <Text style={styles.modalCancelText}>{t('cancel')}</Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -150,5 +208,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.mutedForeground,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.mutedForeground,
+    marginBottom: 16,
+  },
+  modalMatchup: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.foreground,
+    textAlign: 'center',
+  },
+  modalVs: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.neonGreen,
+    marginVertical: 8,
+  },
+  modalButton: {
+    width: '100%',
+    height: 48,
+    backgroundColor: colors.neonGreen,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  modalButtonText: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalCancelButton: {
+    marginTop: 12,
+    padding: 8,
+  },
+  modalCancelText: {
+    color: colors.mutedForeground,
+    fontSize: 14,
   },
 })

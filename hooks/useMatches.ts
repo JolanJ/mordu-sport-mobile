@@ -3,7 +3,7 @@
  * Avec cache persistant pour affichage instantané
  */
 
-import { fetchMatches } from '@/lib/services/api'
+import { fetchMatches, fetchMatchDetails, fetchTeamStats } from '@/lib/services/api'
 import { Match } from '@/lib/types'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -103,6 +103,30 @@ export async function prefetchTodayMatches(queryClient: any): Promise<void> {
     if (matches.length > 0) {
       cacheMatches(dateKey, matches)
       queryClient.setQueryData(['matches', 'NHL', dateKey, 'withLogos'], matches)
+
+      // Prefetch match details for all today's games (XML is already cached from fetchMatches)
+      for (const match of matches) {
+        queryClient.prefetchQuery({
+          queryKey: ['matchDetails', match.id, dateKey],
+          queryFn: () => fetchMatchDetails(match.id, today),
+          staleTime: 60000,
+        })
+      }
+
+      // Prefetch season stats for each matchup (same key as useTeamSeasonStats)
+      for (const match of matches) {
+        if (match.homeTeam.teamId && match.awayTeam.teamId) {
+          queryClient.prefetchQuery({
+            queryKey: ['teamSeasonStats', match.homeTeam.teamId, match.awayTeam.teamId],
+            queryFn: () => Promise.all([
+              fetchTeamStats(match.homeTeam.teamId!),
+              fetchTeamStats(match.awayTeam.teamId!),
+            ]).then(([home, away]) => ({ home, away })),
+            staleTime: 5 * 60 * 1000,
+          })
+        }
+      }
     }
   }).catch(() => {})
+
 }

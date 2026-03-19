@@ -8,7 +8,7 @@ interface SplashScreenProps {
   isDataReady?: boolean
 }
 
-const MIN_SPLASH_DURATION = 1500 // Minimum 1.5 secondes pour l'animation
+const MIN_SPLASH_DURATION = 2500 // Minimum 2.5 secondes pour l'animation
 const MAX_SPLASH_DURATION = 5000 // Maximum 5 secondes d'attente
 
 export function SplashScreen({ onFinish, isDataReady = false }: SplashScreenProps) {
