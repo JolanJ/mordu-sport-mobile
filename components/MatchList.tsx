@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { Match } from '@/lib/types'
 import { useMemo, useRef, useState, useCallback } from 'react'
-import { ActivityIndicator, Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Animated, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 interface MatchListProps {
   selectedDate?: Date
@@ -136,28 +136,41 @@ export function MatchList({ selectedDate }: MatchListProps) {
 
       {/* Match confirmation modal */}
       <Modal visible={!!selectedMatch} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
+        <Pressable style={styles.modalOverlay} onPress={() => setSelectedMatch(null)}>
           <View style={styles.modalContent}>
             {selectedMatch && (
               <>
                 <Text style={styles.modalTitle}>{t('enterMatchRoom')}</Text>
-                <Text style={styles.modalMatchup}>
-                  {selectedMatch.awayTeam.name}
-                </Text>
-                <Text style={styles.modalVs}>VS</Text>
-                <Text style={styles.modalMatchup}>
-                  {selectedMatch.homeTeam.name}
-                </Text>
+
+                <View style={styles.modalTeams}>
+                  <View style={styles.modalTeam}>
+                    {selectedMatch.awayTeam.logo ? (
+                      <View style={styles.modalLogoContainer}>
+                        <Image source={{ uri: selectedMatch.awayTeam.logo }} style={styles.modalLogo} resizeMode="contain" />
+                      </View>
+                    ) : null}
+                    <Text style={styles.modalTeamName}>{selectedMatch.awayTeam.abbr}</Text>
+                  </View>
+
+                  <Text style={styles.modalVs}>VS</Text>
+
+                  <View style={styles.modalTeam}>
+                    {selectedMatch.homeTeam.logo ? (
+                      <View style={styles.modalLogoContainer}>
+                        <Image source={{ uri: selectedMatch.homeTeam.logo }} style={styles.modalLogo} resizeMode="contain" />
+                      </View>
+                    ) : null}
+                    <Text style={styles.modalTeamName}>{selectedMatch.homeTeam.abbr}</Text>
+                  </View>
+                </View>
+
                 <Pressable style={styles.modalButton} onPress={handleConfirmEnter}>
                   <Text style={styles.modalButtonText}>{t('enter')}</Text>
-                </Pressable>
-                <Pressable style={styles.modalCancelButton} onPress={() => setSelectedMatch(null)}>
-                  <Text style={styles.modalCancelText}>{t('cancel')}</Text>
                 </Pressable>
               </>
             )}
           </View>
-        </View>
+        </Pressable>
       </Modal>
     </View>
   )
@@ -211,37 +224,62 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
   },
   modalContent: {
     backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 20,
+    padding: 28,
     width: '100%',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
   modalTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
     color: colors.mutedForeground,
-    marginBottom: 16,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 20,
   },
-  modalMatchup: {
-    fontSize: 20,
+  modalTeams: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 24,
+  },
+  modalTeam: {
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  modalLogoContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  modalLogo: {
+    width: 48,
+    height: 48,
+  },
+  modalTeamName: {
+    fontSize: 16,
     fontWeight: '700',
     color: colors.foreground,
-    textAlign: 'center',
   },
   modalVs: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.neonGreen,
-    marginVertical: 8,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.mutedForeground,
   },
   modalButton: {
     width: '100%',
@@ -250,19 +288,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 24,
   },
   modalButtonText: {
     color: colors.background,
     fontSize: 16,
     fontWeight: '700',
-  },
-  modalCancelButton: {
-    marginTop: 12,
-    padding: 8,
-  },
-  modalCancelText: {
-    color: colors.mutedForeground,
-    fontSize: 14,
   },
 })
