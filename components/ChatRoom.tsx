@@ -46,12 +46,6 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set())
   const flatListRef = useRef<FlatList>(null)
 
-  // Mettre à jour la locale si le profil change
-  useEffect(() => {
-    if (profile?.preferred_locale) {
-      setLocale(profile.preferred_locale)
-    }
-  }, [profile?.preferred_locale])
 
   // Charger les users bloqués
   useEffect(() => {
