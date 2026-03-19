@@ -37,7 +37,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
   const { user, profile } = useAuth()
   const { getAvatarUrl } = useAvatars()
   const { t, locale: appLocale } = useTranslation()
-  const [locale, setLocale] = useState<Locale>(profile?.preferred_locale || 'en')
+  const [locale, setLocale] = useState<Locale>('en')
   const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, isAuthenticated } = useChat({ matchId, locale })
   const [inputText, setInputText] = useState('')
   const [keyboardVisible, setKeyboardVisible] = useState(false)
@@ -292,16 +292,16 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
           <View style={styles.headerRight}>
             <View style={styles.localeToggle}>
               <Pressable
-                style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
-                onPress={() => handleLocaleChange('fr')}
-              >
-                <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
-              </Pressable>
-              <Pressable
                 style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
                 onPress={() => handleLocaleChange('en')}
               >
                 <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>ALL</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
+                onPress={() => handleLocaleChange('fr')}
+              >
+                <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
               </Pressable>
             </View>
           </View>
