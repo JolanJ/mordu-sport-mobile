@@ -65,22 +65,11 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     setLocale(newLocale)
   }
 
-  // Scroll vers le bas quand nouveaux messages
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true })
-      }, 100)
-    }
-  }, [messages.length])
 
   // Gérer l'ouverture/fermeture du keyboard
   useEffect(() => {
     const keyboardDidShow = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true)
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true })
-      }, 100)
     })
 
     const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
@@ -310,7 +299,8 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
         <Pressable style={{ flex: 1 }} onPress={() => { setSelectedMessageId(null); setShowModerationMenu(null) }}>
           <FlatList
             ref={flatListRef}
-            data={visibleMessages}
+            data={[...visibleMessages].reverse()}
+            inverted
             renderItem={renderMessage}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.messagesList}

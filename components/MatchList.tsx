@@ -20,6 +20,8 @@ export function MatchList({ selectedDate }: MatchListProps) {
   const scrollY = useRef(new Animated.Value(0)).current
   const router = useRouter()
   const { t, locale } = useTranslation()
+  const queryClient = useQueryClient()
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
 
   // Récupérer les matchs NHL depuis l'API
   const queryDate = selectedDate || new Date()
@@ -43,6 +45,8 @@ export function MatchList({ selectedDate }: MatchListProps) {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
   }
 
+  const allMatches = sortedMatches
+
   // État de chargement
   if (isLoading) {
     return (
@@ -62,24 +66,6 @@ export function MatchList({ selectedDate }: MatchListProps) {
       </View>
     )
   }
-
-  const allMatches = sortedMatches
-
-  // Afficher les matchs NHL
-  if (matches.length === 0 && false) {
-    const dateStr = queryDate.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>{t('noMatchesScheduled')}</Text>
-        <Text style={styles.emptySubtitle}>
-          {t('noMatchesForDate', { date: dateStr })}
-        </Text>
-      </View>
-    )
-  }
-
-  const queryClient = useQueryClient()
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
 
   const handleMatchPress = useCallback((matchId: string, matchDate: string) => {
     const match = allMatches.find(m => m.id === matchId)
