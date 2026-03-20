@@ -47,26 +47,6 @@ export function MatchList({ selectedDate }: MatchListProps) {
 
   const allMatches = sortedMatches
 
-  // État de chargement
-  if (isLoading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.neonGreen} />
-        <Text style={styles.loadingText}>{t('loadingMatches')}</Text>
-      </View>
-    )
-  }
-
-  // État d'erreur
-  if (isError) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorTitle}>{t('loadingError')}</Text>
-        <Text style={styles.errorText}>{t('loadingErrorMessage')}</Text>
-      </View>
-    )
-  }
-
   const handleMatchPress = useCallback((matchId: string, matchDate: string) => {
     const match = allMatches.find(m => m.id === matchId)
 
@@ -96,6 +76,26 @@ export function MatchList({ selectedDate }: MatchListProps) {
     if (!selectedMatch) return
     router.push(`/(tabs)/match/${selectedMatch.id}?date=${selectedMatch.date}` as any)
     setSelectedMatch(null)
+  }
+
+  // État de chargement
+  if (isLoading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={colors.neonGreen} />
+        <Text style={styles.loadingText}>{t('loadingMatches')}</Text>
+      </View>
+    )
+  }
+
+  // État d'erreur
+  if (isError) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorTitle}>{t('loadingError')}</Text>
+        <Text style={styles.errorText}>{t('loadingErrorMessage')}</Text>
+      </View>
+    )
   }
 
   return (

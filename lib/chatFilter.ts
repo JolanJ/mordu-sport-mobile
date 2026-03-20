@@ -23,7 +23,7 @@ const BLOCKED_WORDS = [
   'nigger', 'nig', 'nigga', 'faggot', 'fag', 'retard',
 
   // Spam / Promo / Liens
-  'http', 'https', 'www', '.com', '.net', '.io', '.gg', '.bet', '.casino',
+  'http', 'https', 'www', '.com', '.ca', '.net', '.org', '.io', '.gg', '.bet', '.casino', '.info', '.co', '.tv', '.me', '.xyz',
 
   // FR - Auto-promo
   'site', 'business', 'lien', 'promo', 'abonne',

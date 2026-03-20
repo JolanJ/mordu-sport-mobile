@@ -193,6 +193,33 @@ export function useChat({ matchId, locale }: UseChatOptions) {
         locale,
       })
 
+      // Store @mentions in DB (fire and forget)
+      if (!error) {
+        const mentionMatches = content.match(/@(\w+)/g)
+        if (mentionMatches) {
+          const mentionedUsernames = mentionMatches.map(m => m.slice(1).toLowerCase())
+          // Look up user IDs from profiles
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .in('username', mentionedUsernames)
+          if (profiles && profiles.length > 0) {
+            const mentions = profiles
+              .filter(p => p.id !== user.id) // Don't mention yourself
+              .map(p => ({
+                match_id: matchId,
+                mentioned_user_id: p.id,
+                from_user_id: user.id,
+                from_username: username,
+                content: content.trim(),
+              }))
+            if (mentions.length > 0) {
+              supabase.from('mentions').insert(mentions).then(() => {})
+            }
+          }
+        }
+      }
+
       setSending(false)
 
       return { error }
@@ -299,6 +326,30 @@ export function useChat({ matchId, locale }: UseChatOptions) {
     [reactions, user]
   )
 
+  // Fetch unread mentions for this match
+  const getUnreadMentions = useCallback(async () => {
+    if (!user || !matchId) return []
+    const { data } = await supabase
+      .from('mentions')
+      .select('*')
+      .eq('mentioned_user_id', user.id)
+      .eq('match_id', matchId)
+      .eq('read', false)
+      .order('created_at', { ascending: false })
+    return data || []
+  }, [user, matchId])
+
+  // Mark all mentions as read for this match
+  const markMentionsRead = useCallback(async () => {
+    if (!user || !matchId) return
+    await supabase
+      .from('mentions')
+      .update({ read: true })
+      .eq('mentioned_user_id', user.id)
+      .eq('match_id', matchId)
+      .eq('read', false)
+  }, [user, matchId])
+
   return {
     messages,
     loading,
@@ -307,6 +358,8 @@ export function useChat({ matchId, locale }: UseChatOptions) {
     deleteMessage,
     toggleReaction,
     getReactionsForMessage,
+    getUnreadMentions,
+    markMentionsRead,
     isAuthenticated: !!user,
   }
 }

@@ -6,7 +6,7 @@ import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
 import { LogIn, Send } from 'lucide-react-native'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -38,14 +38,48 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
   const { getAvatarUrl } = useAvatars()
   const { t, locale: appLocale } = useTranslation()
   const [locale, setLocale] = useState<Locale>('en')
-  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, isAuthenticated } = useChat({ matchId, locale })
+  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, getUnreadMentions, markMentionsRead, isAuthenticated } = useChat({ matchId, locale })
+  const [unreadCount, setUnreadCount] = useState(0)
   const [inputText, setInputText] = useState('')
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [showModerationMenu, setShowModerationMenu] = useState<string | null>(null)
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set())
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [mentionToast, setMentionToast] = useState<string | null>(null)
+  const prevMessageCount = useRef(messages.length)
   const flatListRef = useRef<FlatList>(null)
 
+
+  // Check for unread mentions on mount
+  useEffect(() => {
+    if (!isAuthenticated) return
+    getUnreadMentions().then(mentions => {
+      if (mentions.length > 0) {
+        setUnreadCount(mentions.length)
+        // Auto-dismiss after 5 seconds and mark as read
+        setTimeout(() => {
+          setUnreadCount(0)
+          markMentionsRead()
+        }, 5000)
+      }
+    })
+  }, [isAuthenticated])
+
+  // Detect @mention in new messages
+  useEffect(() => {
+    if (messages.length > prevMessageCount.current) {
+      const newMessages = messages.slice(prevMessageCount.current)
+      for (const msg of newMessages) {
+        if (msg.user_id !== user?.id && msg.content.toLowerCase().includes(`@${username.toLowerCase()}`)) {
+          setMentionToast(msg.username)
+          setTimeout(() => setMentionToast(null), 3000)
+          break
+        }
+      }
+    }
+    prevMessageCount.current = messages.length
+  }, [messages.length])
 
   // Charger les users bloqués
   useEffect(() => {
@@ -81,6 +115,44 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
       keyboardDidHide.remove()
     }
   }, [])
+
+  // Get unique usernames from chat (excluding own)
+  const chatUsernames = useMemo(() => {
+    const names = new Set<string>()
+    for (const m of messages) {
+      if (m.user_id !== user?.id) names.add(m.username)
+    }
+    return Array.from(names)
+  }, [messages, user?.id])
+
+  // Filter usernames matching the @query
+  const mentionSuggestions = useMemo(() => {
+    if (mentionQuery === null) return []
+    if (mentionQuery === '') return chatUsernames.slice(0, 5)
+    return chatUsernames.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5)
+  }, [mentionQuery, chatUsernames])
+
+  const handleTextChange = (text: string) => {
+    setInputText(text)
+    // Detect @mention typing
+    const lastAtIndex = text.lastIndexOf('@')
+    if (lastAtIndex >= 0) {
+      const afterAt = text.slice(lastAtIndex + 1)
+      // Only show suggestions if no space after @
+      if (!afterAt.includes(' ')) {
+        setMentionQuery(afterAt)
+        return
+      }
+    }
+    setMentionQuery(null)
+  }
+
+  const handleMentionSelect = (mentionUsername: string) => {
+    const lastAtIndex = inputText.lastIndexOf('@')
+    const newText = inputText.slice(0, lastAtIndex) + `@${mentionUsername} `
+    setInputText(newText)
+    setMentionQuery(null)
+  }
 
   const handleSend = async () => {
     if (!inputText.trim() || sending) return
@@ -151,6 +223,18 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     setSelectedMessageId(null)
   }
 
+  const renderMessageContent = (content: string, isOwn: boolean) => {
+    const parts = content.split(/(@\w+)/g)
+    return parts.map((part, i) => {
+      if (part.startsWith('@')) {
+        return (
+          <Text key={i} style={[styles.mention, isOwn && styles.mentionOwn]}>{part}</Text>
+        )
+      }
+      return part
+    })
+  }
+
   const visibleMessages = messages.filter(m => !blockedUserIds.has(m.user_id))
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
@@ -177,7 +261,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
               </Text>
             </View>
             <Text style={[styles.messageText, isOwnMessage && styles.ownMessageText]}>
-              {item.content}
+              {renderMessageContent(item.content, isOwnMessage)}
             </Text>
           </View>
           {isOwnMessage && avatarUrl && (
@@ -291,6 +375,24 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
         </View>
       )}
 
+      {/* Unread mentions banner */}
+      {unreadCount > 0 && (
+        <Pressable style={styles.mentionToast} onPress={() => { setUnreadCount(0); markMentionsRead() }}>
+          <Text style={styles.mentionToastText}>
+            💬 {unreadCount} {unreadCount === 1 ? t('newMention') : t('newMentions')}
+          </Text>
+        </Pressable>
+      )}
+
+      {/* Mention toast */}
+      {mentionToast && (
+        <View style={styles.mentionToast}>
+          <Text style={styles.mentionToastText}>
+            💬 {mentionToast} {t('mentionedYou')}
+          </Text>
+        </View>
+      )}
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -317,6 +419,18 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
         </Pressable>
       )}
 
+      {/* @mention suggestions */}
+      {mentionQuery !== null && mentionSuggestions.length > 0 && (
+        <View style={styles.mentionList}>
+          {mentionSuggestions.map((name) => (
+            <Pressable key={name} style={styles.mentionItem} onPress={() => handleMentionSelect(name)}>
+              <Text style={styles.mentionAt}>@</Text>
+              <Text style={styles.mentionName}>{name}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       <View style={styles.inputWrapper}>
         {/* Quick emoji reactions - caché quand keyboard ouvert */}
         {!keyboardVisible && <View style={styles.quickEmojis}>
@@ -338,7 +452,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
             placeholder={t('writeMessage')}
             placeholderTextColor={colors.mutedForeground}
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={handleTextChange}
             multiline
             maxLength={200}
             onSubmitEditing={handleSend}
@@ -499,6 +613,47 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
     fontSize: 14,
     textAlign: 'center',
+  },
+  mentionToast: {
+    backgroundColor: colors.neonGreen,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  mentionToastText: {
+    color: colors.background,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  mentionList: {
+    backgroundColor: colors.card,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingVertical: 4,
+  },
+  mentionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  mentionAt: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.neonGreen,
+  },
+  mentionName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.foreground,
+  },
+  mention: {
+    color: colors.neonGreen,
+    fontWeight: '700',
+  },
+  mentionOwn: {
+    color: '#ffffff',
+    fontWeight: '700',
   },
   inputWrapper: {
     borderTopWidth: 1,
