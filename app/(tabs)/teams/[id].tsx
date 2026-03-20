@@ -1,3 +1,4 @@
+import { AdBanner } from '@/components/AdBanner'
 import { HomeHeader } from '@/components/HomeHeader'
 import { InjuryReport } from '@/components/InjuryReport'
 import { TabsNavigation } from '@/components/TabsNavigation'
@@ -191,6 +192,7 @@ export default function TeamDetail() {
         {activeTab === 'stats' && displayTeamStats && <TeamStatsComponent stats={displayTeamStats} />}
         {activeTab === 'injuries' && <InjuryReport injuries={displayInjuries} />}
       </ScrollView>
+      <AdBanner />
     </SafeAreaView>
   )
 }

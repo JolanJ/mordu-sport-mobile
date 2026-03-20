@@ -1,3 +1,4 @@
+import { AdBanner } from '@/components/AdBanner'
 import { HomeHeader } from '@/components/HomeHeader'
 import { MatchCard } from '@/components/MatchCard'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
@@ -141,6 +142,7 @@ export default function Favorites() {
           <ScrollToTopButton scrollY={scrollY} onPress={scrollToTop} />
         </View>
       )}
+      <AdBanner />
     </SafeAreaView>
   )
 }

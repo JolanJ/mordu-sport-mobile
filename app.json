@@ -13,7 +13,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.jostinjarry1.mordusportmobile",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "SKAdNetworkItems": [
+          { "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" }
+        ]
       }
     },
     "android": {
@@ -41,6 +44,14 @@
           "dark": {
             "backgroundColor": "#0d0d0d"
           }
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-5165277705756059~3315021170",
+          "userTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you."
         }
       ]
     ],

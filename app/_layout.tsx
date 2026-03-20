@@ -1,3 +1,4 @@
+import mobileAds from 'react-native-google-mobile-ads'
 import { BannedModal } from '@/components/BannedModal'
 import { SplashScreen } from '@/components/SplashScreen'
 import { UpdateRequiredModal } from '@/components/UpdateRequiredModal'
@@ -19,6 +20,11 @@ import { ActivityIndicator, AppState, View } from 'react-native'
 
 // Keep native splash visible until we're ready
 ExpoSplashScreen.preventAutoHideAsync()
+
+// Initialize the Google Mobile Ads SDK
+mobileAds()
+  .initialize()
+  .catch((e: unknown) => console.log('AdMob init error:', e))
 
 // QueryClient en dehors pour être accessible pendant le prefetch
 const queryClient = new QueryClient({

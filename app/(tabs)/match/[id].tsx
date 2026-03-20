@@ -1,3 +1,4 @@
+import { AdBanner } from '@/components/AdBanner'
 import { ChatRoom } from '@/components/ChatRoom'
 import { MatchEventsComponent } from '@/components/MatchEventsComponent'
 import { TeamSeasonStatsComponent } from '@/components/TeamSeasonStatsComponent'
@@ -242,6 +243,7 @@ export default function MatchRoom() {
           awayTeamAbbr={match.awayTeam.abbr}
         />
       )}
+      {!keyboardVisible && <AdBanner />}
     </SafeAreaView>
   )
 }
