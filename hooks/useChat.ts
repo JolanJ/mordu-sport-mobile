@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { AppState } from 'react-native'
 
 export type Locale = 'fr' | 'en'
 
@@ -43,44 +44,52 @@ export function useChat({ matchId, locale }: UseChatOptions) {
   const [sending, setSending] = useState(false)
 
   // Charger les messages existants (filtrés par locale ou tous si 'all')
-  useEffect(() => {
+  const fetchMessages = useCallback(async () => {
     if (!matchId) return
 
-    const fetchMessages = async () => {
-      setLoading(true)
-      let query = supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('match_id', matchId)
+    setLoading(true)
+    let query = supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('match_id', matchId)
 
-      // Filtrer par locale
-      query = query.eq('locale', locale)
+    query = query.eq('locale', locale)
 
-      const { data, error } = await query
-        .order('created_at', { ascending: true })
-        .limit(100)
+    const { data, error } = await query
+      .order('created_at', { ascending: true })
+      .limit(100)
 
-      if (!error && data) {
-        setMessages(data)
+    if (!error && data) {
+      setMessages(data)
 
-        // Fetch reactions for these messages
-        if (data.length > 0) {
-          const messageIds = data.map(m => m.id)
-          const { data: reactionsData } = await supabase
-            .from('message_reactions')
-            .select('*')
-            .in('message_id', messageIds)
+      if (data.length > 0) {
+        const messageIds = data.map(m => m.id)
+        const { data: reactionsData } = await supabase
+          .from('message_reactions')
+          .select('*')
+          .in('message_id', messageIds)
 
-          if (reactionsData) {
-            setReactions(reactionsData)
-          }
+        if (reactionsData) {
+          setReactions(reactionsData)
         }
       }
-      setLoading(false)
     }
-
-    fetchMessages()
+    setLoading(false)
   }, [matchId, locale])
+
+  useEffect(() => {
+    fetchMessages()
+  }, [fetchMessages])
+
+  // Refetch messages when app comes back to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        fetchMessages()
+      }
+    })
+    return () => sub.remove()
+  }, [fetchMessages])
 
   // Écouter les nouveaux messages en temps réel (filtrés par locale)
   useEffect(() => {
@@ -98,7 +107,8 @@ export function useChat({ matchId, locale }: UseChatOptions) {
         },
         (payload) => {
           const newMessage = payload.new as ChatMessage
-          // Ajouter si c'est la bonne locale et pas déjà présent (optimistic update)
+          // Skip own messages — already handled by optimistic update
+          if (newMessage.user_id === user?.id) return
           if (newMessage.locale === locale) {
             setMessages((prev) => {
               if (prev.some(m => m.id === newMessage.id)) return prev

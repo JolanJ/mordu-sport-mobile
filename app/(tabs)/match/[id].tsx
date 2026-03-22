@@ -19,7 +19,7 @@ import UsfLogo from '@/assets/images/usf.svg'
 type TabType = 'chat' | 'events' | 'teamStats'
 
 export default function MatchRoom() {
-  const { id, date: dateParam } = useLocalSearchParams<{ id: string; date?: string }>()
+  const { id, date: dateParam, messageId: messageIdParam } = useLocalSearchParams<{ id: string; date?: string; messageId?: string }>()
   const router = useRouter()
   const { profile } = useAuth()
   const { t } = useTranslation()
@@ -30,15 +30,15 @@ export default function MatchRoom() {
 
   // Gérer l'ouverture/fermeture du keyboard
   useEffect(() => {
-    const keyboardDidShow = Keyboard.addListener('keyboardDidShow', () => {
+    const keyboardWillShow = Keyboard.addListener('keyboardWillShow', () => {
       setKeyboardVisible(true)
     })
-    const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
+    const keyboardWillHide = Keyboard.addListener('keyboardWillHide', () => {
       setKeyboardVisible(false)
     })
     return () => {
-      keyboardDidShow.remove()
-      keyboardDidHide.remove()
+      keyboardWillShow.remove()
+      keyboardWillHide.remove()
     }
   }, [])
 
@@ -225,6 +225,7 @@ export default function MatchRoom() {
           period={match.period}
           timeRemaining={match.timeRemaining}
           isLive={match.status === 'live'}
+          highlightMessageId={messageIdParam}
         />
       )}
       {activeTab === 'events' && (

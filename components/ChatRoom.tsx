@@ -29,17 +29,17 @@ interface ChatRoomProps {
   period?: string
   timeRemaining?: string
   isLive?: boolean
+  highlightMessageId?: string
 }
 
 const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
 
-export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, timeRemaining, isLive }: ChatRoomProps) {
+export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, timeRemaining, isLive, highlightMessageId }: ChatRoomProps) {
   const { user, profile } = useAuth()
   const { getAvatarUrl } = useAvatars()
   const { t, locale: appLocale } = useTranslation()
   const [locale, setLocale] = useState<Locale>('en')
   const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, getUnreadMentions, markMentionsRead, isAuthenticated } = useChat({ matchId, locale })
-  const [unreadCount, setUnreadCount] = useState(0)
   const [inputText, setInputText] = useState('')
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
@@ -47,27 +47,43 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set())
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionToast, setMentionToast] = useState<string | null>(null)
-  const prevMessageCount = useRef(messages.length)
+  const [highlightedId, setHighlightedId] = useState<string | null>(highlightMessageId || null)
+  const initialLoadDone = useRef(false)
+  const prevMessageCount = useRef(0)
   const flatListRef = useRef<FlatList>(null)
 
-
-  // Check for unread mentions on mount
+  // Mark mentions as read when entering this chat room
   useEffect(() => {
     if (!isAuthenticated) return
-    getUnreadMentions().then(mentions => {
-      if (mentions.length > 0) {
-        setUnreadCount(mentions.length)
-        // Auto-dismiss after 5 seconds and mark as read
-        setTimeout(() => {
-          setUnreadCount(0)
-          markMentionsRead()
-        }, 5000)
-      }
-    })
+    markMentionsRead()
   }, [isAuthenticated])
 
-  // Detect @mention in new messages
+  // Scroll to highlighted message after messages load
   useEffect(() => {
+    if (!highlightedId || loading || messages.length === 0) return
+
+    const reversedMessages = [...messages].reverse()
+    const index = reversedMessages.findIndex(m => m.id === highlightedId)
+    if (index >= 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 })
+      }, 300)
+      // Clear highlight after 3 seconds
+      setTimeout(() => setHighlightedId(null), 3000)
+    }
+  }, [highlightedId, loading, messages.length])
+
+  // Detect @mention in new messages (only after initial load)
+  useEffect(() => {
+    if (!initialLoadDone.current) {
+      // Skip initial load — don't toast for old messages
+      if (!loading && messages.length > 0) {
+        initialLoadDone.current = true
+        prevMessageCount.current = messages.length
+      }
+      return
+    }
+
     if (messages.length > prevMessageCount.current) {
       const newMessages = messages.slice(prevMessageCount.current)
       for (const msg of newMessages) {
@@ -79,7 +95,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
       }
     }
     prevMessageCount.current = messages.length
-  }, [messages.length])
+  }, [messages.length, loading])
 
   // Charger les users bloqués
   useEffect(() => {
@@ -242,9 +258,10 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     const avatarUrl = getAvatarUrl(item.avatar_id)
     const messageReactions = getReactionsForMessage(item.id)
     const showReactionPicker = selectedMessageId === item.id
+    const isHighlighted = highlightedId === item.id
 
     return (
-      <View style={styles.messageWrapper}>
+      <View style={[styles.messageWrapper, isHighlighted && styles.highlightedMessage]}>
         <Pressable
           onLongPress={() => handleLongPress(item.id)}
           delayLongPress={300}
@@ -373,15 +390,6 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
             </View>
           </View>
         </View>
-      )}
-
-      {/* Unread mentions banner */}
-      {unreadCount > 0 && (
-        <Pressable style={styles.mentionToast} onPress={() => { setUnreadCount(0); markMentionsRead() }}>
-          <Text style={styles.mentionToastText}>
-            💬 {unreadCount} {unreadCount === 1 ? t('newMention') : t('newMentions')}
-          </Text>
-        </Pressable>
       )}
 
       {/* Mention toast */}
@@ -748,6 +756,12 @@ const styles = StyleSheet.create({
   // Reactions
   messageWrapper: {
     marginBottom: 4,
+  },
+  highlightedMessage: {
+    backgroundColor: `${colors.neonGreen}20`,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.neonGreen,
   },
   reactionPicker: {
     flexDirection: 'row',

@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function HomeScreen() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [unreadMentions, setUnreadMentions] = useState<{ count: number; matchId?: string; matchDate?: string }>({ count: 0 })
+  const [unreadMentions, setUnreadMentions] = useState<{ count: number; matchId?: string; matchDate?: string; messageId?: string }>({ count: 0 })
   const { user } = useAuth()
   const { t } = useTranslation()
   const router = useRouter()
@@ -27,17 +27,16 @@ export default function HomeScreen() {
     const checkMentions = async () => {
       const { data, count } = await supabase
         .from('mentions')
-        .select('match_id, created_at', { count: 'exact' })
+        .select('match_id, message_id, created_at', { count: 'exact' })
         .eq('mentioned_user_id', user.id)
         .eq('read', false)
         .order('created_at', { ascending: false })
         .limit(1)
       if (data && data.length > 0 && count) {
-        // Use the mention's timestamp to derive the match date
         const matchDate = data[0].created_at
           ? new Date(data[0].created_at).toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0]
-        setUnreadMentions({ count, matchId: data[0].match_id, matchDate })
+        setUnreadMentions({ count, matchId: data[0].match_id, matchDate, messageId: data[0].message_id })
       } else {
         setUnreadMentions({ count: 0 })
       }
@@ -78,8 +77,9 @@ export default function HomeScreen() {
   const handleMentionPress = () => {
     if (unreadMentions.matchId) {
       const date = unreadMentions.matchDate || new Date().toISOString().split('T')[0]
+      const messageId = unreadMentions.messageId || ''
       markMentionsRead()
-      router.push(`/(tabs)/match/${unreadMentions.matchId}?date=${date}` as any)
+      router.push(`/(tabs)/match/${unreadMentions.matchId}?date=${date}&messageId=${messageId}` as any)
     }
   }
 

@@ -37,32 +37,51 @@ class GoalserveAPI {
   // ============================================
 
   async fetchMatches(league: 'NHL', date?: Date, withLogos: boolean = false): Promise<Match[]> {
-    const useScoresEndpoint = isToday(date)
-    let path = useScoresEndpoint ? 'hockey/nhl-scores' : 'hockey/nhl-shedule'
-
-    if (date && !useScoresEndpoint) {
-      path += `?date1=${formatDate(date)}`
+    // Today = always live from Goalserve (scores update every 30s)
+    if (isToday(date)) {
+      return this.fetchMatchesLive(league, date, withLogos)
     }
 
-    try {
-      const xml = await fetchGoalserveXml(path)
+    // Other dates = try cache first
+    const dateKey = date
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      : new Date().toISOString().split('T')[0]
 
-      if (useScoresEndpoint) {
-        this.scoresXmlCache = { path, xml, timestamp: Date.now() }
-      }
+    const { data } = await supabase
+      .from('matches_cache')
+      .select('*')
+      .eq('match_date', dateKey)
 
-      const matches = useScoresEndpoint
-        ? parseXMLScores(xml, league)
-        : parseXMLMatches(xml, league, date)
-
-      if (withLogos && matches.length > 0) {
-        return await this.enrichMatchesWithLogos(matches)
-      }
-
-      return matches
-    } catch (error) {
-      return []
+    if (data && data.length > 0) {
+      return data.map(m => ({
+        id: m.id,
+        league: m.league as 'NHL',
+        status: m.status as 'upcoming' | 'live' | 'finished',
+        statusText: m.status_text || undefined,
+        date: m.match_date,
+        time: m.time || undefined,
+        period: m.period || undefined,
+        timeRemaining: m.time_remaining || undefined,
+        venue: m.venue || undefined,
+        awayTeam: {
+          name: m.away_team_name,
+          abbr: m.away_team_abbr,
+          logo: m.away_team_logo || undefined,
+          score: m.away_team_score ?? undefined,
+          teamId: m.away_team_id || undefined,
+        },
+        homeTeam: {
+          name: m.home_team_name,
+          abbr: m.home_team_abbr,
+          logo: m.home_team_logo || undefined,
+          score: m.home_team_score ?? undefined,
+          teamId: m.home_team_id || undefined,
+        },
+      }))
     }
+
+    // Fallback to live API if cache is empty
+    return this.fetchMatchesLive(league, date, withLogos)
   }
 
   // ============================================
@@ -345,8 +364,37 @@ class GoalserveAPI {
   }
 
   // ============================================
-  // LOGOS (SUPABASE)
+  // PRIVATE METHODS
   // ============================================
+
+  private async fetchMatchesLive(league: 'NHL', date?: Date, withLogos: boolean = false): Promise<Match[]> {
+    const useScoresEndpoint = isToday(date)
+    let path = useScoresEndpoint ? 'hockey/nhl-scores' : 'hockey/nhl-shedule'
+
+    if (date && !useScoresEndpoint) {
+      path += `?date1=${formatDate(date)}`
+    }
+
+    try {
+      const xml = await fetchGoalserveXml(path)
+
+      if (useScoresEndpoint) {
+        this.scoresXmlCache = { path, xml, timestamp: Date.now() }
+      }
+
+      const matches = useScoresEndpoint
+        ? parseXMLScores(xml, league)
+        : parseXMLMatches(xml, league, date)
+
+      if (withLogos && matches.length > 0) {
+        return await this.enrichMatchesWithLogos(matches)
+      }
+
+      return matches
+    } catch (error) {
+      return []
+    }
+  }
 
   private async loadLogosFromDB(): Promise<void> {
     if (this.logoCacheLoaded) return
