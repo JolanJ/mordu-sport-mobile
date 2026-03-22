@@ -35,10 +35,10 @@ export default function Teams() {
     const team = getTeamById(teamId)
     const gId = team?.goalserveId
     if (gId) {
-      queryClient.prefetchQuery({ queryKey: ['teamRoster', gId], queryFn: () => api.fetchTeamRoster(gId) })
-      queryClient.prefetchQuery({ queryKey: ['teamStats', gId], queryFn: () => api.fetchTeamStats(gId) })
-      queryClient.prefetchQuery({ queryKey: ['playerStats', gId], queryFn: () => api.fetchPlayerStats(gId) })
-      queryClient.prefetchQuery({ queryKey: ['teamInjuries', gId], queryFn: () => api.fetchTeamInjuries(gId) })
+      queryClient.prefetchQuery({ queryKey: ['teamRoster', gId], queryFn: () => api.fetchTeamRosterCached(gId) })
+      queryClient.prefetchQuery({ queryKey: ['teamStats', gId], queryFn: () => api.fetchTeamStatsCached(gId) })
+      queryClient.prefetchQuery({ queryKey: ['playerStats', gId], queryFn: () => api.fetchPlayerStatsCached(gId) })
+      queryClient.prefetchQuery({ queryKey: ['teamInjuries', gId], queryFn: () => api.fetchTeamInjuriesCached(gId) })
     }
     router.push(`/teams/${teamId}`)
   }

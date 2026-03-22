@@ -14,33 +14,33 @@ export function useTeamData({ teamId }: UseTeamDataOptions) {
   // Fetch le roster (avec logo)
   const rosterQuery = useQuery({
     queryKey: ['teamRoster', goalserveId],
-    queryFn: () => api.fetchTeamRoster(goalserveId!),
+    queryFn: () => api.fetchTeamRosterCached(goalserveId!),
     enabled: !!goalserveId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 60 * 1000, // 30 minutes — data synced daily
   })
 
   // Fetch les stats de l'équipe
   const teamStatsQuery = useQuery({
     queryKey: ['teamStats', goalserveId],
-    queryFn: () => api.fetchTeamStats(goalserveId!),
+    queryFn: () => api.fetchTeamStatsCached(goalserveId!),
     enabled: !!goalserveId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
   })
 
   // Fetch les stats des joueurs
   const playerStatsQuery = useQuery({
     queryKey: ['playerStats', goalserveId],
-    queryFn: () => api.fetchPlayerStats(goalserveId!),
+    queryFn: () => api.fetchPlayerStatsCached(goalserveId!),
     enabled: !!goalserveId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
   })
 
   // Fetch les blessures
   const injuriesQuery = useQuery({
     queryKey: ['teamInjuries', goalserveId],
-    queryFn: () => api.fetchTeamInjuries(goalserveId!),
+    queryFn: () => api.fetchTeamInjuriesCached(goalserveId!),
     enabled: !!goalserveId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
   })
 
   const isLoading = rosterQuery.isLoading || teamStatsQuery.isLoading || playerStatsQuery.isLoading || injuriesQuery.isLoading
