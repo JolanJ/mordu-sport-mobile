@@ -114,77 +114,68 @@ export default function MatchRoom() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.foreground} />
-        </Pressable>
-        <UsfLogo width={160} height={22} />
-        <View style={styles.placeholder} />
-      </View>
-
-      {/* Match Info - Full when keyboard closed, mini when open */}
       {keyboardVisible ? (
-        <View style={styles.matchInfoMini}>
-          <View style={styles.teamMini}>
-            <View style={styles.logoContainerMini}>
-              {match.awayTeam.logo ? (
-                <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoMini} resizeMode="contain" />
-              ) : (
-                <Text style={styles.logoPlaceholderTextSmall}>{match.awayTeam.abbr}</Text>
-              )}
-            </View>
-            <Text style={styles.teamNameMini}>{match.awayTeam.abbr}</Text>
-          </View>
-          <Text style={styles.scoreMini}>{match.awayTeam.score ?? 0}</Text>
-          <Text style={styles.timeMini}>
-            {match.period ? `${match.period}` : match.time || '-'}
-            {match.timeRemaining ? `\n${match.timeRemaining}` : ''}
-          </Text>
-          <Text style={styles.scoreMini}>{match.homeTeam.score ?? 0}</Text>
-          <View style={styles.teamMini}>
-            <View style={styles.logoContainerMini}>
-              {match.homeTeam.logo ? (
-                <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoMini} resizeMode="contain" />
-              ) : (
-                <Text style={styles.logoPlaceholderTextSmall}>{match.homeTeam.abbr}</Text>
-              )}
-            </View>
-            <Text style={styles.teamNameMini}>{match.homeTeam.abbr}</Text>
+        <View style={styles.headerKeyboard}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={20} color={colors.foreground} />
+          </Pressable>
+          <View style={styles.headerKeyboardScore}>
+            <Text style={styles.miniAbbr}>{match.awayTeam.abbr}</Text>
+            <Text style={styles.miniScore}>{match.awayTeam.score ?? 0}</Text>
+            <Text style={styles.miniDivider}>-</Text>
+            <Text style={styles.miniScore}>{match.homeTeam.score ?? 0}</Text>
+            <Text style={styles.miniAbbr}>{match.homeTeam.abbr}</Text>
+            {match.period && (
+              <View style={styles.miniPeriodBadge}>
+                <Text style={styles.miniPeriodText}>
+                  {match.period}{match.timeRemaining ? ` · ${match.timeRemaining}` : ''}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       ) : (
-        <View style={styles.matchInfoCompact}>
-          <View style={styles.teamCompact}>
-            <View style={styles.logoContainerSmall}>
-              {match.awayTeam.logo ? (
-                <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
-              ) : (
-                <Text style={styles.logoPlaceholderTextSmall}>{match.awayTeam.abbr}</Text>
+        <View>
+          <View style={styles.header}>
+            <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <ArrowLeft size={24} color={colors.foreground} />
+            </Pressable>
+            <UsfLogo width={160} height={22} />
+            <View style={styles.placeholder} />
+          </View>
+          <View style={styles.matchInfoCompact}>
+            <View style={styles.teamCompact}>
+              <View style={styles.logoContainerSmall}>
+                {match.awayTeam.logo ? (
+                  <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
+                ) : (
+                  <Text style={styles.logoPlaceholderTextSmall}>{match.awayTeam.abbr}</Text>
+                )}
+              </View>
+              <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
+            </View>
+            <Text style={styles.teamScoreCompact}>{match.awayTeam.score ?? 0}</Text>
+
+            <View style={styles.matchStatus}>
+              <Text style={styles.periodTimeText}>
+                {match.period || match.time || '-'}
+              </Text>
+              {match.timeRemaining && (
+                <Text style={styles.timeRemainingText}>{match.timeRemaining}</Text>
               )}
             </View>
-            <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
-          </View>
-          <Text style={styles.teamScoreCompact}>{match.awayTeam.score ?? 0}</Text>
 
-          <View style={styles.matchStatus}>
-            <Text style={styles.periodTimeText}>
-              {match.period || match.time || '-'}
-            </Text>
-            {match.timeRemaining && (
-              <Text style={styles.timeRemainingText}>{match.timeRemaining}</Text>
-            )}
-          </View>
-
-          <Text style={styles.teamScoreCompact}>{match.homeTeam.score ?? 0}</Text>
-          <View style={styles.teamCompact}>
-            <View style={styles.logoContainerSmall}>
-              {match.homeTeam.logo ? (
-                <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
-              ) : (
-                <Text style={styles.logoPlaceholderTextSmall}>{match.homeTeam.abbr}</Text>
-              )}
+            <Text style={styles.teamScoreCompact}>{match.homeTeam.score ?? 0}</Text>
+            <View style={styles.teamCompact}>
+              <View style={styles.logoContainerSmall}>
+                {match.homeTeam.logo ? (
+                  <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogoSmall} resizeMode="contain" />
+                ) : (
+                  <Text style={styles.logoPlaceholderTextSmall}>{match.homeTeam.abbr}</Text>
+                )}
+              </View>
+              <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
             </View>
-            <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
           </View>
         </View>
       )}
@@ -222,9 +213,7 @@ export default function MatchRoom() {
           matchId={match.id}
           username={profile?.username || 'Fan'}
           avatarId={profile?.avatar_id || 1}
-          period={match.period}
-          timeRemaining={match.timeRemaining}
-          isLive={match.status === 'live'}
+          keyboardVisible={keyboardVisible}
           highlightMessageId={messageIdParam}
         />
       )}
@@ -263,6 +252,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerKeyboard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: colors.card,
+  },
+  headerKeyboardScore: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginRight: 36,
+  },
   backButton: {
     padding: 8,
   },
@@ -274,52 +278,33 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  // Match Info Mini (keyboard open)
-  matchInfoMini: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  teamMini: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  logoContainerMini: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.neonBlue,
-  },
-  teamNameMini: {
-    fontSize: 10,
-    fontWeight: '600',
+  miniAbbr: {
+    fontSize: 13,
+    fontWeight: '700',
     color: colors.foreground,
+    letterSpacing: 0.5,
   },
-  teamLogoMini: {
-    width: 34,
-    height: 34,
-  },
-  scoreMini: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  miniScore: {
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.neonGreen,
   },
-  timeMini: {
+  miniDivider: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.mutedForeground,
+  },
+  miniPeriodBadge: {
+    backgroundColor: colors.muted,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: 4,
+  },
+  miniPeriodText: {
     fontSize: 11,
     fontWeight: '600',
     color: colors.mutedForeground,
-    textAlign: 'center',
   },
   // Match Info Compact
   matchInfoCompact: {

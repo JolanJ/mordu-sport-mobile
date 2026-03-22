@@ -5,14 +5,13 @@ import { useAvatars } from '@/hooks/useAvatars'
 import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
-import { LogIn, Send } from 'lucide-react-native'
+import { LogIn, Send, ChevronRight } from 'lucide-react-native'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   Image,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -26,22 +25,19 @@ interface ChatRoomProps {
   matchId: string
   username?: string
   avatarId?: number
-  period?: string
-  timeRemaining?: string
-  isLive?: boolean
+  keyboardVisible?: boolean
   highlightMessageId?: string
 }
 
 const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
 
-export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, timeRemaining, isLive, highlightMessageId }: ChatRoomProps) {
-  const { user, profile } = useAuth()
+export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboardVisible = false, highlightMessageId }: ChatRoomProps) {
+  const { user } = useAuth()
   const { getAvatarUrl } = useAvatars()
   const { t, locale: appLocale } = useTranslation()
   const [locale, setLocale] = useState<Locale>('en')
-  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, getUnreadMentions, markMentionsRead, isAuthenticated } = useChat({ matchId, locale })
+  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, markMentionsRead, isAuthenticated } = useChat({ matchId, locale })
   const [inputText, setInputText] = useState('')
-  const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [showModerationMenu, setShowModerationMenu] = useState<string | null>(null)
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set())
@@ -116,21 +112,6 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
   }
 
 
-  // Gérer l'ouverture/fermeture du keyboard
-  useEffect(() => {
-    const keyboardDidShow = Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardVisible(true)
-    })
-
-    const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardVisible(false)
-    })
-
-    return () => {
-      keyboardDidShow.remove()
-      keyboardDidHide.remove()
-    }
-  }, [])
 
   // Get unique usernames from chat (excluding own)
   const chatUsernames = useMemo(() => {
@@ -267,8 +248,16 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
           delayLongPress={300}
           style={[styles.messageContainer, isOwnMessage && styles.ownMessageContainer]}
         >
-          {!isOwnMessage && avatarUrl && (
-            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+          {!isOwnMessage && (
+            <View style={styles.avatarContainer}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.avatarFallback]}>
+                  <Text style={styles.avatarFallbackText}>{item.username.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
+            </View>
           )}
           <View style={[styles.messageBubble, isOwnMessage && styles.ownMessageBubble]}>
             <View style={styles.usernameRow}>
@@ -281,12 +270,20 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
               {renderMessageContent(item.content, isOwnMessage)}
             </Text>
           </View>
-          {isOwnMessage && avatarUrl && (
-            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+          {isOwnMessage && (
+            <View style={styles.avatarContainer}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.avatarFallback]}>
+                  <Text style={styles.avatarFallbackText}>{item.username.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
+            </View>
           )}
         </Pressable>
 
-        {/* Reaction Picker - en bas du message */}
+        {/* Reaction Picker */}
         {showReactionPicker && (
           <View style={[styles.reactionPicker, isOwnMessage && styles.reactionPickerOwn]}>
             {REACTION_EMOJIS.map((emoji) => (
@@ -347,7 +344,9 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
     return (
       <View style={styles.container}>
         <View style={styles.authPrompt}>
-          <LogIn size={48} color={colors.mutedForeground} />
+          <View style={styles.authIconWrapper}>
+            <LogIn size={28} color={colors.neonGreen} />
+          </View>
           <Text style={styles.authPromptTitle}>{t('loginRequired')}</Text>
           <Text style={styles.authPromptText}>{t('loginToChat')}</Text>
           <Pressable
@@ -355,6 +354,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
             onPress={() => router.push('/(auth)/login')}
           >
             <Text style={styles.authLoginButtonText}>{t('signIn')}</Text>
+            <ChevronRight size={18} color={colors.background} />
           </Pressable>
         </View>
       </View>
@@ -370,34 +370,36 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
       {!keyboardVisible && (
         <View style={styles.header}>
           <View style={styles.liveIndicator}>
-            <View style={styles.liveDot} />
+            <View style={styles.liveDotOuter}>
+              <View style={styles.liveDot} />
+            </View>
             <Text style={styles.liveText}>{t('liveChat')}</Text>
           </View>
-          <View style={styles.headerRight}>
-            <View style={styles.localeToggle}>
-              <Pressable
-                style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
-                onPress={() => handleLocaleChange('en')}
-              >
-                <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>ALL</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
-                onPress={() => handleLocaleChange('fr')}
-              >
-                <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
-              </Pressable>
-            </View>
+          <View style={styles.localeToggle}>
+            <Pressable
+              style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
+              onPress={() => handleLocaleChange('en')}
+            >
+              <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>ALL</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
+              onPress={() => handleLocaleChange('fr')}
+            >
+              <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
+            </Pressable>
           </View>
         </View>
       )}
 
       {/* Mention toast */}
       {mentionToast && (
-        <View style={styles.mentionToast}>
-          <Text style={styles.mentionToastText}>
-            💬 {mentionToast} {t('mentionedYou')}
-          </Text>
+        <View style={styles.mentionToastWrapper}>
+          <View style={styles.mentionToast}>
+            <Text style={styles.mentionToastText}>
+              💬 {mentionToast} {t('mentionedYou')}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -440,25 +442,27 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
       )}
 
       <View style={styles.inputWrapper}>
-        {/* Quick emoji reactions - caché quand keyboard ouvert */}
-        {!keyboardVisible && <View style={styles.quickEmojis}>
-          {['👍', '👎', '🔥', '💀'].map((emoji) => (
-            <Pressable
-              key={emoji}
-              style={styles.emojiButton}
-              onPress={() => sendMessage(emoji, username, avatarId)}
-              disabled={sending}
-            >
-              <Text style={styles.emojiText}>{emoji}</Text>
-            </Pressable>
-          ))}
-        </View>}
+        {/* Quick emoji reactions */}
+        {!keyboardVisible && (
+          <View style={styles.quickEmojis}>
+            {['👍', '👎', '🔥', '💀'].map((emoji) => (
+              <Pressable
+                key={emoji}
+                style={styles.emojiButton}
+                onPress={() => sendMessage(emoji, username, avatarId)}
+                disabled={sending}
+              >
+                <Text style={styles.emojiText}>{emoji}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
             placeholder={t('writeMessage')}
-            placeholderTextColor={colors.mutedForeground}
+            placeholderTextColor={`${colors.mutedForeground}99`}
             value={inputText}
             onChangeText={handleTextChange}
             multiline
@@ -473,7 +477,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, period, 
             {sending ? (
               <ActivityIndicator size="small" color={colors.background} />
             ) : (
-              <Send size={20} color={colors.background} />
+              <Send size={18} color={colors.background} />
             )}
           </Pressable>
         </View>
@@ -487,50 +491,51 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+
+  // ── Header ──────────────────────────────────────────
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: colors.card,
   },
   liveIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+  },
+  liveDotOuter: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: `${colors.live}25`,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: colors.live,
   },
   liveText: {
     color: colors.foreground,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  participantsText: {
-    color: colors.mutedForeground,
-    fontSize: 12,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   localeToggle: {
     flexDirection: 'row',
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    padding: 2,
+    backgroundColor: colors.muted,
+    borderRadius: 10,
+    padding: 3,
   },
   localeButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   localeButtonActive: {
     backgroundColor: colors.primary,
@@ -538,48 +543,80 @@ const styles = StyleSheet.create({
   localeButtonText: {
     color: colors.mutedForeground,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   localeButtonTextActive: {
     color: colors.background,
   },
+
+  // ── Loading ─────────────────────────────────────────
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+
+  // ── Messages ────────────────────────────────────────
   messagesList: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    gap: 4,
+    gap: 2,
+  },
+  messageWrapper: {
+    marginBottom: 6,
+  },
+  highlightedMessage: {
+    backgroundColor: `${colors.neonGreen}15`,
+    borderRadius: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.neonGreen,
+    paddingLeft: 4,
   },
   messageContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 6,
-    marginBottom: 4,
+    gap: 8,
   },
   ownMessageContainer: {
     justifyContent: 'flex-end',
   },
-  avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.card,
+
+  // ── Avatar ──────────────────────────────────────────
+  avatarContainer: {
+    marginBottom: 2,
   },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.muted,
+  },
+  avatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.muted,
+  },
+  avatarFallbackText: {
+    color: colors.neonGreen,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // ── Bubble ──────────────────────────────────────────
   messageBubble: {
-    maxWidth: '75%',
+    maxWidth: '78%',
     backgroundColor: colors.card,
-    borderRadius: 12,
-    borderBottomLeftRadius: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderRadius: 18,
+    borderBottomLeftRadius: 6,
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
   ownMessageBubble: {
     backgroundColor: colors.primary,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 4,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 6,
   },
   usernameRow: {
     flexDirection: 'row',
@@ -591,59 +628,83 @@ const styles = StyleSheet.create({
   username: {
     color: colors.neonGreen,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   ownUsername: {
-    color: 'rgba(13, 13, 13, 0.8)',
+    color: 'rgba(13, 13, 13, 0.7)',
   },
   messageText: {
     color: colors.foreground,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   ownMessageText: {
     color: colors.background,
   },
   messageTime: {
-    color: colors.mutedForeground,
+    color: `${colors.mutedForeground}99`,
     fontSize: 10,
+    marginTop: 4,
+    alignSelf: 'flex-end',
   },
   ownMessageTime: {
-    color: 'rgba(13, 13, 13, 0.6)',
+    color: 'rgba(13, 13, 13, 0.5)',
   },
+
+  // ── Empty State ─────────────────────────────────────
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
   },
   emptyText: {
     color: colors.mutedForeground,
     fontSize: 14,
     textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  // ── Mention Toast ───────────────────────────────────
+  mentionToastWrapper: {
+    position: 'absolute',
+    top: 56,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 50,
   },
   mentionToast: {
     backgroundColor: colors.neonGreen,
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    shadowColor: colors.neonGreen,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   mentionToastText: {
     color: colors.background,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
+
+  // ── Mention Suggestions ─────────────────────────────
   mentionList: {
     backgroundColor: colors.card,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingVertical: 4,
+    borderTopColor: `${colors.border}80`,
+    paddingVertical: 6,
   },
   mentionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 10,
+    gap: 2,
   },
   mentionAt: {
     fontSize: 14,
@@ -663,28 +724,27 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '700',
   },
+
+  // ── Input Area ──────────────────────────────────────
   inputWrapper: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
     backgroundColor: colors.background,
-    paddingTop: 4,
+    paddingTop: 6,
+    paddingBottom: Platform.OS === 'ios' ? 2 : 4,
   },
   quickEmojis: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16,
+    gap: 12,
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
   emojiButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.card,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.muted,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   emojiText: {
     fontSize: 18,
@@ -692,27 +752,26 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 4,
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 2,
   },
   input: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 38,
     maxHeight: 100,
     backgroundColor: colors.card,
-    borderRadius: 22,
+    borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 9,
+    paddingBottom: 9,
     fontSize: 14,
     color: colors.foreground,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: colors.neonGreen,
     justifyContent: 'center',
     alignItems: 'center',
@@ -720,81 +779,93 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: colors.muted,
   },
+
+  // ── Auth Prompt ─────────────────────────────────────
   authPrompt: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 32,
+  },
+  authIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${colors.neonGreen}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   authPromptTitle: {
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: '600',
+    marginTop: 12,
+    fontSize: 20,
+    fontWeight: '700',
     color: colors.foreground,
+    letterSpacing: 0.2,
   },
   authPromptText: {
     marginTop: 8,
     color: colors.mutedForeground,
     fontSize: 14,
     textAlign: 'center',
-    paddingHorizontal: 32,
+    lineHeight: 20,
+    paddingHorizontal: 24,
   },
   authLoginButton: {
-    marginTop: 24,
-    height: 48,
-    paddingHorizontal: 32,
+    marginTop: 28,
+    height: 50,
+    paddingHorizontal: 36,
     backgroundColor: colors.neonGreen,
-    borderRadius: 12,
+    borderRadius: 25,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
   },
   authLoginButtonText: {
     color: colors.background,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  // Reactions
-  messageWrapper: {
-    marginBottom: 4,
-  },
-  highlightedMessage: {
-    backgroundColor: `${colors.neonGreen}20`,
-    borderRadius: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.neonGreen,
-  },
+
+  // ── Reaction Picker ─────────────────────────────────
   reactionPicker: {
     flexDirection: 'row',
     backgroundColor: colors.card,
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 6,
-    marginTop: 4,
+    marginTop: 6,
     alignSelf: 'flex-start',
-    marginLeft: 40,
+    marginLeft: 44,
     gap: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   reactionPickerOwn: {
     alignSelf: 'flex-end',
-    marginRight: 40,
+    marginRight: 4,
     marginLeft: 0,
   },
   reactionPickerButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.muted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   reactionPickerEmoji: {
-    fontSize: 16,
+    fontSize: 18,
   },
+
+  // ── Moderation ──────────────────────────────────────
   moderationButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.muted,
     alignItems: 'center',
     justifyContent: 'center',
@@ -807,59 +878,61 @@ const styles = StyleSheet.create({
   },
   moderationMenu: {
     position: 'absolute',
-    top: 40,
+    top: 42,
     left: 0,
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
-    minWidth: 120,
+    borderColor: `${colors.border}80`,
+    minWidth: 140,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
     zIndex: 100,
+    overflow: 'hidden',
   },
   moderationMenuItem: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   moderationMenuDivider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: `${colors.border}60`,
   },
   moderationMenuText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: colors.foreground,
   },
+
+  // ── Reaction Badges ─────────────────────────────────
   reactionsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-    marginLeft: 40,
+    gap: 6,
+    marginLeft: 44,
     marginTop: 4,
   },
   reactionsContainerOwn: {
     justifyContent: 'flex-end',
-    marginRight: 40,
+    marginRight: 4,
     marginLeft: 0,
   },
   reactionBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: colors.muted,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     gap: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   reactionBadgeActive: {
-    borderColor: colors.neonGreen,
-    backgroundColor: 'rgba(57, 255, 20, 0.1)',
+    backgroundColor: `${colors.neonGreen}18`,
+    borderWidth: 1,
+    borderColor: `${colors.neonGreen}40`,
   },
   reactionEmoji: {
     fontSize: 14,
@@ -867,7 +940,7 @@ const styles = StyleSheet.create({
   reactionCount: {
     fontSize: 12,
     color: colors.mutedForeground,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   reactionCountActive: {
     color: colors.neonGreen,
