@@ -37,19 +37,6 @@ export default function TeamDetail() {
     return playerStats.find(ps => ps.name.toLowerCase() === playerName.toLowerCase())
   }
 
-  // Loading state
-  if (isLoading && hasGoalserveId) {
-    return (
-      <SafeAreaView edges={['top']} style={styles.container}>
-        <HomeHeader />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.neonGreen} />
-          <Text style={styles.loadingText}>{t('loadingData')}</Text>
-        </View>
-      </SafeAreaView>
-    )
-  }
-
   // Équipe non trouvée
   if (!teamBasicInfo) {
     return (

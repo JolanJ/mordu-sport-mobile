@@ -191,6 +191,7 @@ class GoalserveAPI {
     if (!data || data.length === 0) return this.fetchTeamRoster(teamId)
 
     const roster = { forwards: [] as any[], defensemen: [] as any[], goalies: [] as any[] }
+    const playerIds: string[] = []
     for (const p of data) {
       const player = {
         id: p.player_id,
@@ -199,9 +200,24 @@ class GoalserveAPI {
         position: p.position || '',
         birthplace: p.birthplace || undefined,
       }
+      playerIds.push(p.player_id)
       if (p.position_group === 'forwards') roster.forwards.push(player)
       else if (p.position_group === 'defensemen') roster.defensemen.push(player)
       else if (p.position_group === 'goalies') roster.goalies.push(player)
+    }
+
+    // Batch-load player images into memory cache
+    const uncachedIds = playerIds.filter(id => !this.playerImageCache.has(id))
+    if (uncachedIds.length > 0) {
+      const { data: images } = await supabase
+        .from('player_images_cache')
+        .select('player_id, image_url')
+        .in('player_id', uncachedIds)
+      if (images) {
+        for (const img of images) {
+          this.playerImageCache.set(img.player_id, img.image_url)
+        }
+      }
     }
 
     // Get team info from the teams table
@@ -294,6 +310,38 @@ class GoalserveAPI {
       description: i.description || '',
       date: i.injury_date || '',
     })) as GoalserveInjury[]
+  }
+
+  // ============================================
+  // PLAYER IMAGE (CACHED)
+  // ============================================
+
+  async fetchPlayerImageCached(playerId: string): Promise<string | null> {
+    if (this.playerImageCache.has(playerId)) {
+      return this.playerImageCache.get(playerId) || null
+    }
+
+    // Try DB cache only — no live API fallback
+    const { data } = await supabase
+      .from('player_images_cache')
+      .select('image_url')
+      .eq('player_id', playerId)
+      .single()
+
+    if (data?.image_url) {
+      this.playerImageCache.set(playerId, data.image_url)
+      return data.image_url
+    }
+
+    return null
+  }
+
+  // Cache-only — returns null instantly if not cached (no live API call)
+  async getPlayerImageFromCache(playerId: string): Promise<string | null> {
+    if (this.playerImageCache.has(playerId)) {
+      return this.playerImageCache.get(playerId) || null
+    }
+    return null
   }
 
   // ============================================

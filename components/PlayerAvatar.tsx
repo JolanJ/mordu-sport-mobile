@@ -26,7 +26,7 @@ export function PlayerAvatar({ playerId, playerNumber, size = 56, color }: Playe
       }
 
       try {
-        const uri = await api.fetchPlayerImage(playerId)
+        const uri = await api.fetchPlayerImageCached(playerId)
         if (isMounted) {
           setImageUri(uri)
           setHasError(!uri)
