@@ -1,4 +1,4 @@
-import { fetchPlayerImage } from '@/lib/services/api'
+import { api } from '@/lib/services/api'
 import { colors } from '@/theme/colors'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native'
@@ -26,7 +26,7 @@ export function PlayerAvatar({ playerId, playerNumber, size = 56, color }: Playe
       }
 
       try {
-        const uri = await fetchPlayerImage(playerId)
+        const uri = await api.fetchPlayerImage(playerId)
         if (isMounted) {
           setImageUri(uri)
           setHasError(!uri)

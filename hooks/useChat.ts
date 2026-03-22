@@ -98,9 +98,12 @@ export function useChat({ matchId, locale }: UseChatOptions) {
         },
         (payload) => {
           const newMessage = payload.new as ChatMessage
-          // Ajouter si c'est la bonne locale
+          // Ajouter si c'est la bonne locale et pas déjà présent (optimistic update)
           if (newMessage.locale === locale) {
-            setMessages((prev) => [...prev, newMessage])
+            setMessages((prev) => {
+              if (prev.some(m => m.id === newMessage.id)) return prev
+              return [...prev, newMessage]
+            })
           }
         }
       )
@@ -139,22 +142,27 @@ export function useChat({ matchId, locale }: UseChatOptions) {
         },
         (payload) => {
           const newReaction = payload.new as MessageReaction
-          // Éviter les doublons (déjà ajouté par optimistic update)
-          setReactions((prev) => {
-            const exists = prev.some(r => r.id === newReaction.id ||
-              (r.message_id === newReaction.message_id &&
-               r.user_id === newReaction.user_id &&
-               r.emoji === newReaction.emoji))
-            if (exists) {
-              // Remplacer le temp par le vrai si c'est un temp
-              return prev.map(r =>
-                (r.id.startsWith('temp-') &&
-                 r.message_id === newReaction.message_id &&
-                 r.user_id === newReaction.user_id &&
-                 r.emoji === newReaction.emoji) ? newReaction : r
-              )
+          // Ignore reactions for messages not in this chat
+          setMessages(currentMessages => {
+            const belongsToChat = currentMessages.some(m => m.id === newReaction.message_id)
+            if (belongsToChat) {
+              setReactions((prev) => {
+                const exists = prev.some(r => r.id === newReaction.id ||
+                  (r.message_id === newReaction.message_id &&
+                   r.user_id === newReaction.user_id &&
+                   r.emoji === newReaction.emoji))
+                if (exists) {
+                  return prev.map(r =>
+                    (r.id.startsWith('temp-') &&
+                     r.message_id === newReaction.message_id &&
+                     r.user_id === newReaction.user_id &&
+                     r.emoji === newReaction.emoji) ? newReaction : r
+                  )
+                }
+                return [...prev, newReaction]
+              })
             }
-            return [...prev, newReaction]
+            return currentMessages
           })
         }
       )
@@ -184,30 +192,52 @@ export function useChat({ matchId, locale }: UseChatOptions) {
 
       setSending(true)
 
-      const { error } = await supabase.from('chat_messages').insert({
+      // Optimistic update — show message immediately
+      const tempId = `temp-${Date.now()}`
+      const optimisticMessage: ChatMessage = {
+        id: tempId,
         match_id: matchId,
         user_id: user.id,
         username,
         avatar_id: avatarId,
         content: content.trim(),
         locale,
-      })
+        created_at: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, optimisticMessage])
+
+      const { data, error } = await supabase.from('chat_messages').insert({
+        match_id: matchId,
+        user_id: user.id,
+        username,
+        avatar_id: avatarId,
+        content: content.trim(),
+        locale,
+      }).select().single()
+
+      if (error) {
+        // Rollback on error
+        setMessages(prev => prev.filter(m => m.id !== tempId))
+      } else if (data) {
+        // Replace temp with real message
+        setMessages(prev => prev.map(m => m.id === tempId ? data : m))
+      }
 
       // Store @mentions in DB (fire and forget)
-      if (!error) {
+      if (!error && data) {
         const mentionMatches = content.match(/@(\w+)/g)
         if (mentionMatches) {
           const mentionedUsernames = mentionMatches.map(m => m.slice(1).toLowerCase())
-          // Look up user IDs from profiles
           const { data: profiles } = await supabase
             .from('profiles')
             .select('id, username')
             .in('username', mentionedUsernames)
           if (profiles && profiles.length > 0) {
             const mentions = profiles
-              .filter(p => p.id !== user.id) // Don't mention yourself
+              .filter(p => p.id !== user.id)
               .map(p => ({
                 match_id: matchId,
+                message_id: data.id,
                 mentioned_user_id: p.id,
                 from_user_id: user.id,
                 from_username: username,

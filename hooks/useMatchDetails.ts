@@ -2,7 +2,7 @@
  * Hook pour récupérer les détails d'un match en direct (événements, stats)
  */
 
-import { fetchMatchDetails } from '@/lib/services/api'
+import { api } from '@/lib/services/api'
 import { MatchDetails } from '@/lib/types'
 import { useQuery } from '@tanstack/react-query'
 
@@ -22,7 +22,7 @@ export function useMatchDetails({ matchId, date, enabled = true }: UseMatchDetai
 
   return useQuery<MatchDetails | null>({
     queryKey: ['matchDetails', matchId, date],
-    queryFn: () => fetchMatchDetails(matchId, matchDate),
+    queryFn: () => api.fetchMatchDetails(matchId, matchDate),
     enabled: enabled && !!matchId,
     staleTime: 15000, // 15 secondes
     refetchInterval: 15000, // Rafraîchir toutes les 15 secondes pour les matchs en direct

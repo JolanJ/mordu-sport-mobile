@@ -3,7 +3,7 @@ import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useMatches } from '@/hooks/useMatches'
-import { fetchMatchDetails, fetchTeamStats } from '@/lib/services/api'
+import { api } from '@/lib/services/api'
 import { colors } from '@/theme/colors'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
@@ -54,7 +54,7 @@ export function MatchList({ selectedDate }: MatchListProps) {
     const date = new Date(matchDate + 'T12:00:00')
     queryClient.prefetchQuery({
       queryKey: ['matchDetails', matchId, matchDate],
-      queryFn: () => fetchMatchDetails(matchId, date),
+      queryFn: () => api.fetchMatchDetails(matchId, date),
     })
 
     // Prefetch season stats for both teams
@@ -62,8 +62,8 @@ export function MatchList({ selectedDate }: MatchListProps) {
       queryClient.prefetchQuery({
         queryKey: ['teamSeasonStats', match.homeTeam.teamId, match.awayTeam.teamId],
         queryFn: () => Promise.all([
-          fetchTeamStats(match.homeTeam.teamId!),
-          fetchTeamStats(match.awayTeam.teamId!),
+          api.fetchTeamStats(match.homeTeam.teamId!),
+          api.fetchTeamStats(match.awayTeam.teamId!),
         ]).then(([home, away]) => ({ home, away })),
       })
     }

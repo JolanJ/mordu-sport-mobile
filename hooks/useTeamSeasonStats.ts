@@ -2,7 +2,7 @@
  * Hook pour récupérer les stats de saison de deux équipes
  */
 
-import { fetchTeamStats, GoalserveTeamStats } from '@/lib/services/api'
+import { api, type GoalserveTeamStats } from '@/lib/services/api'
 import { useQuery } from '@tanstack/react-query'
 
 interface UseTeamSeasonStatsOptions {
@@ -24,8 +24,8 @@ export function useTeamSeasonStats({ homeTeamId, awayTeamId, enabled = true }: U
     queryKey: ['teamSeasonStats', homeTeamId, awayTeamId],
     queryFn: async () => {
       const [homeStats, awayStats] = await Promise.all([
-        homeTeamId ? fetchTeamStats(homeTeamId) : null,
-        awayTeamId ? fetchTeamStats(awayTeamId) : null,
+        homeTeamId ? api.fetchTeamStats(homeTeamId) : null,
+        awayTeamId ? api.fetchTeamStats(awayTeamId) : null,
       ])
       return { home: homeStats, away: awayStats }
     },

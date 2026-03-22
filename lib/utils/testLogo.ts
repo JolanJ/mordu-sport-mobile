@@ -4,7 +4,7 @@
  * Usage: Appeler cette fonction depuis un composant pour tester
  */
 
-import { fetchTeamRoster, base64ToDataUri } from '@/lib/services/api'
+import { api, base64ToDataUri } from '@/lib/services/api'
 
 /**
  * Teste la récupération et la conversion du logo
@@ -13,7 +13,7 @@ export async function testTeamLogo(teamId: string = '2786') {
   try {
     console.log(`[Test Logo] Récupération du roster pour l'équipe ${teamId}...`)
     
-    const rosterData = await fetchTeamRoster(teamId)
+    const rosterData = await api.fetchTeamRoster(teamId)
     
     if (!rosterData) {
       console.error('[Test Logo] ❌ Aucune donnée récupérée')

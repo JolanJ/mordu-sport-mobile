@@ -8,6 +8,7 @@ import { useTranslation } from '@/contexts/TranslationContext'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
 import { useRouter } from 'expo-router'
+import { X } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -24,15 +25,19 @@ export default function HomeScreen() {
     if (!user) return
 
     const checkMentions = async () => {
-      const { data } = await supabase
+      const { data, count } = await supabase
         .from('mentions')
-        .select('match_id')
+        .select('match_id, created_at', { count: 'exact' })
         .eq('mentioned_user_id', user.id)
         .eq('read', false)
         .order('created_at', { ascending: false })
         .limit(1)
-      if (data && data.length > 0) {
-        setUnreadMentions({ count: data.length, matchId: data[0].match_id })
+      if (data && data.length > 0 && count) {
+        // Use the mention's timestamp to derive the match date
+        const matchDate = data[0].created_at
+          ? new Date(data[0].created_at).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0]
+        setUnreadMentions({ count, matchId: data[0].match_id, matchDate })
       } else {
         setUnreadMentions({ count: 0 })
       }
@@ -60,11 +65,26 @@ export default function HomeScreen() {
     setSelectedDate(date)
   }
 
+  const markMentionsRead = async () => {
+    if (!user) return
+    await supabase
+      .from('mentions')
+      .update({ read: true })
+      .eq('mentioned_user_id', user.id)
+      .eq('read', false)
+    setUnreadMentions({ count: 0 })
+  }
+
   const handleMentionPress = () => {
     if (unreadMentions.matchId) {
-      const today = new Date().toISOString().split('T')[0]
-      router.push(`/(tabs)/match/${unreadMentions.matchId}?date=${today}` as any)
+      const date = unreadMentions.matchDate || new Date().toISOString().split('T')[0]
+      markMentionsRead()
+      router.push(`/(tabs)/match/${unreadMentions.matchId}?date=${date}` as any)
     }
+  }
+
+  const handleMentionDismiss = () => {
+    markMentionsRead()
   }
 
   return (
@@ -76,6 +96,13 @@ export default function HomeScreen() {
           <Text style={styles.mentionBannerText}>
             💬 {t('youHaveMentions', { count: unreadMentions.count })}
           </Text>
+          <Pressable
+            style={styles.mentionDismiss}
+            onPress={handleMentionDismiss}
+            hitSlop={8}
+          >
+            <X size={16} color={colors.background} />
+          </Pressable>
         </Pressable>
       )}
 
@@ -101,12 +128,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neonGreen,
     paddingVertical: 10,
     paddingHorizontal: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   mentionBannerText: {
     color: colors.background,
     fontSize: 14,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  mentionDismiss: {
+    padding: 4,
   },
 })
 

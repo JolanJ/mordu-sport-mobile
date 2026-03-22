@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchTeamRoster, fetchTeamStats, fetchPlayerStats, fetchTeamInjuries } from '@/lib/services/api'
+import { api } from '@/lib/services/api'
 import { getTeamById } from '@/lib/teamData'
 
 interface UseTeamDataOptions {
@@ -14,7 +14,7 @@ export function useTeamData({ teamId }: UseTeamDataOptions) {
   // Fetch le roster (avec logo)
   const rosterQuery = useQuery({
     queryKey: ['teamRoster', goalserveId],
-    queryFn: () => fetchTeamRoster(goalserveId!),
+    queryFn: () => api.fetchTeamRoster(goalserveId!),
     enabled: !!goalserveId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
@@ -22,7 +22,7 @@ export function useTeamData({ teamId }: UseTeamDataOptions) {
   // Fetch les stats de l'équipe
   const teamStatsQuery = useQuery({
     queryKey: ['teamStats', goalserveId],
-    queryFn: () => fetchTeamStats(goalserveId!),
+    queryFn: () => api.fetchTeamStats(goalserveId!),
     enabled: !!goalserveId,
     staleTime: 5 * 60 * 1000,
   })
@@ -30,7 +30,7 @@ export function useTeamData({ teamId }: UseTeamDataOptions) {
   // Fetch les stats des joueurs
   const playerStatsQuery = useQuery({
     queryKey: ['playerStats', goalserveId],
-    queryFn: () => fetchPlayerStats(goalserveId!),
+    queryFn: () => api.fetchPlayerStats(goalserveId!),
     enabled: !!goalserveId,
     staleTime: 5 * 60 * 1000,
   })
@@ -38,7 +38,7 @@ export function useTeamData({ teamId }: UseTeamDataOptions) {
   // Fetch les blessures
   const injuriesQuery = useQuery({
     queryKey: ['teamInjuries', goalserveId],
-    queryFn: () => fetchTeamInjuries(goalserveId!),
+    queryFn: () => api.fetchTeamInjuries(goalserveId!),
     enabled: !!goalserveId,
     staleTime: 5 * 60 * 1000,
   })

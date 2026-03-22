@@ -4,7 +4,7 @@ import { LeagueFilter } from '@/components/LeagueFilter'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useTeamsWithLogos } from '@/hooks/useTeamsWithLogos'
-import { fetchTeamRoster, fetchTeamStats, fetchPlayerStats, fetchTeamInjuries } from '@/lib/services/api'
+import { api } from '@/lib/services/api'
 import { getTeamById, Team } from '@/lib/teamData'
 import { colors } from '@/theme/colors'
 import { useQueryClient } from '@tanstack/react-query'
@@ -35,10 +35,10 @@ export default function Teams() {
     const team = getTeamById(teamId)
     const gId = team?.goalserveId
     if (gId) {
-      queryClient.prefetchQuery({ queryKey: ['teamRoster', gId], queryFn: () => fetchTeamRoster(gId) })
-      queryClient.prefetchQuery({ queryKey: ['teamStats', gId], queryFn: () => fetchTeamStats(gId) })
-      queryClient.prefetchQuery({ queryKey: ['playerStats', gId], queryFn: () => fetchPlayerStats(gId) })
-      queryClient.prefetchQuery({ queryKey: ['teamInjuries', gId], queryFn: () => fetchTeamInjuries(gId) })
+      queryClient.prefetchQuery({ queryKey: ['teamRoster', gId], queryFn: () => api.fetchTeamRoster(gId) })
+      queryClient.prefetchQuery({ queryKey: ['teamStats', gId], queryFn: () => api.fetchTeamStats(gId) })
+      queryClient.prefetchQuery({ queryKey: ['playerStats', gId], queryFn: () => api.fetchPlayerStats(gId) })
+      queryClient.prefetchQuery({ queryKey: ['teamInjuries', gId], queryFn: () => api.fetchTeamInjuries(gId) })
     }
     router.push(`/teams/${teamId}`)
   }

@@ -3,7 +3,7 @@
  * Avec cache persistant pour affichage instantané
  */
 
-import { fetchMatches, fetchMatchDetails, fetchTeamStats } from '@/lib/services/api'
+import { api } from '@/lib/services/api'
 import { Match } from '@/lib/types'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -70,7 +70,7 @@ export function useMatches({ date, withLogos = true }: UseMatchesOptions = {}) {
   const query = useQuery<Match[]>({
     queryKey: ['matches', 'NHL', dateKey, withLogos ? 'withLogos' : 'noLogos'],
     queryFn: async () => {
-      const matches = await fetchMatches('NHL', queryDate, withLogos)
+      const matches = await api.fetchMatches('NHL', queryDate, withLogos)
       // Sauvegarder en cache pour le prochain lancement
       if (matches.length > 0) {
         cacheMatches(dateKey, matches)
@@ -99,7 +99,7 @@ export async function prefetchTodayMatches(queryClient: any): Promise<void> {
   }
 
   // Fetcher les données fraîches en arrière-plan (ne bloque pas)
-  fetchMatches('NHL', today, true).then(matches => {
+  api.fetchMatches('NHL', today, true).then(matches => {
     if (matches.length > 0) {
       cacheMatches(dateKey, matches)
       queryClient.setQueryData(['matches', 'NHL', dateKey, 'withLogos'], matches)
@@ -108,7 +108,7 @@ export async function prefetchTodayMatches(queryClient: any): Promise<void> {
       for (const match of matches) {
         queryClient.prefetchQuery({
           queryKey: ['matchDetails', match.id, dateKey],
-          queryFn: () => fetchMatchDetails(match.id, today),
+          queryFn: () => api.fetchMatchDetails(match.id, today),
           staleTime: 60000,
         })
       }
@@ -119,8 +119,8 @@ export async function prefetchTodayMatches(queryClient: any): Promise<void> {
           queryClient.prefetchQuery({
             queryKey: ['teamSeasonStats', match.homeTeam.teamId, match.awayTeam.teamId],
             queryFn: () => Promise.all([
-              fetchTeamStats(match.homeTeam.teamId!),
-              fetchTeamStats(match.awayTeam.teamId!),
+              api.fetchTeamStats(match.homeTeam.teamId!),
+              api.fetchTeamStats(match.awayTeam.teamId!),
             ]).then(([home, away]) => ({ home, away })),
             staleTime: 5 * 60 * 1000,
           })

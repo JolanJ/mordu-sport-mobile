@@ -1,48 +1,21 @@
 /**
- * Configuration de l'API
+ * Configuration de l'API — proxy via Supabase Edge Function
  */
 
-const GOALSERVE_TOKEN = '174a9bd35aac4c6ba67a08de21cd460f'
-export const API_BASE_URL = 'https://www.goalserve.com/getfeed'
-
-export const API_ENDPOINTS = {
-  nhl: `/${GOALSERVE_TOKEN}/hockey/nhl-shedule`, // "shedule" est la faute d'orthographe de Goalserve pour "schedule"
-  nhlScores: `/${GOALSERVE_TOKEN}/hockey/nhl-scores`, // Scores en direct
-} as const
+import { supabase } from '@/lib/supabase'
 
 /**
- * Construit l'URL pour récupérer le roster d'une équipe
+ * Appelle le proxy Goalserve et retourne le XML brut
+ * @param path Chemin Goalserve (ex: "hockey/nhl-scores")
  */
-export function getTeamRosterUrl(teamId: string): string {
-  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/${teamId}_rosters`
-}
+export async function fetchGoalserveXml(path: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('goalserve-proxy', {
+    body: { path },
+  })
 
-/**
- * Construit l'URL pour récupérer les stats globales d'une équipe
- */
-export function getTeamStatsUrl(teamId: string): string {
-  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/${teamId}_team_stats`
-}
+  if (error) throw new Error(`Proxy error: ${error.message}`)
 
-/**
- * Construit l'URL pour récupérer les stats des joueurs d'une équipe
- */
-export function getPlayerStatsUrl(teamId: string): string {
-  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/${teamId}_stats`
-}
-
-/**
- * Construit l'URL pour récupérer les blessures d'une équipe
- */
-export function getTeamInjuriesUrl(teamId: string): string {
-  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/${teamId}_injuries`
-}
-
-/**
- * Construit l'URL pour récupérer l'image d'un joueur
- */
-export function getPlayerImageUrl(playerId: string): string {
-  return `${API_BASE_URL}/${GOALSERVE_TOKEN}/hockey/usa?playerimage=${playerId}`
+  return data.xml
 }
 
 /**
@@ -54,4 +27,3 @@ export function formatDate(date: Date): string {
   const year = date.getFullYear()
   return `${day}.${month}.${year}`
 }
-
