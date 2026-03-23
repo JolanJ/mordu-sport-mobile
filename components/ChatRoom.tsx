@@ -5,9 +5,10 @@ import { useAvatars } from '@/hooks/useAvatars'
 import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
-import { LogIn, Send, ChevronRight } from 'lucide-react-native'
+import { LogIn, Send, ChevronRight, ChevronLeft } from 'lucide-react-native'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  Animated,
   ActivityIndicator,
   Alert,
   FlatList,
@@ -44,6 +45,8 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionToast, setMentionToast] = useState<string | null>(null)
   const [highlightedId, setHighlightedId] = useState<string | null>(highlightMessageId || null)
+  const PICKER_PANEL_WIDTH = REACTION_EMOJIS.length * 40
+  const moderationSlide = useRef(new Animated.Value(0)).current
   const initialLoadDone = useRef(false)
   const prevMessageCount = useRef(0)
   const flatListRef = useRef<FlatList>(null)
@@ -169,7 +172,18 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
   }
 
   const handleLongPress = (messageId: string) => {
+    moderationSlide.setValue(0)
+    setShowModerationMenu(null)
     setSelectedMessageId(messageId === selectedMessageId ? null : messageId)
+  }
+
+  const toggleModerationSlide = (id: string) => {
+    const isOpen = showModerationMenu === id
+    Animated.spring(moderationSlide, {
+      toValue: isOpen ? 0 : -PICKER_PANEL_WIDTH,
+      useNativeDriver: true,
+    }).start()
+    setShowModerationMenu(isOpen ? null : id)
   }
 
   const handleReport = (item: ChatMessage) => {
@@ -286,35 +300,40 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
         {/* Reaction Picker */}
         {showReactionPicker && (
           <View style={[styles.reactionPicker, isOwnMessage && styles.reactionPickerOwn]}>
-            {REACTION_EMOJIS.map((emoji) => (
-              <Pressable
-                key={emoji}
-                style={styles.reactionPickerButton}
-                onPress={() => handleReaction(item.id, emoji)}
-              >
-                <Text style={styles.reactionPickerEmoji}>{emoji}</Text>
-              </Pressable>
-            ))}
-            {!isOwnMessage && (
-              <View>
-                <Pressable
-                  style={styles.moderationButton}
-                  onPress={() => setShowModerationMenu(showModerationMenu === item.id ? null : item.id)}
-                >
-                  <Text style={styles.moderationButtonText}>•••</Text>
-                </Pressable>
-                {showModerationMenu === item.id && (
-                  <View style={styles.moderationMenu}>
-                    <Pressable style={styles.moderationMenuItem} onPress={() => { setShowModerationMenu(null); handleReport(item) }}>
-                      <Text style={styles.moderationMenuText}>⚠️ {t('report')}</Text>
+            <View style={{ overflow: 'hidden', width: PICKER_PANEL_WIDTH }}>
+              <Animated.View style={{ flexDirection: 'row', width: PICKER_PANEL_WIDTH * 2, transform: [{ translateX: moderationSlide }] }}>
+                {/* Panneau emojis */}
+                <View style={{ width: PICKER_PANEL_WIDTH, flexDirection: 'row', alignItems: 'center' }}>
+                  {REACTION_EMOJIS.map((emoji) => (
+                    <Pressable
+                      key={emoji}
+                      style={styles.reactionPickerButton}
+                      onPress={() => handleReaction(item.id, emoji)}
+                    >
+                      <Text style={styles.reactionPickerEmoji}>{emoji}</Text>
                     </Pressable>
-                    <View style={styles.moderationMenuDivider} />
-                    <Pressable style={styles.moderationMenuItem} onPress={() => { setShowModerationMenu(null); handleBlock(item) }}>
-                      <Text style={[styles.moderationMenuText, { color: colors.destructive }]}>🚫 {t('block')}</Text>
+                  ))}
+                </View>
+                {/* Panneau actions */}
+                {!isOwnMessage && (
+                  <View style={{ width: PICKER_PANEL_WIDTH, flexDirection: 'row', justifyContent: 'flex-start' }}>
+                    <Pressable style={styles.slideAction} onPress={() => handleReport(item)}>
+                      <Text style={styles.slideActionText}>⚠️ {t('report')}</Text>
+                    </Pressable>
+                    <Pressable style={[styles.slideAction, styles.slideActionBlock]} onPress={() => handleBlock(item)}>
+                      <Text style={[styles.slideActionText, { color: colors.destructive }]}>🚫 {t('block')}</Text>
                     </Pressable>
                   </View>
                 )}
-              </View>
+              </Animated.View>
+            </View>
+            {!isOwnMessage && (
+              <Pressable style={styles.slideArrow} onPress={() => toggleModerationSlide(item.id)}>
+                {showModerationMenu === item.id
+                  ? <ChevronLeft size={16} color={colors.mutedForeground} />
+                  : <ChevronRight size={16} color={colors.mutedForeground} />
+                }
+              </Pressable>
             )}
           </View>
         )}
@@ -833,11 +852,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.card,
     borderRadius: 22,
-    padding: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     marginTop: 6,
     alignSelf: 'flex-start',
     marginLeft: 44,
-    gap: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -850,9 +869,10 @@ const styles = StyleSheet.create({
     marginLeft: 0,
   },
   reactionPickerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginHorizontal: 3,
     backgroundColor: colors.muted,
     alignItems: 'center',
     justifyContent: 'center',
@@ -876,35 +896,26 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
     letterSpacing: 1,
   },
-  moderationMenu: {
-    position: 'absolute',
-    top: 42,
-    left: 0,
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: `${colors.border}80`,
-    minWidth: 140,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
-    zIndex: 100,
-    overflow: 'hidden',
+  slideAction: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  moderationMenuItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  slideActionBlock: {
+    borderLeftWidth: 1,
+    borderLeftColor: `${colors.border}60`,
   },
-  moderationMenuDivider: {
-    height: 1,
-    backgroundColor: `${colors.border}60`,
-  },
-  moderationMenuText: {
-    fontSize: 14,
+  slideActionText: {
+    fontSize: 12,
     fontWeight: '600',
     color: colors.foreground,
+  },
+  slideArrow: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // ── Reaction Badges ─────────────────────────────────
