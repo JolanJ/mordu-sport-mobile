@@ -9,7 +9,7 @@ import { useTeamSeasonStats } from '@/hooks/useTeamSeasonStats'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft, BarChart3, MessageCircle, TrendingUp } from 'lucide-react-native'
-import { Image, Keyboard, Pressable, StyleSheet, View, ActivityIndicator, Text } from 'react-native'
+import { Image, Keyboard, Platform, Pressable, StyleSheet, View, ActivityIndicator, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useMatches } from '@/hooks/useMatches'
 import { useState, useEffect } from 'react'
@@ -30,15 +30,13 @@ export default function MatchRoom() {
 
   // Gérer l'ouverture/fermeture du keyboard
   useEffect(() => {
-    const keyboardWillShow = Keyboard.addListener('keyboardWillShow', () => {
-      setKeyboardVisible(true)
-    })
-    const keyboardWillHide = Keyboard.addListener('keyboardWillHide', () => {
-      setKeyboardVisible(false)
-    })
+    const showEvent = Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow'
+    const hideEvent = Platform.OS === 'android' ? 'keyboardDidHide' : 'keyboardWillHide'
+    const showListener = Keyboard.addListener(showEvent, () => setKeyboardVisible(true))
+    const hideListener = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false))
     return () => {
-      keyboardWillShow.remove()
-      keyboardWillHide.remove()
+      showListener.remove()
+      hideListener.remove()
     }
   }, [])
 
@@ -120,18 +118,13 @@ export default function MatchRoom() {
             <ArrowLeft size={20} color={colors.foreground} />
           </Pressable>
           <View style={styles.headerKeyboardScore}>
+            {match.awayTeam.logo && <View style={styles.miniLogoContainer}><Image source={{ uri: match.awayTeam.logo }} style={styles.miniLogo} resizeMode="contain" /></View>}
             <Text style={styles.miniAbbr}>{match.awayTeam.abbr}</Text>
             <Text style={styles.miniScore}>{match.awayTeam.score ?? 0}</Text>
             <Text style={styles.miniDivider}>-</Text>
             <Text style={styles.miniScore}>{match.homeTeam.score ?? 0}</Text>
             <Text style={styles.miniAbbr}>{match.homeTeam.abbr}</Text>
-            {match.period && (
-              <View style={styles.miniPeriodBadge}>
-                <Text style={styles.miniPeriodText}>
-                  {match.period}{match.timeRemaining ? ` · ${match.timeRemaining}` : ''}
-                </Text>
-              </View>
-            )}
+            {match.homeTeam.logo && <View style={styles.miniLogoContainer}><Image source={{ uri: match.homeTeam.logo }} style={styles.miniLogo} resizeMode="contain" /></View>}
           </View>
         </View>
       ) : (
@@ -277,6 +270,19 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  miniLogoContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 2,
+  },
+  miniLogo: {
+    width: 22,
+    height: 22,
   },
   miniAbbr: {
     fontSize: 13,
