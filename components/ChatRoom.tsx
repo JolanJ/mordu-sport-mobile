@@ -415,6 +415,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.messagesList}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => { setSelectedMessageId(null); setShowModerationMenu(null) }}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
