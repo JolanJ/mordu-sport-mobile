@@ -258,7 +258,22 @@ function transformMatch(matchData: any, league: League): Match | null {
     let timeStr: string | undefined
     const timeValue = matchData['@_time']
     if (timeValue) {
-      timeStr = String(timeValue).trim().replace(':', 'h')
+      const raw = String(timeValue).trim()
+      const pmMatch = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+      const h24Match = raw.match(/^(\d{1,2}):(\d{2})$/)
+      let hours = 0, minutes = 0
+      if (pmMatch) {
+        hours = parseInt(pmMatch[1], 10)
+        minutes = parseInt(pmMatch[2], 10)
+        if (pmMatch[3].toUpperCase() === 'PM' && hours !== 12) hours += 12
+        if (pmMatch[3].toUpperCase() === 'AM' && hours === 12) hours = 0
+      } else if (h24Match) {
+        hours = parseInt(h24Match[1], 10)
+        minutes = parseInt(h24Match[2], 10)
+      }
+      // Goalserve retourne les heures en EST fixe (UTC-5) — on convertit en heure locale de l'appareil
+      const date = new Date(`${dateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00-05:00`)
+      timeStr = `${date.getHours()}h${String(date.getMinutes()).padStart(2, '0')}`
     }
 
     let period: string | undefined
