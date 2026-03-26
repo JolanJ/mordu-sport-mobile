@@ -359,27 +359,6 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
     )
   }
 
-  if (!isAuthenticated) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.authPrompt}>
-          <View style={styles.authIconWrapper}>
-            <LogIn size={28} color={colors.neonGreen} />
-          </View>
-          <Text style={styles.authPromptTitle}>{t('loginRequired')}</Text>
-          <Text style={styles.authPromptText}>{t('loginToChat')}</Text>
-          <Pressable
-            style={styles.authLoginButton}
-            onPress={() => router.push('/(auth)/login')}
-          >
-            <Text style={styles.authLoginButtonText}>{t('signIn')}</Text>
-            <ChevronRight size={18} color={colors.background} />
-          </Pressable>
-        </View>
-      </View>
-    )
-  }
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -460,47 +439,58 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
         </View>
       )}
 
-      <View style={styles.inputWrapper}>
-        {/* Quick emoji reactions */}
-        {!keyboardVisible && (
-          <View style={styles.quickEmojis}>
-            {['👍', '👎', '🔥', '💀'].map((emoji) => (
-              <Pressable
-                key={emoji}
-                style={styles.emojiButton}
-                onPress={() => sendMessage(emoji, username, avatarId)}
-                disabled={sending}
-              >
-                <Text style={styles.emojiText}>{emoji}</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder={t('writeMessage')}
-            placeholderTextColor={`${colors.mutedForeground}99`}
-            value={inputText}
-            onChangeText={handleTextChange}
-            multiline
-            maxLength={200}
-            onSubmitEditing={handleSend}
-          />
-          <Pressable
-            style={[styles.sendButton, (!inputText.trim() || sending) && styles.sendButtonDisabled]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || sending}
-          >
-            {sending ? (
-              <ActivityIndicator size="small" color={colors.background} />
-            ) : (
-              <Send size={18} color={colors.background} />
-            )}
+      {!isAuthenticated ? (
+        <View style={styles.guestInputBanner}>
+          <LogIn size={16} color={colors.neonGreen} />
+          <Text style={styles.guestInputText}>{t('loginToChat')}</Text>
+          <Pressable style={styles.guestInputButton} onPress={() => router.push('/(auth)/login')}>
+            <Text style={styles.guestInputButtonText}>{t('signIn')}</Text>
+            <ChevronRight size={14} color={colors.background} />
           </Pressable>
         </View>
-      </View>
+      ) : (
+        <View style={styles.inputWrapper}>
+          {/* Quick emoji reactions */}
+          {!keyboardVisible && (
+            <View style={styles.quickEmojis}>
+              {['👍', '👎', '🔥', '💀'].map((emoji) => (
+                <Pressable
+                  key={emoji}
+                  style={styles.emojiButton}
+                  onPress={() => sendMessage(emoji, username, avatarId)}
+                  disabled={sending}
+                >
+                  <Text style={styles.emojiText}>{emoji}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder={t('writeMessage')}
+              placeholderTextColor={`${colors.mutedForeground}99`}
+              value={inputText}
+              onChangeText={handleTextChange}
+              multiline
+              maxLength={200}
+              onSubmitEditing={handleSend}
+            />
+            <Pressable
+              style={[styles.sendButton, (!inputText.trim() || sending) && styles.sendButtonDisabled]}
+              onPress={handleSend}
+              disabled={!inputText.trim() || sending}
+            >
+              {sending ? (
+                <ActivityIndicator size="small" color={colors.background} />
+              ) : (
+                <Send size={18} color={colors.background} />
+              )}
+            </Pressable>
+          </View>
+        </View>
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -797,6 +787,37 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: colors.muted,
+  },
+
+  // ── Guest Input Banner ──────────────────────────────
+  guestInputBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.card,
+    borderTopWidth: 1,
+    borderTopColor: `${colors.border}60`,
+  },
+  guestInputText: {
+    flex: 1,
+    color: colors.mutedForeground,
+    fontSize: 13,
+  },
+  guestInputButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.neonGreen,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  guestInputButtonText: {
+    color: colors.background,
+    fontSize: 13,
+    fontWeight: '700',
   },
 
   // ── Auth Prompt ─────────────────────────────────────
