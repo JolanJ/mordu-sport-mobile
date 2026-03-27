@@ -121,7 +121,13 @@ export default function MatchRoom() {
             {match.awayTeam.logo && <View style={styles.miniLogoContainer}><Image source={{ uri: match.awayTeam.logo }} style={styles.miniLogo} resizeMode="contain" /></View>}
             <Text style={styles.miniAbbr}>{match.awayTeam.abbr}</Text>
             <Text style={styles.miniScore}>{match.awayTeam.score ?? 0}</Text>
-            <Text style={styles.miniDivider}>-</Text>
+            <View style={styles.miniCenter}>
+              {match.timeRemaining ? (
+                <Text style={styles.miniTimer}>{match.timeRemaining}</Text>
+              ) : (
+                <Text style={styles.miniDivider}>-</Text>
+              )}
+            </View>
             <Text style={styles.miniScore}>{match.homeTeam.score ?? 0}</Text>
             <Text style={styles.miniAbbr}>{match.homeTeam.abbr}</Text>
             {match.homeTeam.logo && <View style={styles.miniLogoContainer}><Image source={{ uri: match.homeTeam.logo }} style={styles.miniLogo} resizeMode="contain" /></View>}
@@ -307,6 +313,14 @@ const styles = StyleSheet.create({
   },
   miniDivider: {
     fontSize: 14,
+    fontWeight: '600',
+    color: colors.mutedForeground,
+  },
+  miniCenter: {
+    alignItems: 'center',
+  },
+  miniTimer: {
+    fontSize: 10,
     fontWeight: '600',
     color: colors.mutedForeground,
   },
