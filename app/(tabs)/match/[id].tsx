@@ -166,7 +166,7 @@ export default function MatchRoom() {
               <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
               {match.awayPP && (
                 <View style={styles.ppBadge}>
-                  <Text style={styles.ppBadgeText}>⚡ PP</Text>
+                  <Text style={styles.ppBadgeText}>PP</Text>
                 </View>
               )}
             </View>
@@ -193,7 +193,7 @@ export default function MatchRoom() {
               <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
               {match.homePP && (
                 <View style={styles.ppBadge}>
-                  <Text style={styles.ppBadgeText}>⚡ PP</Text>
+                  <Text style={styles.ppBadgeText}>PP</Text>
                 </View>
               )}
             </View>
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     color: colors.foreground,
   },
   ppBadge: {
-    backgroundColor: '#FF9500',
+    backgroundColor: colors.neonBlue,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
