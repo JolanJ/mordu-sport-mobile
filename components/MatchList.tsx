@@ -45,21 +45,7 @@ export function MatchList({ selectedDate }: MatchListProps) {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
   }
 
-  // Mock match pour tester le PP — à retirer après test
-  const MOCK_PP_MATCH: Match = {
-    id: 'test',
-    league: 'NHL',
-    status: 'live',
-    date: queryDate.toISOString().split('T')[0],
-    period: '2e période',
-    timeRemaining: '14:23',
-    awayPP: true,
-    homePP: false,
-    awayTeam: { name: 'Montreal Canadiens', abbr: 'MTL', logo: undefined, score: 1 },
-    homeTeam: { name: 'Colorado Avalanche', abbr: 'COL', logo: undefined, score: 2 },
-  }
-
-  const allMatches = [MOCK_PP_MATCH, ...sortedMatches]
+  const allMatches = sortedMatches
 
   const handleMatchPress = useCallback((matchId: string, matchDate: string) => {
     const match = allMatches.find(m => m.id === matchId)

@@ -63,24 +63,6 @@ export default function MatchRoom() {
       return
     }
 
-    // Mock match pour tester le PP
-    if (normalizedId === 'test') {
-      setMatch({
-        id: 'test',
-        league: 'NHL',
-        status: 'live',
-        date: new Date().toISOString().split('T')[0],
-        period: '2e période',
-        timeRemaining: '14:23',
-        awayPP: true,
-        homePP: false,
-        awayTeam: { name: 'Montreal Canadiens', abbr: 'MTL', logo: undefined, score: 1 },
-        homeTeam: { name: 'Colorado Avalanche', abbr: 'COL', logo: undefined, score: 2 },
-      })
-      setIsLoading(false)
-      return
-    }
-
     // Chercher le match par ID
     const foundMatch = matches.find(m => String(m.id).trim() === normalizedId)
 
