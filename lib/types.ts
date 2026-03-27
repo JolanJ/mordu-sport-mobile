@@ -9,6 +9,9 @@ export interface Match {
   timeRemaining?: string
   venue?: string // Nom du stade/aréna
 
+  homePP?: boolean // Équipe locale en avantage numérique
+  awayPP?: boolean // Équipe visiteur en avantage numérique
+
   awayTeam: {
     name: string
     abbr: string

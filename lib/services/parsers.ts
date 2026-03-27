@@ -303,6 +303,8 @@ function transformMatch(matchData: any, league: League): Match | null {
       period,
       timeRemaining: matchData['@_timer'] ? String(matchData['@_timer']) : undefined,
       venue,
+      homePP: String(homeTeam['@_pp'] || '').toLowerCase() === 'true',
+      awayPP: String(awayTeam['@_pp'] || '').toLowerCase() === 'true',
       awayTeam: {
         name: String(awayName),
         abbr: awayAbbr,

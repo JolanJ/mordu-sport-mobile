@@ -63,6 +63,24 @@ export default function MatchRoom() {
       return
     }
 
+    // Mock match pour tester le PP
+    if (normalizedId === 'test') {
+      setMatch({
+        id: 'test',
+        league: 'NHL',
+        status: 'live',
+        date: new Date().toISOString().split('T')[0],
+        period: '2e période',
+        timeRemaining: '14:23',
+        awayPP: true,
+        homePP: false,
+        awayTeam: { name: 'Montreal Canadiens', abbr: 'MTL', logo: undefined, score: 1 },
+        homeTeam: { name: 'Colorado Avalanche', abbr: 'COL', logo: undefined, score: 2 },
+      })
+      setIsLoading(false)
+      return
+    }
+
     // Chercher le match par ID
     const foundMatch = matches.find(m => String(m.id).trim() === normalizedId)
 
@@ -146,6 +164,11 @@ export default function MatchRoom() {
                 )}
               </View>
               <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
+              {match.awayPP && (
+                <View style={styles.ppBadge}>
+                  <Text style={styles.ppBadgeText}>⚡ PP</Text>
+                </View>
+              )}
             </View>
             <Text style={styles.teamScoreCompact}>{match.awayTeam.score ?? 0}</Text>
 
@@ -168,6 +191,11 @@ export default function MatchRoom() {
                 )}
               </View>
               <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
+              {match.homePP && (
+                <View style={styles.ppBadge}>
+                  <Text style={styles.ppBadgeText}>⚡ PP</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -353,6 +381,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: colors.foreground,
+  },
+  ppBadge: {
+    backgroundColor: '#FF9500',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 2,
+  },
+  ppBadgeText: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   teamScoreCompact: {
     fontSize: 20,
