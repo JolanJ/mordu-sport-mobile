@@ -5,23 +5,19 @@ import { Animated, StyleSheet, View } from 'react-native'
 
 interface SplashScreenProps {
   onFinish: () => void
-  isDataReady?: boolean
 }
 
-const MIN_SPLASH_DURATION = 2500 // Minimum 2.5 secondes pour l'animation
-const MAX_SPLASH_DURATION = 5000 // Maximum 5 secondes d'attente
+const SPLASH_DURATION = 2500
 
-export function SplashScreen({ onFinish, isDataReady = false }: SplashScreenProps) {
+export function SplashScreen({ onFinish }: SplashScreenProps) {
   const [fadeAnim] = useState(new Animated.Value(0))
   const [scaleAnim] = useState(new Animated.Value(0.8))
-  const [minTimeElapsed, setMinTimeElapsed] = useState(false)
   const hasStartedExit = useRef(false)
 
   const startExitAnimation = useCallback(() => {
     if (hasStartedExit.current) return
     hasStartedExit.current = true
 
-    // Animation de sortie
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -39,7 +35,6 @@ export function SplashScreen({ onFinish, isDataReady = false }: SplashScreenProp
   }, [fadeAnim, scaleAnim, onFinish])
 
   useEffect(() => {
-    // Animation d'entrée
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -54,28 +49,12 @@ export function SplashScreen({ onFinish, isDataReady = false }: SplashScreenProp
       }),
     ]).start()
 
-    // Timer minimum pour l'animation
-    const minTimer = setTimeout(() => {
-      setMinTimeElapsed(true)
-    }, MIN_SPLASH_DURATION)
-
-    // Timer maximum de sécurité
-    const maxTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       startExitAnimation()
-    }, MAX_SPLASH_DURATION)
+    }, SPLASH_DURATION)
 
-    return () => {
-      clearTimeout(minTimer)
-      clearTimeout(maxTimer)
-    }
+    return () => clearTimeout(timer)
   }, [fadeAnim, scaleAnim, startExitAnimation])
-
-  // Fermer quand les données sont prêtes ET le temps minimum est écoulé
-  useEffect(() => {
-    if (isDataReady && minTimeElapsed) {
-      startExitAnimation()
-    }
-  }, [isDataReady, minTimeElapsed, startExitAnimation])
 
   return (
     <View style={styles.container}>

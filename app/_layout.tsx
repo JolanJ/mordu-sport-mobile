@@ -124,7 +124,6 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true)
-  const [isDataReady, setIsDataReady] = useState(false)
   const prefetchStarted = useRef(false)
 
   // Vérification de version
@@ -174,7 +173,7 @@ export default function RootLayout() {
       } catch (error) {
         // Erreur silencieuse - on continue quand même
       } finally {
-        setIsDataReady(true)
+        // prefetch terminé en arrière-plan
       }
     }
 
@@ -191,7 +190,7 @@ export default function RootLayout() {
         style={{ flex: 1, backgroundColor: colors.background }}
         onLayout={() => ExpoSplashScreen.hideAsync()}
       >
-        <SplashScreen onFinish={handleSplashFinish} isDataReady={isDataReady} />
+        <SplashScreen onFinish={handleSplashFinish} />
       </View>
     )
   }
