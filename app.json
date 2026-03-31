@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ultra Sports Fans",
     "slug": "mordu-sport-mobile",
-    "version": "1.1.6",
+    "version": "1.1.7",
     "runtimeVersion": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
@@ -15,7 +15,9 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "SKAdNetworkItems": [
-          { "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" }
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          }
         ]
       }
     },
