@@ -7,18 +7,16 @@ import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads'
 export function AdBanner() {
   const [adLoaded, setAdLoaded] = useState(false)
 
-  return null
-
-  // return (
-  //   <View style={[styles.container, !adLoaded && styles.hidden]}>
-  //     <BannerAd
-  //       unitId={AD_UNIT_IDS.BANNER}
-  //       size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-  //       onAdLoaded={() => setAdLoaded(true)}
-  //       onAdFailedToLoad={() => setAdLoaded(false)}
-  //     />
-  //   </View>
-  // )
+  return (
+    <View style={[styles.container, !adLoaded && styles.hidden]}>
+      <BannerAd
+        unitId={AD_UNIT_IDS.BANNER}
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        onAdLoaded={() => setAdLoaded(true)}
+        onAdFailedToLoad={() => setAdLoaded(false)}
+      />
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({
