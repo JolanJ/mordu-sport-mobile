@@ -23,7 +23,7 @@ export { base64ToDataUri } from './parsers'
 export type { League, TeamRosterData, GoalserveTeamStats, GoalservePlayerStats, GoalserveInjury } from './parsers'
 import type { TeamRosterData, GoalserveTeamStats, GoalservePlayerStats, GoalserveInjury } from './parsers'
 
-const SCORES_CACHE_TTL = 60000
+const SCORES_CACHE_TTL = 30000
 
 class GoalserveAPI {
   private logoCache: Record<string, string> = {}

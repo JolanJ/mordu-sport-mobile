@@ -24,7 +24,7 @@ export function useMatchDetails({ matchId, date, enabled = true }: UseMatchDetai
     queryKey: ['matchDetails', matchId, date],
     queryFn: () => api.fetchMatchDetails(matchId, matchDate),
     enabled: enabled && !!matchId,
-    staleTime: 15000, // 15 secondes
-    refetchInterval: 15000, // Rafraîchir toutes les 15 secondes pour les matchs en direct
+    staleTime: 30000,
+    refetchInterval: 30000,
   })
 }
