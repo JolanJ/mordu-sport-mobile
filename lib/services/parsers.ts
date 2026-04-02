@@ -186,6 +186,40 @@ export function parseXMLScores(xml: string, league: League): Match[] {
   }
 }
 
+function calculateActivePP(matchData: any): { homePP: boolean; awayPP: boolean } {
+  const periodNum = parseInt(String(matchData['@_period'] || '0'), 10)
+  const timer = String(matchData['@_timer'] || '')
+  if (!periodNum || !timer) return { homePP: false, awayPP: false }
+
+  const periodKeys = ['firstperiod', 'secondperiod', 'thirdperiod', 'overtime']
+  const currentPeriodKey = periodKeys[periodNum - 1]
+  if (!currentPeriodKey) return { homePP: false, awayPP: false }
+
+  const periodDuration = periodNum <= 3 ? 20 * 60 : 5 * 60
+  const timeElapsed = periodDuration - parseTime(timer)
+
+  const penalties = matchData.penalties?.[currentPeriodKey]?.penalty
+if (!penalties) return { homePP: false, awayPP: false }
+
+  const penaltyArray = Array.isArray(penalties) ? penalties : [penalties]
+  let homeActive = 0
+  let awayActive = 0
+
+  for (const penalty of penaltyArray) {
+    if (!penalty) continue
+    const penaltyElapsed = parseTime(String(penalty['@_min'] || ''))
+    if (timeElapsed >= penaltyElapsed && timeElapsed < penaltyElapsed + 120) {
+      if (penalty['@_team'] === 'hometeam') homeActive++
+      else awayActive++
+    }
+  }
+
+  return {
+    homePP: awayActive > homeActive,
+    awayPP: homeActive > awayActive,
+  }
+}
+
 function transformMatch(matchData: any, league: League): Match | null {
   try {
     const awayTeam = matchData.awayteam || {}
@@ -303,8 +337,7 @@ function transformMatch(matchData: any, league: League): Match | null {
       period,
       timeRemaining: matchData['@_timer'] ? String(matchData['@_timer']) : undefined,
       venue,
-      homePP: String(homeTeam['@_pp'] || '').toLowerCase() === 'true',
-      awayPP: String(awayTeam['@_pp'] || '').toLowerCase() === 'true',
+      ...calculateActivePP(matchData),
       awayTeam: {
         name: String(awayName),
         abbr: awayAbbr,

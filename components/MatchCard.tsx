@@ -285,9 +285,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.neonBlue,
-    textShadowColor: colors.neonBlue,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 3,
   },
   venueColumn: {
     width: 75,

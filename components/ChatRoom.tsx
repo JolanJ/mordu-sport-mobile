@@ -1,16 +1,16 @@
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useAvatars } from '@/hooks/useAvatars'
 import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
+import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
-import { LogIn, Send, ChevronRight, ChevronLeft } from 'lucide-react-native'
+import { ChevronLeft, ChevronRight, LogIn, Send } from 'lucide-react-native'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Animated,
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -36,7 +36,8 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
   const { user } = useAuth()
   const { getAvatarUrl } = useAvatars()
   const { t, locale: appLocale } = useTranslation()
-  const [locale, setLocale] = useState<Locale>('en')
+  const [locale, setLocale] = useState<Locale>(appLocale)
+  useEffect(() => { setLocale(appLocale) }, [appLocale, matchId])
   const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, markMentionsRead, isAuthenticated } = useChat({ matchId, locale })
   const [inputText, setInputText] = useState('')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
