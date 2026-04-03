@@ -77,8 +77,8 @@ export function useMatches({ date, withLogos = true }: UseMatchesOptions = {}) {
       }
       return matches
     },
-    staleTime: 60000, // 1 minute
-    refetchInterval: 30000, // Rafraîchir toutes les 30 secondes
+    staleTime: 30000,
+    refetchInterval: 30000,
   })
 
   return query

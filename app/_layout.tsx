@@ -10,7 +10,7 @@ import { prefetchTeamLogos } from '@/hooks/useTeamsWithLogos'
 import { useVersionCheck } from '@/hooks/useVersionCheck'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as Linking from 'expo-linking'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as ExpoSplashScreen from 'expo-splash-screen'
@@ -128,6 +128,14 @@ export default function RootLayout() {
 
   // Vérification de version
   const { needsUpdate, requiredVersion, currentVersion, loading: versionLoading } = useVersionCheck()
+
+  // Tell React Query when app is focused so it refetches on foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      focusManager.setFocused(state === 'active')
+    })
+    return () => subscription.remove()
+  }, [])
 
   // Check for OTA updates on launch and when app comes to foreground
   useEffect(() => {
