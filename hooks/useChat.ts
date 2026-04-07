@@ -3,8 +3,6 @@ import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AppState } from 'react-native'
 
-export type Locale = 'fr' | 'en'
-
 export interface MessageReaction {
   id: string
   message_id: string
@@ -33,10 +31,9 @@ export interface ChatMessage {
 
 interface UseChatOptions {
   matchId: string
-  locale: Locale
 }
 
-export function useChat({ matchId, locale }: UseChatOptions) {
+export function useChat({ matchId }: UseChatOptions) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [reactions, setReactions] = useState<MessageReaction[]>([])
@@ -52,8 +49,6 @@ export function useChat({ matchId, locale }: UseChatOptions) {
       .from('chat_messages')
       .select('*')
       .eq('match_id', matchId)
-
-    query = query.eq('locale', locale)
 
     const { data, error } = await query
       .order('created_at', { ascending: true })
@@ -96,7 +91,7 @@ export function useChat({ matchId, locale }: UseChatOptions) {
     if (!matchId) return
 
     const channel = supabase
-      .channel(`chat:${matchId}:${locale}`)
+      .channel(`chat:${matchId}`)
       .on(
         'postgres_changes',
         {
@@ -109,12 +104,10 @@ export function useChat({ matchId, locale }: UseChatOptions) {
           const newMessage = payload.new as ChatMessage
           // Skip own messages — already handled by optimistic update
           if (newMessage.user_id === user?.id) return
-          if (newMessage.locale === locale) {
-            setMessages((prev) => {
-              if (prev.some(m => m.id === newMessage.id)) return prev
-              return [...prev, newMessage]
-            })
-          }
+          setMessages((prev) => {
+            if (prev.some(m => m.id === newMessage.id)) return prev
+            return [...prev, newMessage]
+          })
         }
       )
       .on(
@@ -135,7 +128,7 @@ export function useChat({ matchId, locale }: UseChatOptions) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [matchId, locale])
+  }, [matchId])
 
   // Écouter les réactions en temps réel
   useEffect(() => {
@@ -211,7 +204,7 @@ export function useChat({ matchId, locale }: UseChatOptions) {
         username,
         avatar_id: avatarId,
         content: content.trim(),
-        locale,
+        locale: 'fr',
         created_at: new Date().toISOString(),
       }
       setMessages(prev => [...prev, optimisticMessage])
@@ -222,7 +215,7 @@ export function useChat({ matchId, locale }: UseChatOptions) {
         username,
         avatar_id: avatarId,
         content: content.trim(),
-        locale,
+        locale: 'fr',
       }).select().single()
 
       if (error) {
@@ -264,7 +257,7 @@ export function useChat({ matchId, locale }: UseChatOptions) {
 
       return { error }
     },
-    [user, matchId, locale]
+    [user, matchId]
   )
 
   // Supprimer un message

@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useAvatars } from '@/hooks/useAvatars'
-import { ChatMessage, Locale, useChat } from '@/hooks/useChat'
+import { ChatMessage, useChat } from '@/hooks/useChat'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
 import { router } from 'expo-router'
@@ -35,10 +35,8 @@ const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
 export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboardVisible = false, highlightMessageId }: ChatRoomProps) {
   const { user } = useAuth()
   const { getAvatarUrl } = useAvatars()
-  const { t, locale: appLocale } = useTranslation()
-  const [locale, setLocale] = useState<Locale>(appLocale)
-  useEffect(() => { setLocale(appLocale) }, [appLocale, matchId])
-  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, markMentionsRead, isAuthenticated } = useChat({ matchId, locale })
+  const { t } = useTranslation()
+  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, markMentionsRead, isAuthenticated } = useChat({ matchId })
   const [inputText, setInputText] = useState('')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [showModerationMenu, setShowModerationMenu] = useState<string | null>(null)
@@ -110,11 +108,6 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
     fetchBlocked()
   }, [user])
 
-  // Changer de langue (local seulement, pas d'écriture en BD)
-  const handleLocaleChange = (newLocale: Locale) => {
-    setLocale(newLocale)
-  }
-
 
 
   // Get unique usernames from chat (excluding own)
@@ -169,7 +162,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleTimeString(appLocale === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   }
 
   const handleLongPress = (messageId: string) => {
@@ -373,20 +366,6 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
               <View style={styles.liveDot} />
             </View>
             <Text style={styles.liveText}>{t('liveChat')}</Text>
-          </View>
-          <View style={styles.localeToggle}>
-            <Pressable
-              style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}
-              onPress={() => handleLocaleChange('en')}
-            >
-              <Text style={[styles.localeButtonText, locale === 'en' && styles.localeButtonTextActive]}>ALL</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.localeButton, locale === 'fr' && styles.localeButtonActive]}
-              onPress={() => handleLocaleChange('fr')}
-            >
-              <Text style={[styles.localeButtonText, locale === 'fr' && styles.localeButtonTextActive]}>FR</Text>
-            </Pressable>
           </View>
         </View>
       )}
