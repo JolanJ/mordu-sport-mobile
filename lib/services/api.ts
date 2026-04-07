@@ -368,30 +368,39 @@ class GoalserveAPI {
   // ============================================
 
   private async fetchMatchesLive(league: 'NHL', date?: Date, withLogos: boolean = false): Promise<Match[]> {
-    const useScoresEndpoint = isToday(date)
-    let path = useScoresEndpoint ? 'hockey/nhl-scores' : 'hockey/nhl-shedule'
+    const today = isToday(date)
+    const targetDate = date || new Date()
 
-    if (date && !useScoresEndpoint) {
-      path += `?date1=${formatDate(date)}`
+    if (!today) {
+      try {
+        const xml = await fetchGoalserveXml(`hockey/nhl-shedule?date1=${formatDate(targetDate)}`)
+        const matches = parseXMLMatches(xml, league, targetDate)
+        if (withLogos && matches.length > 0) return await this.enrichMatchesWithLogos(matches)
+        return matches
+      } catch {
+        return []
+      }
     }
 
+    // Aujourd'hui : schedule pour tous les matchs + scores pour les live/terminés
     try {
-      const xml = await fetchGoalserveXml(path)
+      const [scoresXml, scheduleXml] = await Promise.all([
+        fetchGoalserveXml('hockey/nhl-scores'),
+        fetchGoalserveXml(`hockey/nhl-shedule?date1=${formatDate(targetDate)}`),
+      ])
 
-      if (useScoresEndpoint) {
-        this.scoresXmlCache = { path, xml, timestamp: Date.now() }
-      }
+      this.scoresXmlCache = { path: 'hockey/nhl-scores', xml: scoresXml, timestamp: Date.now() }
 
-      const matches = useScoresEndpoint
-        ? parseXMLScores(xml, league)
-        : parseXMLMatches(xml, league, date)
+      const todayStr = formatDate(targetDate).split('.').reverse().join('-') // DD.MM.YYYY → YYYY-MM-DD
+      const liveMatches = parseXMLScores(scoresXml, league).filter(m => m.date === todayStr)
+      const scheduledMatches = parseXMLMatches(scheduleXml, league, targetDate)
 
-      if (withLogos && matches.length > 0) {
-        return await this.enrichMatchesWithLogos(matches)
-      }
+      const liveIds = new Set(liveMatches.map(m => m.id))
+      const merged = [...liveMatches, ...scheduledMatches.filter(m => !liveIds.has(m.id))]
 
-      return matches
-    } catch (error) {
+      if (withLogos && merged.length > 0) return await this.enrichMatchesWithLogos(merged)
+      return merged
+    } catch {
       return []
     }
   }

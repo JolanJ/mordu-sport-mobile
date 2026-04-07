@@ -12,8 +12,7 @@ import { ArrowLeft, BarChart3, MessageCircle, TrendingUp } from 'lucide-react-na
 import { Image, Keyboard, Platform, Pressable, StyleSheet, View, ActivityIndicator, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useMatches } from '@/hooks/useMatches'
-import { useState, useEffect, useMemo } from 'react'
-import { PenaltyEvent } from '@/lib/types'
+import { useState, useEffect } from 'react'
 import { Match } from '@/lib/types'
 import UsfLogo from '@/assets/images/usf.svg'
 
@@ -51,38 +50,12 @@ export default function MatchRoom() {
   const { data: matches = [] } = useMatches({ date: matchDate, withLogos: true })
 
   // Start fetching match details and season stats immediately (don't wait for tab click)
-  const { data: matchDetails } = useMatchDetails({ matchId: normalizedId || '', date: dateParam, enabled: !!normalizedId })
+  useMatchDetails({ matchId: normalizedId || '', date: dateParam, enabled: !!normalizedId })
   useTeamSeasonStats({
     homeTeamId: match?.homeTeam.teamId,
     awayTeamId: match?.awayTeam.teamId,
     enabled: !!match,
   })
-
-  const ppStatus = useMemo(() => {
-    if (!match?.timeRemaining || !match?.period || !matchDetails) return { homePP: false, awayPP: false }
-    const periodMap: Record<string, number> = { '1ère': 1, '2e': 2, '3e': 3, 'Prolongation': 4 }
-    const periodNum = Object.entries(periodMap).find(([k]) => match.period?.startsWith(k))?.[1] ?? 0
-    if (!periodNum) return { homePP: false, awayPP: false }
-    const periodDuration = periodNum <= 3 ? 1200 : 300
-    const timerParts = match.timeRemaining.split(':')
-    const timerSeconds = timerParts.length === 2 ? parseInt(timerParts[0]) * 60 + parseInt(timerParts[1]) : 0
-    const elapsed = periodDuration - timerSeconds
-    const periodNames: Record<number, string> = { 1: '1ère', 2: '2e', 3: '3e', 4: 'Prolongation' }
-    const currentPeriodName = periodNames[periodNum]
-    const penalties = matchDetails.events.filter(
-      (e): e is PenaltyEvent => e.type === 'penalty' && e.period === currentPeriodName
-    )
-    let homeActive = 0, awayActive = 0
-    for (const p of penalties) {
-      const parts = p.time.split(':')
-      const penElapsed = parts.length === 2 ? parseInt(parts[0]) * 60 + parseInt(parts[1]) : parseInt(parts[0]) * 60
-      if (elapsed >= penElapsed && elapsed < penElapsed + 120) {
-        if (p.team === 'home') homeActive++
-        else awayActive++
-      }
-    }
-    return { homePP: awayActive > homeActive, awayPP: homeActive > awayActive }
-  }, [match?.timeRemaining, match?.period, matchDetails])
 
   useEffect(() => {
     if (!normalizedId) {
@@ -181,7 +154,7 @@ export default function MatchRoom() {
                 )}
               </View>
               <Text style={styles.teamNameCompact}>{match.awayTeam.abbr}</Text>
-              {ppStatus.awayPP && (
+              {match.awayPP && (
                 <View style={styles.ppBadge}>
                   <Text style={styles.ppBadgeText}>PP</Text>
                 </View>
@@ -208,7 +181,7 @@ export default function MatchRoom() {
                 )}
               </View>
               <Text style={styles.teamNameCompact}>{match.homeTeam.abbr}</Text>
-              {ppStatus.homePP && (
+              {match.homePP && (
                 <View style={styles.ppBadge}>
                   <Text style={styles.ppBadgeText}>PP</Text>
                 </View>
