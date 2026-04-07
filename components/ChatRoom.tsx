@@ -4,8 +4,9 @@ import { useAvatars } from '@/hooks/useAvatars'
 import { ChatMessage, useChat } from '@/hooks/useChat'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
+import { Image as ExpoImage } from 'expo-image'
 import { router } from 'expo-router'
-import { ChevronLeft, ChevronRight, LogIn, Send } from 'lucide-react-native'
+import { ChevronLeft, ChevronRight, LogIn, Send, Smile } from 'lucide-react-native'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -13,9 +14,12 @@ import {
   Animated,
   FlatList,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -44,6 +48,10 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionToast, setMentionToast] = useState<string | null>(null)
   const [highlightedId, setHighlightedId] = useState<string | null>(highlightMessageId || null)
+  const [showGifPicker, setShowGifPicker] = useState(false)
+  const [gifQuery, setGifQuery] = useState('')
+  const [gifs, setGifs] = useState<any[]>([])
+  const [gifLoading, setGifLoading] = useState(false)
   const PICKER_PANEL_WIDTH = REACTION_EMOJIS.length * 40
   const moderationSlide = useRef(new Animated.Value(0)).current
   const initialLoadDone = useRef(false)
@@ -240,6 +248,26 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
     })
   }
 
+  const fetchGifs = async (q: string) => {
+    setGifLoading(true)
+    try {
+      const endpoint = q.trim()
+        ? `https://api.giphy.com/v1/gifs/search?api_key=Yiq9m5asqIF6XAZchWuAuXYFEEAm00Q7&q=${encodeURIComponent(q)}&limit=24&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=Yiq9m5asqIF6XAZchWuAuXYFEEAm00Q7&limit=24&rating=g`
+      const res = await fetch(endpoint)
+      const json = await res.json()
+      setGifs(json.data || [])
+    } catch {}
+    setGifLoading(false)
+  }
+
+  const handleSendGif = async (gifUrl: string) => {
+    setShowGifPicker(false)
+    setGifQuery('')
+    setGifs([])
+    await sendMessage(`[gif]${gifUrl}`, username, avatarId)
+  }
+
   const visibleMessages = messages.filter(m => !blockedUserIds.has(m.user_id))
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
@@ -274,9 +302,17 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
                 {formatTime(item.created_at)}
               </Text>
             </View>
-            <Text style={[styles.messageText, isOwnMessage && styles.ownMessageText]}>
-              {renderMessageContent(item.content, isOwnMessage)}
-            </Text>
+            {item.content.startsWith('[gif]') ? (
+              <ExpoImage
+                source={{ uri: item.content.slice(5) }}
+                style={styles.gifMessage}
+                contentFit="contain"
+              />
+            ) : (
+              <Text style={[styles.messageText, isOwnMessage && styles.ownMessageText]}>
+                {renderMessageContent(item.content, isOwnMessage)}
+              </Text>
+            )}
           </View>
           {isOwnMessage && (
             <View style={styles.avatarContainer}>
@@ -386,7 +422,7 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <Pressable style={{ flex: 1 }} onPress={() => { setSelectedMessageId(null); setShowModerationMenu(null) }}>
+        <Pressable style={{ flex: 1 }} onPress={() => { setSelectedMessageId(null); setShowModerationMenu(null); if (Platform.OS === 'ios') Keyboard.dismiss() }}>
           <FlatList
             ref={flatListRef}
             data={[...visibleMessages].reverse()}
@@ -448,6 +484,9 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
           )}
 
           <View style={styles.inputContainer}>
+            <Pressable style={styles.gifButton} onPress={() => { setShowGifPicker(true); fetchGifs('') }}>
+              <Text style={styles.gifButtonText}>GIF</Text>
+            </Pressable>
             <TextInput
               style={styles.input}
               placeholder={t('writeMessage')}
@@ -469,7 +508,49 @@ export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboard
                 <Send size={18} color={colors.background} />
               )}
             </Pressable>
+            {Platform.OS === 'ios' && keyboardVisible && (
+              <Pressable onPress={() => Keyboard.dismiss()} style={styles.dismissKeyboardButton}>
+                <ChevronLeft size={20} color={colors.mutedForeground} style={{ transform: [{ rotate: '-90deg' }] }} />
+              </Pressable>
+            )}
           </View>
+
+          <Modal visible={showGifPicker} animationType="slide" transparent onRequestClose={() => setShowGifPicker(false)}>
+            <View style={styles.gifModal}>
+              <Text style={styles.gifPoweredBy}>Powered by GIPHY</Text>
+              <View style={styles.gifModalHeader}>
+                <TextInput
+                  style={styles.gifSearchInput}
+                  placeholder="Rechercher un GIF..."
+                  placeholderTextColor={colors.mutedForeground}
+                  value={gifQuery}
+                  onChangeText={(t) => { setGifQuery(t); fetchGifs(t) }}
+                />
+                <Pressable onPress={() => { setShowGifPicker(false); setGifQuery(''); setGifs([]) }}>
+                  <Text style={styles.gifModalClose}>✕</Text>
+                </Pressable>
+              </View>
+              {gifLoading ? (
+                <ActivityIndicator color={colors.neonBlue} style={{ marginTop: 20 }} />
+              ) : (
+                <ScrollView contentContainerStyle={styles.gifGrid}>
+                  {gifs.map((gif) => {
+                    const w = parseInt(gif.images.fixed_height.width) || 200
+                    const h = parseInt(gif.images.fixed_height.height) || 150
+                    return (
+                      <Pressable key={gif.id} onPress={() => handleSendGif(gif.images.fixed_height.url)}>
+                        <Image
+                          source={{ uri: gif.images.fixed_height_still.url }}
+                          style={[styles.gifThumb, { width: w, height: h }]}
+                          resizeMode="cover"
+                        />
+                      </Pressable>
+                    )
+                  })}
+                </ScrollView>
+              )}
+            </View>
+          </Modal>
         </View>
       )}
     </KeyboardAvoidingView>
@@ -757,6 +838,80 @@ const styles = StyleSheet.create({
     paddingBottom: 9,
     fontSize: 14,
     color: colors.foreground,
+  },
+  dismissKeyboardButton: {
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gifButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.neonBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gifButtonText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: colors.neonBlue,
+  },
+  gifMessage: {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  gifPoweredBy: {
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: colors.mutedForeground,
+    paddingTop: 10,
+    paddingBottom: 4,
+    letterSpacing: 1,
+  },
+  gifModal: {
+    flex: 1,
+    backgroundColor: colors.background,
+    marginTop: Platform.OS === 'ios' ? 120 : 80,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  gifModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  gifSearchInput: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: colors.foreground,
+    fontSize: 14,
+  },
+  gifModalClose: {
+    fontSize: 18,
+    color: colors.mutedForeground,
+    paddingHorizontal: 8,
+  },
+  gifGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 4,
+  },
+  gifThumb: {
+    width: 180,
+    height: 120,
+    borderRadius: 8,
+    margin: 4,
   },
   sendButton: {
     width: 38,

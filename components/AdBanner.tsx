@@ -1,4 +1,4 @@
-import { AD_UNIT_IDS } from '@/lib/ads'
+import { BANNER_AD_UNIT_ID } from '@/lib/ads'
 import { colors } from '@/theme/colors'
 import { useState } from 'react'
 import { StyleSheet, View } from 'react-native'
@@ -10,7 +10,7 @@ export function AdBanner() {
   return (
     <View style={[styles.container, !adLoaded && styles.hidden]}>
       <BannerAd
-        unitId={AD_UNIT_IDS.BANNER}
+        unitId={BANNER_AD_UNIT_ID}
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
         onAdLoaded={() => setAdLoaded(true)}
         onAdFailedToLoad={() => setAdLoaded(false)}
