@@ -42,10 +42,15 @@ class GoalserveAPI {
       return this.fetchMatchesLive(league, date, withLogos)
     }
 
-    // Other dates = try cache first
-    const dateKey = date
-      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-      : new Date().toISOString().split('T')[0]
+    // Dates passées = scores API (même source que fetchMatchDetails, évite désync home/away)
+    const targetDate = date || new Date()
+    const todayMidnight = new Date(new Date().setHours(0, 0, 0, 0))
+    if (targetDate < todayMidnight) {
+      return this.fetchMatchesLive(league, date, withLogos)
+    }
+
+    // Dates futures = DB cache
+    const dateKey = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`
 
     const { data } = await supabase
       .from('matches_cache')

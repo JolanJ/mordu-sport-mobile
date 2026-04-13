@@ -19,12 +19,13 @@ export interface ReactionCount {
 
 export interface ChatMessage {
   id: string
-  match_id: string
+  match_id?: string
+  team_id?: string
   user_id: string
   username: string
   avatar_id: number
   content: string
-  locale: Locale
+  locale: string
   created_at: string
   reactions?: ReactionCount[]
 }
@@ -70,7 +71,7 @@ export function useChat({ matchId }: UseChatOptions) {
       }
     }
     setLoading(false)
-  }, [matchId, locale])
+  }, [matchId])
 
   useEffect(() => {
     fetchMessages()

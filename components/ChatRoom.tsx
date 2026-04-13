@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useAvatars } from '@/hooks/useAvatars'
 import { ChatMessage, useChat } from '@/hooks/useChat'
+import { useTeamChat } from '@/hooks/useTeamChat'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
 import { Image as ExpoImage } from 'expo-image'
@@ -27,7 +28,8 @@ import {
 } from 'react-native'
 
 interface ChatRoomProps {
-  matchId: string
+  matchId?: string
+  teamId?: string
   username?: string
   avatarId?: number
   keyboardVisible?: boolean
@@ -36,11 +38,13 @@ interface ChatRoomProps {
 
 const REACTION_EMOJIS = ['👍', '👎', '🔥', '💀']
 
-export function ChatRoom({ matchId, username = 'Anonyme', avatarId = 1, keyboardVisible = false, highlightMessageId }: ChatRoomProps) {
+export function ChatRoom({ matchId, teamId, username = 'Anonyme', avatarId = 1, keyboardVisible = false, highlightMessageId }: ChatRoomProps) {
   const { user } = useAuth()
   const { getAvatarUrl } = useAvatars()
   const { t } = useTranslation()
-  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, markMentionsRead, isAuthenticated } = useChat({ matchId })
+  const matchChat = useChat({ matchId: matchId || '' })
+  const teamChat = useTeamChat({ teamId: teamId || '' })
+  const { messages, loading, sending, sendMessage, toggleReaction, getReactionsForMessage, markMentionsRead, isAuthenticated } = teamId ? teamChat : matchChat
   const [inputText, setInputText] = useState('')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [showModerationMenu, setShowModerationMenu] = useState<string | null>(null)

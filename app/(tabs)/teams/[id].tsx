@@ -1,24 +1,27 @@
 import { AdBanner } from '@/components/AdBanner'
+import { ChatRoom } from '@/components/ChatRoom'
 import { HomeHeader } from '@/components/HomeHeader'
 import { InjuryReport } from '@/components/InjuryReport'
 import { TabsNavigation } from '@/components/TabsNavigation'
 import { TeamBanner } from '@/components/TeamBanner'
 import { TeamRosterComponent } from '@/components/TeamRosterComponent'
 import { TeamStatsComponent } from '@/components/TeamStatsComponent'
+import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useTeamData } from '@/hooks/useTeamData'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-type TabType = 'players' | 'stats' | 'injuries'
+type TabType = 'players' | 'stats' | 'injuries' | 'chat'
 
 export default function TeamDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [activeTab, setActiveTab] = useState<TabType>('players')
   const { t } = useTranslation()
+  const { profile } = useAuth()
 
   // Utiliser le hook pour fetcher les vraies données
   const {
@@ -28,8 +31,6 @@ export default function TeamDetail() {
     teamStats,
     playerStats,
     injuries,
-    isLoading,
-    hasGoalserveId,
   } = useTeamData({ teamId: id || '' })
 
   // Helper pour trouver les stats d'un joueur par son nom
@@ -169,16 +170,24 @@ export default function TeamDetail() {
       {/* Tabs Navigation - Sticky */}
       <TabsNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Contenu scrollable selon l'onglet actif */}
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {activeTab === 'players' && <TeamRosterComponent roster={displayRoster} />}
-        {activeTab === 'stats' && displayTeamStats && <TeamStatsComponent stats={displayTeamStats} />}
-        {activeTab === 'injuries' && <InjuryReport injuries={displayInjuries} />}
-      </ScrollView>
+      {/* Chat — pas de ScrollView, FlatList interne gère le scroll */}
+      {activeTab === 'chat' ? (
+        <ChatRoom
+          teamId={teamBasicInfo.goalserveId}
+          username={profile?.username || 'Fan'}
+          avatarId={profile?.avatar_id || 1}
+        />
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {activeTab === 'players' && <TeamRosterComponent roster={displayRoster} />}
+          {activeTab === 'stats' && displayTeamStats && <TeamStatsComponent stats={displayTeamStats} />}
+          {activeTab === 'injuries' && <InjuryReport injuries={displayInjuries} />}
+        </ScrollView>
+      )}
       <AdBanner />
     </SafeAreaView>
   )

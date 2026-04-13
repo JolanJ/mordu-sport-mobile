@@ -216,6 +216,13 @@ export const translations = {
     savePct: '% arrêts',
     offense: 'Offensive',
     defense: 'Défensive',
+
+    // Bonus
+    bonusStep1: 'Crée-toi un compte BET99',
+    bonusStep2: 'Si tu utilises le lien (image ci-dessous) → aucun code promo requis',
+    bonusStep3: 'Sinon → entre le code',
+    bonusRewardTitle: '💰 Ce que tu reçois',
+    bonusRewardText: "Jusqu'à 800 $ de deuxième chance sur ton premier pari sportif.",
   },
 
   en: {
@@ -433,6 +440,13 @@ export const translations = {
     savePct: 'Save %',
     offense: 'Offense',
     defense: 'Defense',
+
+    // Bonus
+    bonusStep1: 'Create a BET99 account',
+    bonusStep2: 'If you use the link (image below) → no promo code required',
+    bonusStep3: 'Otherwise → enter the code',
+    bonusRewardTitle: '💰 What you get',
+    bonusRewardText: 'Up to $800 second chance on your first sports bet.',
   },
 } as const
 

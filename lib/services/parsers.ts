@@ -4,15 +4,15 @@
 
 import { Player, TeamRoster } from '@/lib/teamTypes'
 import {
-  Match,
   GoalEvent,
-  PenaltyEvent,
-  MatchEvent,
-  TeamMatchStats,
-  PlayerMatchStats,
   GoalkeeperMatchStats,
-  PowerplayStats,
+  Match,
   MatchDetails,
+  MatchEvent,
+  PenaltyEvent,
+  PlayerMatchStats,
+  PowerplayStats,
+  TeamMatchStats,
 } from '@/lib/types'
 import { XMLParser } from 'fast-xml-parser'
 
@@ -217,17 +217,17 @@ function transformMatch(matchData: any, league: League): Match | null {
     const isReallyFinished = statusValue.includes('final')
 
     const isUpcoming = statusValue.includes('not started') ||
-                       statusValue.includes('scheduled') ||
-                       statusValue === ''
+      statusValue.includes('scheduled') ||
+      statusValue === ''
 
     const isPlaying = statusValue.includes('live') ||
-                      statusValue.includes('in progress') ||
-                      statusValue.includes('1st') ||
-                      statusValue.includes('2nd') ||
-                      statusValue.includes('3rd') ||
-                      statusValue.includes('ot') ||
-                      statusValue.includes('overtime') ||
-                      hasActiveTimer
+      statusValue.includes('in progress') ||
+      statusValue.includes('1st') ||
+      statusValue.includes('2nd') ||
+      statusValue.includes('3rd') ||
+      statusValue.includes('ot') ||
+      statusValue.includes('overtime') ||
+      hasActiveTimer
 
     if (isUpcoming) {
       status = 'upcoming'
@@ -251,7 +251,7 @@ function transformMatch(matchData: any, league: League): Match | null {
     if (dateValue) {
       const dateParts = String(dateValue).trim().split('.')
       if (dateParts.length === 3) {
-        dateStr = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
+        dateStr = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`
       }
     }
 

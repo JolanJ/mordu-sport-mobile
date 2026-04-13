@@ -1,9 +1,9 @@
 import { useTranslation } from '@/contexts/TranslationContext'
 import { colors } from '@/theme/colors'
-import { BarChart3, Hospital, Users } from 'lucide-react-native'
+import { BarChart3, Hospital, MessageCircle, Users } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
-type TabType = 'players' | 'stats' | 'injuries'
+type TabType = 'players' | 'stats' | 'injuries' | 'chat'
 
 interface TabsNavigationProps {
   activeTab: TabType
@@ -17,6 +17,7 @@ export function TabsNavigation({ activeTab, onTabChange }: TabsNavigationProps) 
     { id: 'players' as TabType, label: t('players'), icon: Users, color: colors.primary },
     { id: 'stats' as TabType, label: t('team'), icon: BarChart3, color: colors.accent },
     { id: 'injuries' as TabType, label: t('injuries'), icon: Hospital, color: colors.destructive },
+    { id: 'chat' as TabType, label: t('chat'), icon: MessageCircle, color: colors.neonGreen },
   ]
 
   return (
