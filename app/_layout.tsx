@@ -30,7 +30,7 @@ mobileAds()
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60000, // 1 minute
+      staleTime: 20000, // 20 seconds
     },
   },
 })

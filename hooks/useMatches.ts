@@ -77,8 +77,8 @@ export function useMatches({ date, withLogos = true }: UseMatchesOptions = {}) {
       }
       return matches
     },
-    staleTime: 30000,
-    refetchInterval: 30000,
+    staleTime: 20000,
+    refetchInterval: 20000,
   })
 
   return query
@@ -109,7 +109,7 @@ export async function prefetchTodayMatches(queryClient: any): Promise<void> {
         queryClient.prefetchQuery({
           queryKey: ['matchDetails', match.id, dateKey],
           queryFn: () => api.fetchMatchDetails(match.id, today),
-          staleTime: 60000,
+          staleTime: 20000,
         })
       }
 
