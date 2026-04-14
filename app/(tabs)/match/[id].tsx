@@ -5,6 +5,7 @@ import { TeamSeasonStatsComponent } from '@/components/TeamSeasonStatsComponent'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useMatchDetails } from '@/hooks/useMatchDetails'
+import { useMatchPresence } from '@/hooks/useMatchPresence'
 import { useTeamSeasonStats } from '@/hooks/useTeamSeasonStats'
 import { colors } from '@/theme/colors'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -42,6 +43,8 @@ export default function MatchRoom() {
 
   // Normaliser l'ID en string pour éviter les problèmes de comparaison
   const normalizedId = id ? String(id).trim() : null
+
+  useMatchPresence(normalizedId)
 
   // Utiliser la date passée en paramètre, sinon aujourd'hui
   const matchDate = dateParam ? new Date(dateParam + 'T12:00:00') : new Date()
