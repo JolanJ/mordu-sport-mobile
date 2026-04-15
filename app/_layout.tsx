@@ -7,6 +7,7 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import { TranslationProvider, useTranslation } from '@/contexts/TranslationContext'
 import { prefetchTodayMatches } from '@/hooks/useMatches'
 import { prefetchTeamLogos } from '@/hooks/useTeamsWithLogos'
+import { useOneSignal } from '@/hooks/useOneSignal'
 import { useVersionCheck } from '@/hooks/useVersionCheck'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/theme/colors'
@@ -41,6 +42,8 @@ function RootLayoutNav() {
   const segments = useSegments()
   const router = useRouter()
   const isResetFlow = useRef(false)
+
+  useOneSignal()
 
   // Handle deep links (auth callback, reset password)
   useEffect(() => {
