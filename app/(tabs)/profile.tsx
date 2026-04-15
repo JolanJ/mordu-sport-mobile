@@ -89,6 +89,16 @@ export default function Profile() {
       return
     }
 
+    const usernameChanged = username.trim() !== profile.username
+    if (usernameChanged && profile.username_changed_at) {
+      const lastChange = new Date(profile.username_changed_at)
+      const daysSince = (Date.now() - lastChange.getTime()) / (1000 * 60 * 60 * 24)
+      if (daysSince < 30) {
+        Alert.alert(t('error'), t('usernameChangeCooldown'))
+        return
+      }
+    }
+
     setSaving(true)
 
     const { error } = await updateProfile({

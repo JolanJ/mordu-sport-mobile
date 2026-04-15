@@ -16,6 +16,7 @@ export type Profile = {
   is_banned: boolean
   created_at: string
   updated_at: string
+  username_changed_at: string | null
 }
 
 type AuthContextType = {
@@ -75,9 +76,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (updates: Partial<Pick<Profile, 'username' | 'state_province' | 'avatar_id' | 'preferred_locale' | 'newsletter_subscribed'>>) => {
     if (!user) return { error: new Error('Non authentifié') }
 
+    const finalUpdates: Record<string, unknown> = { ...updates }
+    if ('username' in updates) {
+      finalUpdates.username_changed_at = new Date().toISOString()
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(finalUpdates)
       .eq('id', user.id)
 
     if (!error) {
