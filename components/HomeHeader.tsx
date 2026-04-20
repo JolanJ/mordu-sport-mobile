@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   betaBadge: {
     marginLeft: 'auto',
     borderWidth: 1,
-    borderColor: colors.morduBlue,
+    borderColor: '#16a34a',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   betaText: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: colors.morduBlue,
+    color: '#16a34a',
     letterSpacing: 1,
   },
 })
