@@ -27,9 +27,6 @@ export function HomeHeader() {
           />}
           <Text style={styles.username}>@{username}</Text>
         </Pressable>
-        <View style={styles.betaBadge}>
-          <Text style={styles.betaText}>BETA</Text>
-        </View>
       </View>
     </View>
   )
@@ -61,19 +58,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.foreground,
-  },
-  betaBadge: {
-    marginLeft: 'auto',
-    borderWidth: 1,
-    borderColor: '#16a34a',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  betaText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#16a34a',
-    letterSpacing: 1,
   },
 })

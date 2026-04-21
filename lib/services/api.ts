@@ -64,7 +64,7 @@ class GoalserveAPI {
         status: m.status as 'upcoming' | 'live' | 'finished',
         statusText: m.status_text || undefined,
         date: m.match_date,
-        time: m.time || undefined,
+        time: m.datetime_utc || m.time || undefined,
         period: m.period || undefined,
         timeRemaining: m.time_remaining || undefined,
         venue: m.venue || undefined,

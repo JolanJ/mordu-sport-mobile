@@ -12,6 +12,15 @@ interface MatchCardProps {
   onToggleFavorite?: (match: Match) => void
 }
 
+function formatMatchTime(time?: string): string | undefined {
+  if (!time) return undefined
+  if (time.includes('T') && (time.endsWith('Z') || time.includes('+00'))) {
+    const date = new Date(time)
+    return `${date.getHours()}h${String(date.getMinutes()).padStart(2, '0')}`
+  }
+  return time
+}
+
 export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite }: MatchCardProps) {
   const { user } = useAuth()
   const { t } = useTranslation()
@@ -63,11 +72,11 @@ export function MatchCard({ match, onPress, isFavorite = false, onToggleFavorite
       case 'live':
         return t('live')
       case 'upcoming':
-        return match.time
+        return formatMatchTime(match.time)
       case 'finished':
         return t('finished')
       default:
-        return match.time
+        return formatMatchTime(match.time)
     }
   }
 

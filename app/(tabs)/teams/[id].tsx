@@ -19,7 +19,7 @@ type TabType = 'players' | 'stats' | 'injuries' | 'chat'
 
 export default function TeamDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const [activeTab, setActiveTab] = useState<TabType>('players')
+  const [activeTab, setActiveTab] = useState<TabType>('chat')
   const { t } = useTranslation()
   const { profile } = useAuth()
 

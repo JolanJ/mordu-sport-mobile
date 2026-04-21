@@ -1,7 +1,7 @@
 import { useTranslation } from '@/contexts/TranslationContext';
 import { colors } from '@/theme/colors';
 import { Tabs } from 'expo-router';
-import { Gift, Home, Star, Users } from 'lucide-react-native';
+import { Home, Star, Users } from 'lucide-react-native';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -39,10 +39,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="bonus"
         options={{
-          title: 'Bonus',
-          tabBarIcon: ({ color }) => (
-            <Gift size={20} color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen

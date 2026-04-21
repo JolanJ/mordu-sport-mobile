@@ -271,9 +271,9 @@ function transformMatch(matchData: any, league: League): Match | null {
         hours = parseInt(h24Match[1], 10)
         minutes = parseInt(h24Match[2], 10)
       }
-      // Goalserve retourne les heures en EST fixe (UTC-5) — on convertit en heure locale de l'appareil
+      // Goalserve retourne les heures en EST fixe (UTC-5) — on stocke en UTC ISO pour convertir à l'affichage
       const date = new Date(`${dateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00-05:00`)
-      timeStr = `${date.getHours()}h${String(date.getMinutes()).padStart(2, '0')}`
+      timeStr = date.toISOString()
     }
 
     let period: string | undefined

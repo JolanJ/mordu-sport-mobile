@@ -14,10 +14,10 @@ export function TabsNavigation({ activeTab, onTabChange }: TabsNavigationProps) 
   const { t } = useTranslation()
 
   const tabs = [
+    { id: 'chat' as TabType, label: t('chat'), icon: MessageCircle, color: colors.neonGreen },
     { id: 'players' as TabType, label: t('players'), icon: Users, color: colors.primary },
     { id: 'stats' as TabType, label: t('team'), icon: BarChart3, color: colors.accent },
     { id: 'injuries' as TabType, label: t('injuries'), icon: Hospital, color: colors.destructive },
-    { id: 'chat' as TabType, label: t('chat'), icon: MessageCircle, color: colors.neonGreen },
   ]
 
   return (
