@@ -52,11 +52,11 @@ export function useChat({ matchId }: UseChatOptions) {
       .eq('match_id', matchId)
 
     const { data, error } = await query
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(100)
 
     if (!error && data) {
-      setMessages(data)
+      setMessages([...data].reverse())
 
       if (data.length > 0) {
         const messageIds = data.map(m => m.id)

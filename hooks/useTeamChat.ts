@@ -35,11 +35,11 @@ export function useTeamChat({ teamId }: UseTeamChatOptions) {
       .from('nhl_team_chat_messages')
       .select('*')
       .eq('team_id', teamId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(100)
 
     if (!error && data) {
-      setMessages(data)
+      setMessages([...data].reverse())
 
       if (data.length > 0) {
         const messageIds = data.map(m => m.id)
