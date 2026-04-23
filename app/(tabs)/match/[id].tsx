@@ -19,6 +19,15 @@ import UsfLogo from '@/assets/images/usf.svg'
 
 type TabType = 'chat' | 'events' | 'teamStats'
 
+function formatMatchTime(time?: string): string | undefined {
+  if (!time) return undefined
+  if (time.includes('T') && (time.endsWith('Z') || time.includes('+00'))) {
+    const date = new Date(time)
+    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  }
+  return time
+}
+
 export default function MatchRoom() {
   const { id, date: dateParam, messageId: messageIdParam } = useLocalSearchParams<{ id: string; date?: string; messageId?: string }>()
   const router = useRouter()
@@ -128,7 +137,7 @@ export default function MatchRoom() {
               {match.timeRemaining ? (
                 <Text style={styles.miniTimer}>{match.timeRemaining}</Text>
               ) : match.period || match.statusText ? (
-                <Text style={styles.miniTimer}>{match.period || (match.statusText ? t(match.statusText as any) : '-')}</Text>
+                <Text style={styles.miniTimer}>{match.period || (match.statusText ? t(match.statusText as any) : formatMatchTime(match.time) ?? '-')}</Text>
               ) : (
                 <Text style={styles.miniDivider}>-</Text>
               )}
@@ -167,7 +176,7 @@ export default function MatchRoom() {
 
             <View style={styles.matchStatus}>
               <Text style={styles.periodTimeText}>
-                {match.period || (match.statusText ? t(match.statusText as any) : match.time) || '-'}
+                {match.period || (match.statusText ? t(match.statusText as any) : formatMatchTime(match.time)) || '-'}
               </Text>
               {match.timeRemaining && (
                 <Text style={styles.timeRemainingText}>{match.timeRemaining}</Text>
