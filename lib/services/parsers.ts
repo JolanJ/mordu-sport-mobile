@@ -301,7 +301,7 @@ function transformMatch(matchData: any, league: League): Match | null {
       date: dateStr,
       time: timeStr,
       period,
-      timeRemaining: matchData['@_timer'] ? String(matchData['@_timer']).split(':')[0] : undefined,
+      timeRemaining: matchData['@_timer'] ? String(matchData['@_timer']) : undefined,
       venue,
       homePP: ['true', '1'].includes(String(homeTeam['@_pp'] || '').toLowerCase()),
       awayPP: ['true', '1'].includes(String(awayTeam['@_pp'] || '').toLowerCase()),
